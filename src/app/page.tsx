@@ -26,7 +26,7 @@ export default async function HomePage() {
         />
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
           <div>
-            <p className="mb-3 text-sm font-extrabold uppercase text-ember">Nigeria Business Discovery</p>
+            <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover Businesses Across Nigeria</p>
             <h1 className="max-w-4xl text-6xl font-black leading-[0.9] tracking-normal text-ink md:text-8xl">
               Find trusted businesses across Nigeria.
             </h1>

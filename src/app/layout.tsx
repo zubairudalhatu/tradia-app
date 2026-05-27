@@ -39,9 +39,27 @@ export default async function RootLayout({
               <Link href="/admin">Admin</Link>
               {user ? <Link href="/logout">Logout</Link> : <Link href="/login">Login</Link>}
             </nav>
+            <details className="relative md:hidden">
+              <summary className="cursor-pointer list-none rounded-tradia border border-slate-200 px-3 py-2 text-sm font-bold text-ink">
+                Menu
+              </summary>
+              <nav className="absolute right-0 top-12 z-50 grid w-48 gap-1 rounded-tradia border border-slate-200 bg-white p-2 text-sm font-bold text-slate-700 shadow-xl">
+                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/businesses">Browse</Link>
+                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/pricing">Pricing</Link>
+                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/dashboard">Business</Link>
+                {user ? <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/account">Account</Link> : null}
+                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/admin">Admin</Link>
+                <Link className="rounded-tradia px-3 py-2 text-forest hover:bg-emerald-50" href="/businesses/new">Add Business</Link>
+                {user ? (
+                  <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/logout">Logout</Link>
+                ) : (
+                  <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/login">Login</Link>
+                )}
+              </nav>
+            </details>
             <Link
               href="/businesses/new"
-              className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white"
+              className="hidden rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white sm:inline-flex"
             >
               Add Business
             </Link>

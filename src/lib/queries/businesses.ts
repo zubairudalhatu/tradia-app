@@ -54,7 +54,11 @@ export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
 }
 
 export function listFeaturedBusinesses(limit = 3) {
-  return prisma.business.findMany({
+  return listRotatingFeaturedBusinesses(limit);
+}
+
+export async function listRotatingFeaturedBusinesses(limit = 3) {
+  const candidates = await prisma.business.findMany({
     where: {
       listingStatus: "PUBLISHED",
       OR: [
@@ -70,8 +74,18 @@ export function listFeaturedBusinesses(limit = 3) {
       { averageRating: "desc" },
       { viewCount: "desc" }
     ],
-    take: limit
+    take: Math.max(limit * 6, 12)
   });
+
+  if (candidates.length <= limit) {
+    return candidates;
+  }
+
+  const rotationSlot = Math.floor(Date.now() / (1000 * 60 * 60));
+  const start = rotationSlot % candidates.length;
+  const rotated = [...candidates.slice(start), ...candidates.slice(0, start)];
+
+  return rotated.slice(0, limit);
 }
 
 export function getBusinessBySlug(slug: string) {

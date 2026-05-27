@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveAreas } from "@/lib/queries/locations";
+import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 import { updateAdminBusinessAction } from "./actions";
 
 type AdminBusinessPageProps = {
@@ -14,12 +14,12 @@ type AdminBusinessPageProps = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminBusinessPage({ params, searchParams }: AdminBusinessPageProps) {
-  const [{ id }, query, admin, categories, locations, users, plans] = await Promise.all([
+  const [{ id }, query, admin, categories, locationGroups, users, plans] = await Promise.all([
     params,
     searchParams,
     getCurrentUser(),
     listActiveCategories(),
-    listActiveAreas(),
+    listActiveStateAreaGroups(),
     prisma.user.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
     prisma.plan.findMany({ where: { isActive: true }, orderBy: { annualPrice: "asc" } })
   ]);
@@ -91,10 +91,14 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
           </select>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
-          Area
+          State / Area
           <select className="rounded-tradia border border-slate-200 px-4 py-3" name="locationId" defaultValue={business.locationId} required>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>{location.name}</option>
+            {locationGroups.map((state) => (
+              <optgroup key={state.id} label={state.name}>
+                {state.children.map((area) => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>

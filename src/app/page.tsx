@@ -2,15 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveAreas } from "@/lib/queries/locations";
+import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCategories, popularLocations] = await Promise.all([
+  const [featuredBusinesses, popularCategories, locationGroups] = await Promise.all([
     listFeaturedBusinesses(3),
     listActiveCategories(),
-    listActiveAreas()
+    listActiveStateAreaGroups()
   ]);
 
   return (
@@ -41,12 +41,16 @@ export default async function HomePage() {
                 placeholder="Hotels, schools, clinics, furniture..."
                 aria-label="Search businesses"
               />
-              <select className="rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="Location">
+              <select className="rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="State or area">
                 <option value="">All Nigeria</option>
-                {popularLocations.map((location) => (
-                  <option key={location.id} value={location.slug}>
-                    {location.name}
-                  </option>
+                {locationGroups.map((state) => (
+                  <optgroup key={state.id} label={state.name}>
+                    {state.children.map((area) => (
+                      <option key={area.id} value={area.slug}>
+                        {area.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <button className="rounded-tradia bg-forest px-6 py-3 text-center font-bold text-white">

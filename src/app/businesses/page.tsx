@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BusinessCard } from "@/components/business-card";
 import { listPublishedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveAreas } from "@/lib/queries/locations";
+import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
 type BusinessesPageProps = {
   searchParams: Promise<{
@@ -23,10 +23,10 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
     location: params.location,
     verified: params.verified === "1"
   };
-  const [businesses, popularCategories, areas] = await Promise.all([
+  const [businesses, popularCategories, locationGroups] = await Promise.all([
     listPublishedBusinesses(filters),
     listActiveCategories(),
-    listActiveAreas()
+    listActiveStateAreaGroups()
   ]);
 
   return (
@@ -62,11 +62,15 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               </select>
             </label>
             <label className="grid gap-2 text-sm font-bold text-slate-600">
-              Area
+              State / Area
               <select className="rounded-tradia border border-slate-200 px-3 py-2" name="location" defaultValue={params.location ?? ""}>
-                <option value="">All areas</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={area.slug}>{area.name}</option>
+                <option value="">All Nigeria</option>
+                {locationGroups.map((state) => (
+                  <optgroup key={state.id} label={state.name}>
+                    {state.children.map((area) => (
+                      <option key={area.id} value={area.slug}>{area.name}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </label>

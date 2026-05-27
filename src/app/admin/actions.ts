@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/queries/featured";
 import { refreshBusinessRating } from "@/lib/ratings";
 
 export async function approveBusinessAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const businessId = String(formData.get("businessId") ?? "");
 
   await prisma.business.update({
@@ -20,7 +21,7 @@ export async function approveBusinessAction(formData: FormData) {
 }
 
 export async function rejectBusinessAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const businessId = String(formData.get("businessId") ?? "");
 
   await prisma.business.update({
@@ -32,7 +33,7 @@ export async function rejectBusinessAction(formData: FormData) {
 }
 
 export async function approveVerificationAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminAction();
   const requestId = String(formData.get("requestId") ?? "");
 
   const request = await prisma.verificationRequest.update({
@@ -54,7 +55,7 @@ export async function approveVerificationAction(formData: FormData) {
 }
 
 export async function rejectVerificationAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminAction();
   const requestId = String(formData.get("requestId") ?? "");
 
   const request = await prisma.verificationRequest.update({
@@ -75,7 +76,7 @@ export async function rejectVerificationAction(formData: FormData) {
 }
 
 export async function publishReviewAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -89,7 +90,7 @@ export async function publishReviewAction(formData: FormData) {
 }
 
 export async function rejectReviewAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -102,7 +103,7 @@ export async function rejectReviewAction(formData: FormData) {
 }
 
 export async function removeReviewAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -116,7 +117,7 @@ export async function removeReviewAction(formData: FormData) {
 }
 
 export async function resolveReportAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminAction();
   const reportId = String(formData.get("reportId") ?? "");
 
   await prisma.report.update({
@@ -132,7 +133,7 @@ export async function resolveReportAction(formData: FormData) {
 }
 
 export async function dismissReportAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminAction();
   const reportId = String(formData.get("reportId") ?? "");
 
   await prisma.report.update({
@@ -148,7 +149,7 @@ export async function dismissReportAction(formData: FormData) {
 }
 
 export async function featureBusinessAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const businessId = String(formData.get("businessId") ?? "");
 
   const existingPlacement = await prisma.featuredPlacement.findFirst({
@@ -170,7 +171,7 @@ export async function featureBusinessAction(formData: FormData) {
 }
 
 export async function unfeatureBusinessAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAction();
   const businessId = String(formData.get("businessId") ?? "");
 
   await deactivateBusinessPlacements(businessId);
@@ -178,4 +179,18 @@ export async function unfeatureBusinessAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath("/businesses");
+}
+
+async function requireAdminAction() {
+  const user = await getCurrentUser();
+
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/login");
+  }
+
+  if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) {
+    redirect("/dashboard");
+  }
+
+  return user;
 }

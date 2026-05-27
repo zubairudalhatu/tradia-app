@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
+import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import {
   approveBusinessAction,
@@ -22,6 +22,7 @@ export default async function AdminPage() {
 
   if (!user) redirect("/login");
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) redirect("/dashboard");
+  const adminActionToken = createAdminActionToken(user);
 
   const [
     pendingListings,
@@ -129,10 +130,12 @@ export default async function AdminPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <form action={approveBusinessAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="businessId" value={business.id} />
                   <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Approve</button>
                 </form>
                 <form action={rejectBusinessAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="businessId" value={business.id} />
                   <button className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Reject</button>
                 </form>
@@ -164,12 +167,14 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <form action={featureBusinessAction}>
+                    <AdminActionTokenInput token={adminActionToken} />
                     <input type="hidden" name="businessId" value={business.id} />
                     <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" disabled={isFeatured}>
                       Feature
                     </button>
                   </form>
                   <form action={unfeatureBusinessAction}>
+                    <AdminActionTokenInput token={adminActionToken} />
                     <input type="hidden" name="businessId" value={business.id} />
                     <button className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" disabled={!isFeatured}>
                       Remove
@@ -204,10 +209,12 @@ export default async function AdminPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <form action={approveVerificationAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="requestId" value={request.id} />
                   <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Verify</button>
                 </form>
                 <form action={rejectVerificationAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="requestId" value={request.id} />
                   <button className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Reject</button>
                 </form>
@@ -234,10 +241,12 @@ export default async function AdminPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <form action={publishReviewAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="reviewId" value={review.id} />
                   <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Publish</button>
                 </form>
                 <form action={rejectReviewAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="reviewId" value={review.id} />
                   <button className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Reject</button>
                 </form>
@@ -269,15 +278,18 @@ export default async function AdminPage() {
               <div className="flex flex-wrap gap-2">
                 {report.reviewId ? (
                   <form action={removeReviewAction}>
+                    <AdminActionTokenInput token={adminActionToken} />
                     <input type="hidden" name="reviewId" value={report.reviewId} />
                     <button className="rounded-tradia bg-ember px-4 py-2 text-sm font-bold text-white">Remove Review</button>
                   </form>
                 ) : null}
                 <form action={resolveReportAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="reportId" value={report.id} />
                   <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Resolve</button>
                 </form>
                 <form action={dismissReportAction}>
+                  <AdminActionTokenInput token={adminActionToken} />
                   <input type="hidden" name="reportId" value={report.id} />
                   <button className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Dismiss</button>
                 </form>
@@ -290,4 +302,8 @@ export default async function AdminPage() {
       </section>
     </main>
   );
+}
+
+function AdminActionTokenInput({ token }: { token: string }) {
+  return <input type="hidden" name="adminActionToken" value={token} />;
 }

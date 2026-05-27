@@ -53,7 +53,7 @@ async function uploadToCloudinary(file: File, folder: string) {
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
-  const publicId = `${folder}/${randomUUID()}`;
+  const publicId = randomUUID();
   const signatureSource = `folder=tradia/${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
   const signature = await sha1(signatureSource);
   const formData = new FormData();

@@ -10,6 +10,10 @@ type SessionPayload = {
   expiresAt: number;
 };
 
+type AdminActionPayload = SessionPayload & {
+  role: string;
+};
+
 export async function createSession(userId: string) {
   const payload: SessionPayload = {
     userId,
@@ -73,6 +77,39 @@ export async function requireAdmin() {
   return user;
 }
 
+export function createAdminActionToken(user: { id: string; role: string }) {
+  const payload: AdminActionPayload = {
+    userId: user.id,
+    role: user.role,
+    expiresAt: Date.now() + 15 * 60 * 1000
+  };
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = sign(encodedPayload);
+
+  return `${encodedPayload}.${signature}`;
+}
+
+export async function getAdminFromActionToken(token?: string) {
+  const payload = verifyAdminActionToken(token);
+
+  if (!payload || !["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(payload.role)) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true
+    }
+  });
+
+  if (!user || user.status !== "ACTIVE" || user.role !== payload.role) return null;
+
+  return user;
+}
+
 function verify(token?: string): SessionPayload | null {
   if (!token) return null;
 
@@ -86,6 +123,14 @@ function verify(token?: string): SessionPayload | null {
   } catch {
     return null;
   }
+}
+
+function verifyAdminActionToken(token?: string): AdminActionPayload | null {
+  const payload = verify(token) as AdminActionPayload | null;
+
+  if (!payload?.role) return null;
+
+  return payload;
 }
 
 function sign(value: string) {

@@ -39,6 +39,8 @@ npm run build
 npm run start
 ```
 
+Run `npm run db:deploy` manually after adding new Prisma migrations. Normal Vercel builds seed existing lookup data and then build the app.
+
 ## Vercel Setup
 
 1. Import the `tradia-app` project into Vercel.

@@ -11,6 +11,7 @@ build
 # env files
 .env
 .env*.local
+.env.production.local
 
 # logs
 *.log
@@ -27,4 +28,6 @@ public/uploads
 Thumbs.db
 
 # vercel
+.vercel
+
 .vercel

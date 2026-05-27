@@ -3,10 +3,15 @@
 import { redirect } from "next/navigation";
 import { createBusiness } from "@/lib/queries/businesses";
 import { businessCreateSchema } from "@/lib/validations/business";
-import { requireUser } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function submitBusinessAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await getCurrentUser();
+
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/login?next=/businesses/new");
+  }
+
   const parsed = businessCreateSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),

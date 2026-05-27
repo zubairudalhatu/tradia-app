@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth/session";
+import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
 import { saveUpload } from "@/lib/uploads";
@@ -38,7 +38,7 @@ function optionalString(value: FormDataEntryValue | null) {
 }
 
 export async function uploadBusinessMediaAction(businessId: string, formData: FormData) {
-  const user = await requireUser();
+  const user = await getActiveUserOrRedirect(businessId);
   const business = await getOwnedBusinessOrThrow(businessId, user.id);
   const mediaType = String(formData.get("mediaType") ?? "GALLERY");
   const file = formData.get("file");
@@ -47,7 +47,13 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
     redirect(`/dashboard/businesses/${businessId}/edit?error=media`);
   }
 
-  const url = await saveUpload(file, `businesses/${business.id}`);
+  let url: string;
+
+  try {
+    url = await saveUpload(file, `businesses/${business.id}`);
+  } catch {
+    redirect(`/dashboard/businesses/${businessId}/edit?error=upload-storage`);
+  }
 
   await prisma.media.create({
     data: {
@@ -73,7 +79,7 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
 }
 
 export async function submitVerificationRequestAction(businessId: string, formData: FormData) {
-  const user = await requireUser();
+  const user = await getActiveUserOrRedirect(businessId);
   const business = await getOwnedBusinessOrThrow(businessId, user.id);
   const documentType = String(formData.get("documentType") ?? "").trim();
   const notes = optionalString(formData.get("notes"));
@@ -83,7 +89,13 @@ export async function submitVerificationRequestAction(businessId: string, formDa
     redirect(`/dashboard/businesses/${businessId}/edit?error=verification`);
   }
 
-  const documentUrl = await saveUpload(file, `verification/${business.id}`);
+  let documentUrl: string;
+
+  try {
+    documentUrl = await saveUpload(file, `verification/${business.id}`);
+  } catch {
+    redirect(`/dashboard/businesses/${businessId}/edit?error=upload-storage`);
+  }
 
   await prisma.verificationRequest.create({
     data: {
@@ -141,6 +153,16 @@ async function getOwnedBusinessOrThrow(businessId: string, ownerId: string) {
   }
 
   return business;
+}
+
+async function getActiveUserOrRedirect(businessId: string) {
+  const user = await getCurrentUser();
+
+  if (!user || user.status !== "ACTIVE") {
+    redirect(`/login?next=/dashboard/businesses/${businessId}/edit`);
+  }
+
+  return user;
 }
 
 function normalizeMediaType(value: string) {

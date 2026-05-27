@@ -18,6 +18,10 @@ export async function saveUpload(file: File, folder: string) {
     return uploadToCloudinary(file, folder);
   }
 
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Production uploads require Cloudinary configuration.");
+  }
+
   return saveLocalUpload(file, folder);
 }
 

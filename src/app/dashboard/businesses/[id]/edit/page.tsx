@@ -73,7 +73,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       ) : null}
       {query.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          Please check the required fields and try again.
+          {errorMessage(query.error)}
         </p>
       ) : null}
       {query.media ? (
@@ -245,4 +245,24 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       </section>
     </main>
   );
+}
+
+function errorMessage(error: string) {
+  if (error === "upload-storage") {
+    return "Uploads are not configured yet. Please add Cloudinary credentials in Vercel before uploading media or verification documents.";
+  }
+
+  if (error === "media") {
+    return "Please choose a valid PNG, JPG, WebP, or PDF file under 5MB.";
+  }
+
+  if (error === "verification") {
+    return "Please choose a document type and upload a valid proof file.";
+  }
+
+  if (error === "response") {
+    return "Please write a response before saving.";
+  }
+
+  return "Please check the required fields and try again.";
 }

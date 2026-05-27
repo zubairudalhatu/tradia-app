@@ -29,7 +29,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
       <h1 className="text-5xl font-black tracking-normal">Start free, upgrade for trust and visibility</h1>
       {params.checkout ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          Checkout could not be started. Please confirm you selected one of your businesses.
+          {checkoutMessage(params.checkout)}
         </p>
       ) : null}
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -79,4 +79,24 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
       </section>
     </main>
   );
+}
+
+function checkoutMessage(status: string) {
+  if (status === "paystack-not-configured") {
+    return "Paystack checkout is not configured yet. Please add PAYSTACK_SECRET_KEY in Vercel, then redeploy.";
+  }
+
+  if (status === "squad-not-configured") {
+    return "Squad checkout is not configured yet. Please confirm SQUAD_SECRET_KEY and SQUAD_ENVIRONMENT in Vercel, then redeploy.";
+  }
+
+  if (status === "invalid") {
+    return "Checkout could not be started. Please confirm you selected one of your businesses.";
+  }
+
+  if (status === "failed") {
+    return "Checkout could not be started by the payment provider. Please try again or choose another provider.";
+  }
+
+  return "Checkout could not be started. Please try again.";
 }

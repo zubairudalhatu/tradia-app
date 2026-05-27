@@ -48,13 +48,10 @@ export async function initializeSquadPayment(input: SquadInitInput) {
     body: JSON.stringify({
       amount: input.amountKobo,
       email: input.email,
-      customer_name: input.customerName,
       currency: "NGN",
       initiate_type: "inline",
       transaction_ref: input.reference,
-      callback_url: input.callbackUrl,
-      payment_channels: ["card", "bank", "ussd", "transfer"],
-      metadata: input.metadata
+      callback_url: input.callbackUrl
     })
   });
 

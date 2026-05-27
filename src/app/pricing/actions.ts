@@ -39,7 +39,7 @@ export async function startPlanCheckoutAction(formData: FormData) {
     redirect("/dashboard?plan=free");
   }
 
-  const reference = `tradia_${paymentProvider}_${Date.now()}_${business.id.slice(0, 8)}_${plan.id.slice(0, 8)}`;
+  const reference = buildPaymentReference(paymentProvider, business.id, plan.id);
   const callbackUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/billing/callback`;
 
   await prisma.payment.create({
@@ -109,4 +109,9 @@ export async function startPlanCheckoutAction(formData: FormData) {
 
 function normalizePaymentProvider(value: string) {
   return value === "paystack" ? "paystack" : "squad";
+}
+
+function buildPaymentReference(provider: string, businessId: string, planId: string) {
+  const rawReference = `tradia${provider}${Date.now()}${businessId.slice(0, 8)}${planId.slice(0, 8)}`;
+  return rawReference.replace(/[^a-zA-Z0-9]/g, "");
 }

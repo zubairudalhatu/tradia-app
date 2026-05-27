@@ -22,6 +22,7 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const user = await getCurrentUser();
+  const canAccessAdmin = Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
 
   return (
     <html lang="en">
@@ -36,7 +37,7 @@ export default async function RootLayout({
               <Link href="/pricing">Pricing</Link>
               <Link href="/dashboard">Business</Link>
               {user ? <Link href="/account">Account</Link> : null}
-              <Link href="/admin">Admin</Link>
+              {canAccessAdmin ? <Link href="/admin">Admin</Link> : null}
               {user ? <Link href="/logout">Logout</Link> : <Link href="/login">Login</Link>}
             </nav>
             <details className="relative md:hidden">
@@ -48,7 +49,7 @@ export default async function RootLayout({
                 <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/pricing">Pricing</Link>
                 <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/dashboard">Business</Link>
                 {user ? <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/account">Account</Link> : null}
-                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/admin">Admin</Link>
+                {canAccessAdmin ? <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/admin">Admin</Link> : null}
                 <Link className="rounded-tradia px-3 py-2 text-forest hover:bg-emerald-50" href="/businesses/new">Add Business</Link>
                 {user ? (
                   <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/logout">Logout</Link>

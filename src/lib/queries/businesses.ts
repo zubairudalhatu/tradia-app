@@ -1,0 +1,169 @@
+import { prisma } from "@/lib/db";
+import { activePlacementWhere } from "@/lib/queries/featured";
+import type { businessCreateSchema } from "@/lib/validations/business";
+import type { Prisma } from "@prisma/client";
+import type { z } from "zod";
+
+const businessInclude = {
+  category: true,
+  location: true,
+  plan: true,
+  featuredPlacements: {
+    where: activePlacementWhere()
+  }
+};
+
+export type BusinessSearchFilters = {
+  q?: string;
+  category?: string;
+  location?: string;
+  verified?: boolean;
+};
+
+export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
+  const search = filters.q?.trim();
+  const where: Prisma.BusinessWhereInput = {
+    listingStatus: "PUBLISHED",
+    ...(filters.verified ? { verificationStatus: "VERIFIED" } : {}),
+    ...(filters.category ? { category: { slug: filters.category } } : {}),
+    ...(filters.location ? { location: { slug: filters.location } } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { address: { contains: search, mode: "insensitive" } },
+            { category: { name: { contains: search, mode: "insensitive" } } },
+            { location: { name: { contains: search, mode: "insensitive" } } }
+          ]
+        }
+      : {})
+  };
+
+  return prisma.business.findMany({
+    where,
+    include: businessInclude,
+    orderBy: [
+      { featuredPlacements: { _count: "desc" } },
+      { plan: { listingPriority: "desc" } },
+      { verificationStatus: "desc" },
+      { averageRating: "desc" },
+      { createdAt: "desc" }
+    ]
+  });
+}
+
+export function listFeaturedBusinesses(limit = 3) {
+  return prisma.business.findMany({
+    where: {
+      listingStatus: "PUBLISHED",
+      OR: [
+        { featuredPlacements: { some: activePlacementWhere() } },
+        { plan: { canBeFeatured: true } }
+      ]
+    },
+    include: businessInclude,
+    orderBy: [
+      { featuredPlacements: { _count: "desc" } },
+      { plan: { listingPriority: "desc" } },
+      { verificationStatus: "desc" },
+      { averageRating: "desc" },
+      { viewCount: "desc" }
+    ],
+    take: limit
+  });
+}
+
+export function getBusinessBySlug(slug: string) {
+  return prisma.business.findUnique({
+    where: { slug },
+    include: {
+      ...businessInclude,
+      hours: true,
+      media: true,
+      reviews: {
+        where: { status: "PUBLISHED" },
+        include: { user: true },
+        orderBy: { createdAt: "desc" }
+      }
+    }
+  });
+}
+
+export async function createBusiness(input: z.infer<typeof businessCreateSchema>, ownerId?: string) {
+  const slug = await uniqueBusinessSlug(input.name);
+  const freePlan = await prisma.plan.findUnique({ where: { name: "Free" } });
+
+  return prisma.business.create({
+    data: {
+      name: input.name,
+      slug,
+      description: input.description,
+      categoryId: input.categoryId,
+      locationId: input.locationId,
+      address: input.address,
+      phone: input.phone,
+      whatsapp: input.whatsapp,
+      email: input.email,
+      website: input.website,
+      ownerId,
+      planId: freePlan?.id,
+      listingStatus: "PENDING_REVIEW"
+    },
+    include: businessInclude
+  });
+}
+
+export async function updateOwnedBusiness(
+  businessId: string,
+  ownerId: string,
+  input: z.infer<typeof businessCreateSchema>
+) {
+  const business = await prisma.business.findFirst({
+    where: {
+      id: businessId,
+      ownerId
+    }
+  });
+
+  if (!business) {
+    throw new Error("Business not found or not owned by current user.");
+  }
+
+  return prisma.business.update({
+    where: { id: businessId },
+    data: {
+      name: input.name,
+      description: input.description,
+      categoryId: input.categoryId,
+      locationId: input.locationId,
+      address: input.address,
+      phone: input.phone,
+      whatsapp: input.whatsapp,
+      email: input.email,
+      website: input.website
+    },
+    include: businessInclude
+  });
+}
+
+async function uniqueBusinessSlug(name: string) {
+  const base = slugify(name);
+  let candidate = base;
+  let counter = 2;
+
+  while (await prisma.business.findUnique({ where: { slug: candidate } })) {
+    candidate = `${base}-${counter}`;
+    counter += 1;
+  }
+
+  return candidate;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

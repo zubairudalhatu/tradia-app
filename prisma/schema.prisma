@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  BUSINESS_OWNER
+  AGENT
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LocationType {
+  COUNTRY
+  STATE
+  CITY
+  AREA
+}
+
+enum MediaType {
+  LOGO
+  COVER
+  GALLERY
+  DOCUMENT
+  MENU
+  BROCHURE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAST_DUE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  phone           String?          @unique
+  passwordHash    String?
+  role            UserRole         @default(USER)
+  avatarUrl       String?
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  status          AccountStatus    @default(ACTIVE)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  businesses      Business[]       @relation("BusinessOwner")
+  reviews         Review[]
+  claims          BusinessClaim[]
+  reports         Report[]         @relation("Reporter")
+  verificationSubmissions VerificationRequest[] @relation("VerificationSubmitter")
+  reviewedVerifications    VerificationRequest[] @relation("VerificationReviewer")
+  reviewedClaims           BusinessClaim[]       @relation("ClaimReviewer")
+  payments        Payment[]
+  auditLogs       AuditLog[]       @relation("AuditActor")
+}
+
+model Business {
+  id                String             @id @default(cuid())
+  ownerId           String?
+  owner             User?              @relation("BusinessOwner", fields: [ownerId], references: [id])
+  name              String
+  slug              String             @unique
+  description       String
+  categoryId        String
+  category          Category           @relation(fields: [categoryId], references: [id])
+  locationId        String
+  location          Location           @relation(fields: [locationId], references: [id])
+  address           String
+  latitude          Decimal?           @db.Decimal(9, 6)
+  longitude         Decimal?           @db.Decimal(9, 6)
+  phone             String?
+  whatsapp          String?
+  email             String?
+  website           String?
+  logoUrl           String?
+  coverUrl          String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  listingStatus     ListingStatus      @default(DRAFT)
+  planId            String?
+  plan              Plan?              @relation(fields: [planId], references: [id])
+  averageRating     Decimal            @default(0) @db.Decimal(2, 1)
+  reviewCount       Int                @default(0)
+  viewCount         Int                @default(0)
+  contactClickCount Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  hours             BusinessHour[]
+  media             Media[]
+  reviews           Review[]
+  verificationRequests VerificationRequest[]
+  claims            BusinessClaim[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+  reports           Report[]
+  featuredPlacements FeaturedPlacement[]
+
+  @@index([categoryId, locationId, listingStatus])
+  @@index([verificationStatus])
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  businesses  Business[]
+  featuredPlacements FeaturedPlacement[]
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  parentId    String?
+  parent      Location?    @relation("LocationTree", fields: [parentId], references: [id])
+  children    Location[]   @relation("LocationTree")
+  type        LocationType
+  name        String
+  slug        String
+  state       String?
+  country     String       @default("Nigeria")
+  isActive    Boolean      @default(true)
+  businesses  Business[]
+  featuredPlacements FeaturedPlacement[]
+
+  @@unique([type, slug, parentId])
+}
+
+model BusinessHour {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int
+  opensAt     String?
+  closesAt    String?
+  isClosed    Boolean  @default(false)
+
+  @@unique([businessId, dayOfWeek])
+}
+
+model Media {
+  id          String    @id @default(cuid())
+  businessId  String?
+  business    Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String?
+  type        MediaType
+  url         String
+  title       String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+model Review {
+  id               String       @id @default(cuid())
+  businessId       String
+  business         Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User         @relation(fields: [userId], references: [id])
+  rating           Int
+  title            String?
+  body             String
+  status           ReviewStatus @default(PENDING)
+  ownerResponse    String?
+  ownerRespondedAt DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  reports          Report[]
+
+  @@unique([businessId, userId])
+}
+
+model VerificationRequest {
+  id           String        @id @default(cuid())
+  businessId   String
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  submittedBy  String
+  submitter    User          @relation("VerificationSubmitter", fields: [submittedBy], references: [id])
+  status       RequestStatus @default(PENDING)
+  documentType String
+  documentUrl  String
+  notes        String?
+  adminNotes   String?
+  reviewedBy   String?
+  reviewer     User?         @relation("VerificationReviewer", fields: [reviewedBy], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime      @default(now())
+}
+
+model BusinessClaim {
+  id          String        @id @default(cuid())
+  businessId  String
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  status      RequestStatus @default(PENDING)
+  proofUrl    String?
+  message     String?
+  adminNotes  String?
+  reviewedBy  String?
+  reviewer    User?         @relation("ClaimReviewer", fields: [reviewedBy], references: [id])
+  reviewedAt  DateTime?
+  createdAt   DateTime      @default(now())
+}
+
+model Plan {
+  id               String     @id @default(cuid())
+  name             String     @unique
+  annualPrice      Int
+  features         Json
+  listingPriority  Int        @default(0)
+  maxPhotos        Int        @default(3)
+  canBeFeatured    Boolean    @default(false)
+  analyticsEnabled Boolean    @default(false)
+  isActive         Boolean    @default(true)
+  businesses       Business[]
+  subscriptions    Subscription[]
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  businessId        String
+  business          Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  planId            String
+  plan              Plan               @relation(fields: [planId], references: [id])
+  status            SubscriptionStatus @default(ACTIVE)
+  startsAt          DateTime
+  endsAt            DateTime
+  paymentProvider   String?
+  providerReference String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  payments          Payment[]
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  businessId        String?
+  business          Business?     @relation(fields: [businessId], references: [id])
+  subscriptionId    String?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id])
+  provider          String
+  providerReference String        @unique
+  amount            Int
+  currency          String        @default("NGN")
+  status            PaymentStatus @default(PENDING)
+  paidAt            DateTime?
+  rawPayload        Json?
+  createdAt         DateTime      @default(now())
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  reporter    User         @relation("Reporter", fields: [reporterId], references: [id])
+  businessId  String?
+  business    Business?    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reviewId    String?
+  review      Review?      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  type        String
+  message     String
+  status      ReportStatus @default(OPEN)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+}
+
+model FeaturedPlacement {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
+  placementType String
+  startsAt      DateTime
+  endsAt        DateTime
+  status        String    @default("ACTIVE")
+  createdAt     DateTime  @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}

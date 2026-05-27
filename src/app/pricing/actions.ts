@@ -66,23 +66,29 @@ export async function startPlanCheckoutAction(formData: FormData) {
     userId: user.id,
     kind: "subscription"
   };
-  const authorizationUrl =
-    paymentProvider === "squad"
-      ? (await initializeSquadPayment({
-          email: user.email,
-          customerName: user.name,
-          amountKobo: plan.annualPrice * 100,
-          reference,
-          callbackUrl,
-          metadata
-        }))?.data?.checkout_url
-      : (await initializePaystackPayment({
-          email: user.email,
-          amountKobo: plan.annualPrice * 100,
-          reference,
-          callbackUrl,
-          metadata
-        }))?.data?.authorization_url;
+  let authorizationUrl: string | undefined;
+
+  try {
+    authorizationUrl =
+      paymentProvider === "squad"
+        ? (await initializeSquadPayment({
+            email: user.email,
+            customerName: user.name,
+            amountKobo: plan.annualPrice * 100,
+            reference,
+            callbackUrl,
+            metadata
+          }))?.data?.checkout_url
+        : (await initializePaystackPayment({
+            email: user.email,
+            amountKobo: plan.annualPrice * 100,
+            reference,
+            callbackUrl,
+            metadata
+          }))?.data?.authorization_url;
+  } catch {
+    redirect(`/pricing?checkout=${paymentProvider}-not-configured`);
+  }
 
   if (!authorizationUrl) {
     redirect("/pricing?checkout=failed");

@@ -83,6 +83,10 @@ function checkoutMessage(status: string) {
     return "Squad checkout is not configured yet. Please confirm SQUAD_SECRET_KEY and SQUAD_ENVIRONMENT in Vercel, then redeploy.";
   }
 
+  if (status === "squad-provider-error") {
+    return "Squad rejected the checkout request. Please confirm the Squad secret key matches the selected environment, then try again.";
+  }
+
   if (status === "invalid") {
     return "Checkout could not be started. Please confirm you selected one of your businesses.";
   }

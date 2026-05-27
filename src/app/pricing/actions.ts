@@ -86,8 +86,18 @@ export async function startPlanCheckoutAction(formData: FormData) {
             callbackUrl,
             metadata
           }))?.data?.authorization_url;
-  } catch {
-    redirect(`/pricing?checkout=${paymentProvider}-not-configured`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown checkout error";
+    console.error("Checkout initialization failed", {
+      provider: paymentProvider,
+      message
+    });
+
+    if (message.includes("not configured")) {
+      redirect(`/pricing?checkout=${paymentProvider}-not-configured`);
+    }
+
+    redirect(`/pricing?checkout=${paymentProvider}-provider-error`);
   }
 
   if (!authorizationUrl) {

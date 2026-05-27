@@ -23,13 +23,13 @@ type SquadVerifyResponse = {
 };
 
 function squadBaseUrl() {
-  return process.env.SQUAD_ENVIRONMENT === "production"
+  return process.env.SQUAD_ENVIRONMENT?.trim().toLowerCase() === "production"
     ? "https://api-d.squadco.com"
     : "https://sandbox-api-d.squadco.com";
 }
 
 function squadSecretKey() {
-  const secret = process.env.SQUAD_SECRET_KEY;
+  const secret = process.env.SQUAD_SECRET_KEY?.trim();
 
   if (!secret) {
     throw new Error("SQUAD_SECRET_KEY is not configured");
@@ -59,7 +59,13 @@ export async function initializeSquadPayment(input: SquadInitInput) {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to initialize Squad transaction");
+    const body = await response.text();
+    console.error("Squad initialize failed", {
+      status: response.status,
+      environment: process.env.SQUAD_ENVIRONMENT,
+      body: body.slice(0, 500)
+    });
+    throw new Error(`Squad initialize failed with status ${response.status}`);
   }
 
   return response.json();

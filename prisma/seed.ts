@@ -38,20 +38,126 @@ async function main() {
     });
   }
 
-  const kano =
+  const nigeria =
     (await prisma.location.findFirst({
       where: {
-        type: "CITY",
-        slug: "kano",
+        type: "COUNTRY",
+        slug: "nigeria",
         parentId: null
       }
     })) ??
     (await prisma.location.create({
       data: {
-        type: "CITY",
+        type: "COUNTRY",
+        name: "Nigeria",
+        slug: "nigeria",
+        country: "Nigeria"
+      }
+    }));
+
+  const nigerianStates = [
+    "Abia",
+    "Adamawa",
+    "Akwa Ibom",
+    "Anambra",
+    "Bauchi",
+    "Bayelsa",
+    "Benue",
+    "Borno",
+    "Cross River",
+    "Delta",
+    "Ebonyi",
+    "Edo",
+    "Ekiti",
+    "Enugu",
+    "Federal Capital Territory",
+    "Gombe",
+    "Imo",
+    "Jigawa",
+    "Kaduna",
+    "Kano",
+    "Katsina",
+    "Kebbi",
+    "Kogi",
+    "Kwara",
+    "Lagos",
+    "Nasarawa",
+    "Niger",
+    "Ogun",
+    "Ondo",
+    "Osun",
+    "Oyo",
+    "Plateau",
+    "Rivers",
+    "Sokoto",
+    "Taraba",
+    "Yobe",
+    "Zamfara"
+  ];
+
+  const stateBySlug: Record<string, { id: string }> = {};
+
+  for (const stateName of nigerianStates) {
+    const slug = slugify(stateName);
+    const existingState = await prisma.location.findFirst({
+      where: {
+        type: "STATE",
+        slug,
+        parentId: nigeria.id
+      }
+    });
+    const state =
+      existingState ??
+      (await prisma.location.create({
+        data: {
+          type: "STATE",
+          name: stateName,
+          slug,
+          state: stateName,
+          country: "Nigeria",
+          parentId: nigeria.id
+        }
+      }));
+    stateBySlug[slug] = state;
+
+    const statewideSlug = `${slug}-statewide`;
+    const existingStatewideArea = await prisma.location.findFirst({
+      where: {
+        type: "AREA",
+        slug: statewideSlug,
+        parentId: state.id
+      }
+    });
+
+    if (!existingStatewideArea) {
+      await prisma.location.create({
+        data: {
+          type: "AREA",
+          name: `${stateName} Statewide`,
+          slug: statewideSlug,
+          state: stateName,
+          country: "Nigeria",
+          parentId: state.id
+        }
+      });
+    }
+  }
+
+  const kano =
+    (await prisma.location.findFirst({
+      where: {
+        type: "STATE",
+        slug: "kano",
+        parentId: nigeria.id
+      }
+    })) ??
+    (await prisma.location.create({
+      data: {
+        type: "STATE",
         name: "Kano",
         slug: "kano",
-        state: "Kano"
+        state: "Kano",
+        parentId: nigeria.id
       }
     }));
 
@@ -202,3 +308,11 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

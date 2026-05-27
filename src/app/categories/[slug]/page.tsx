@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   if (!category) return {};
 
   return {
-    title: `${category.name} Businesses in Kano | Tradia`,
-    description: `Find verified ${category.name.toLowerCase()} businesses in Kano on Tradia. Browse trusted local listings, contacts, reviews, and business profiles.`
+    title: `${category.name} Businesses in Nigeria | Tradia`,
+    description: `Find verified ${category.name.toLowerCase()} businesses across Nigeria on Tradia. Browse trusted local listings, contacts, reviews, and business profiles.`
   };
 }
 
@@ -39,9 +39,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <main className="mx-auto max-w-7xl px-5 py-12">
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Category</p>
-        <h1 className="text-5xl font-black tracking-normal">{category.name} businesses in Kano</h1>
+        <h1 className="text-5xl font-black tracking-normal">{category.name} businesses in Nigeria</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Discover trusted {category.name.toLowerCase()} businesses across Kano, with contact details, ratings, and verification signals.
+          Discover trusted {category.name.toLowerCase()} businesses across Nigeria, with contact details, ratings, and verification signals.
         </p>
       </div>
 

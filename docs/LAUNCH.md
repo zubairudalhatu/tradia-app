@@ -8,6 +8,8 @@
 - Set the public site URL in `NEXTAUTH_URL`.
 - Configure Paystack callback URL as `https://your-domain.com/billing/callback`.
 - Configure Paystack webhook URL as `https://your-domain.com/api/paystack/webhook`.
+- Configure Squad redirect URL as `https://your-domain.com/billing/callback`.
+- Configure Squad webhook URL as `https://your-domain.com/api/squad/webhook`.
 
 ## Required Environment Variables
 
@@ -17,6 +19,8 @@ NEXTAUTH_SECRET=
 NEXTAUTH_URL=
 PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
+SQUAD_SECRET_KEY=
+SQUAD_ENVIRONMENT=production
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=

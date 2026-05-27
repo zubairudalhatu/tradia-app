@@ -56,8 +56,11 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                         <option key={business.id} value={business.id}>{business.name}</option>
                       ))}
                     </select>
-                    <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+                    <button name="paymentProvider" value="paystack" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                       Upgrade with Paystack
+                    </button>
+                    <button name="paymentProvider" value="squad" className="rounded-tradia bg-ink px-4 py-2 text-sm font-bold text-white">
+                      Upgrade with Squad
                     </button>
                   </form>
                 ) : (

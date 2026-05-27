@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: CategoryLocationPageProps): P
   if (!area || !category) return {};
 
   return {
-    title: `${category.name} in ${area.name}, Kano | Tradia`,
-    description: `Find verified ${category.name.toLowerCase()} businesses in ${area.name}, Kano. Compare trusted local profiles, reviews, and contact details on Tradia.`
+    title: `${category.name} in ${area.name} | Tradia`,
+    description: `Find verified ${category.name.toLowerCase()} businesses in ${area.name}. Compare trusted local profiles, reviews, and contact details on Tradia.`
   };
 }
 
@@ -43,7 +43,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
     <main className="mx-auto max-w-7xl px-5 py-12">
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Local Search</p>
-        <h1 className="text-5xl font-black tracking-normal">{category.name} in {area.name}, Kano</h1>
+        <h1 className="text-5xl font-black tracking-normal">{category.name} in {area.name}</h1>
         <p className="mt-4 text-lg text-slate-600">
           Find trusted {category.name.toLowerCase()} businesses in {area.name}, with ratings, contact options, and verification status.
         </p>

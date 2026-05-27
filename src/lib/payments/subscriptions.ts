@@ -43,7 +43,7 @@ export async function activateSubscriptionFromPayment(input: ActivateSubscriptio
       status: "ACTIVE",
       startsAt,
       endsAt: addYears(startsAt, 1),
-      paymentProvider: "paystack",
+      paymentProvider: payment.provider,
       providerReference: input.reference
     }
   });

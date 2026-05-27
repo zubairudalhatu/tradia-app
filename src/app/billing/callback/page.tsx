@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { prisma } from "@/lib/db";
 import { activateSubscriptionFromPayment } from "@/lib/payments/subscriptions";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
+import { verifySquadTransaction } from "@/lib/payments/squad";
 
 type BillingCallbackPageProps = {
   searchParams: Promise<{ reference?: string; trxref?: string }>;
@@ -16,22 +18,44 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
 
   if (reference) {
     try {
-      const verification = await verifyPaystackTransaction(reference);
-      const data = verification.data;
+      const payment = await prisma.payment.findUnique({ where: { providerReference: reference } });
 
-      if (verification.status && data?.status === "success") {
-        await activateSubscriptionFromPayment({
-          reference: data.reference,
-          amount: Math.round(data.amount / 100),
-          currency: data.currency,
-          paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
-          rawPayload: data
-        });
-        status = "success";
-        message = "Payment confirmed. Your Tradia plan is active.";
+      if (payment?.provider === "squad") {
+        const verification = await verifySquadTransaction(reference);
+        const data = verification.data;
+
+        if (verification.success && data?.transaction_status === "Success" && data.transaction_ref) {
+          await activateSubscriptionFromPayment({
+            reference: data.transaction_ref,
+            amount: Math.round((data.transaction_amount ?? payment.amount * 100) / 100),
+            currency: data.transaction_currency_id,
+            paidAt: data.created_at ? new Date(data.created_at) : new Date(),
+            rawPayload: data
+          });
+          status = "success";
+          message = "Payment confirmed. Your Tradia plan is active.";
+        } else {
+          status = "failed";
+          message = verification.message || "Squad did not confirm this payment.";
+        }
       } else {
-        status = "failed";
-        message = verification.message || "Paystack did not confirm this payment.";
+        const verification = await verifyPaystackTransaction(reference);
+        const data = verification.data;
+
+        if (verification.status && data?.status === "success") {
+          await activateSubscriptionFromPayment({
+            reference: data.reference,
+            amount: Math.round(data.amount / 100),
+            currency: data.currency,
+            paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
+            rawPayload: data
+          });
+          status = "success";
+          message = "Payment confirmed. Your Tradia plan is active.";
+        } else {
+          status = "failed";
+          message = verification.message || "Paystack did not confirm this payment.";
+        }
       }
     } catch {
       status = "failed";

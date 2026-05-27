@@ -70,7 +70,7 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Address
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="address" placeholder="Kano Municipal, Kano" required />
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="address" placeholder="Wuse 2, Abuja or Ikeja, Lagos" required />
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           WhatsApp

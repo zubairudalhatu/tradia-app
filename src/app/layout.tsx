@@ -8,7 +8,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: "Tradia - Nigeria's Trusted Business Directory",
-  description: "Discover, verify, and connect with trusted Nigerian businesses, starting in Kano.",
+  description: "Discover, verify, and connect with trusted Nigerian businesses across all 36 states and the FCT.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

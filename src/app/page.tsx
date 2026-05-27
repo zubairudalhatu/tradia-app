@@ -2,13 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
+import { listActiveAreas } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCategories] = await Promise.all([
+  const [featuredBusinesses, popularCategories, popularLocations] = await Promise.all([
     listFeaturedBusinesses(3),
-    listActiveCategories()
+    listActiveCategories(),
+    listActiveAreas()
   ]);
 
   return (
@@ -24,7 +26,7 @@ export default async function HomePage() {
         />
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
           <div>
-            <p className="mb-3 text-sm font-extrabold uppercase text-ember">Launching from Kano</p>
+            <p className="mb-3 text-sm font-extrabold uppercase text-ember">Nigeria-wide business discovery</p>
             <h1 className="max-w-4xl text-6xl font-black leading-[0.9] tracking-normal text-ink md:text-8xl">
               Find trusted businesses across Nigeria.
             </h1>
@@ -40,10 +42,12 @@ export default async function HomePage() {
                 aria-label="Search businesses"
               />
               <select className="rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="Location">
-                <option value="">All Kano</option>
-                <option value="kano-municipal">Kano Municipal</option>
-                <option value="nassarawa">Nassarawa</option>
-                <option value="fagge">Fagge</option>
+                <option value="">All Nigeria</option>
+                {popularLocations.slice(0, 12).map((location) => (
+                  <option key={location.id} value={location.slug}>
+                    {location.name}
+                  </option>
+                ))}
               </select>
               <button className="rounded-tradia bg-forest px-6 py-3 text-center font-bold text-white">
                 Search

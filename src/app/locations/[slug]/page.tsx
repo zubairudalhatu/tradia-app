@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   if (!area) return {};
 
   return {
-    title: `Businesses in ${area.name}, Kano | Tradia`,
-    description: `Find verified businesses in ${area.name}, Kano on Tradia. Browse local services, shops, schools, clinics, hotels, and more.`
+    title: `Businesses in ${area.name} | Tradia`,
+    description: `Find verified businesses in ${area.name} on Tradia. Browse local services, shops, schools, clinics, hotels, and more.`
   };
 }
 
@@ -39,7 +39,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
     <main className="mx-auto max-w-7xl px-5 py-12">
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Location</p>
-        <h1 className="text-5xl font-black tracking-normal">Businesses in {area.name}, Kano</h1>
+        <h1 className="text-5xl font-black tracking-normal">Businesses in {area.name}</h1>
         <p className="mt-4 text-lg text-slate-600">
           Browse trusted local businesses in {area.name}, including verified profiles, reviews, and contact options.
         </p>

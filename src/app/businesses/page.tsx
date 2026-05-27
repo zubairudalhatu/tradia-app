@@ -33,7 +33,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
     <main className="mx-auto max-w-7xl px-5 py-12">
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Directory</p>
-        <h1 className="text-5xl font-black tracking-normal">Browse Kano businesses</h1>
+        <h1 className="text-5xl font-black tracking-normal">Browse Nigerian businesses</h1>
         <p className="mt-4 text-lg text-slate-600">
           Search by name, category, service, location, and verification status.
         </p>

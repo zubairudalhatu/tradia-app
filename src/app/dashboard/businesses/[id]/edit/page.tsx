@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -26,7 +26,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
     listActiveAreas()
   ]);
 
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?next=/dashboard/businesses/${id}/edit`);
 
   const business = await prisma.business.findFirst({
     where: {
@@ -51,7 +51,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
     }
   });
 
-  if (!business) notFound();
+  if (!business) redirect("/dashboard?error=business-not-found");
 
   const action = updateBusinessProfileAction.bind(null, business.id);
   const mediaAction = uploadBusinessMediaAction.bind(null, business.id);

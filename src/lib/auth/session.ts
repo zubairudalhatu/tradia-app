@@ -50,6 +50,7 @@ export async function getCurrentUser() {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       status: true
     }
@@ -100,6 +101,7 @@ export async function getAdminFromActionToken(token?: string) {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       status: true
     }

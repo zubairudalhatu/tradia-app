@@ -1,0 +1,185 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
+import { listActiveCategories } from "@/lib/queries/categories";
+import { listActiveAreas } from "@/lib/queries/locations";
+import { updateAdminBusinessAction } from "./actions";
+
+type AdminBusinessPageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; saved?: string }>;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminBusinessPage({ params, searchParams }: AdminBusinessPageProps) {
+  const [{ id }, query, admin, categories, locations, users, plans] = await Promise.all([
+    params,
+    searchParams,
+    getCurrentUser(),
+    listActiveCategories(),
+    listActiveAreas(),
+    prisma.user.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
+    prisma.plan.findMany({ where: { isActive: true }, orderBy: { annualPrice: "asc" } })
+  ]);
+
+  if (!admin) redirect("/login?next=/admin");
+  if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(admin.role)) redirect("/dashboard");
+
+  const business = await prisma.business.findUnique({
+    where: { id },
+    include: {
+      category: true,
+      location: true,
+      owner: true,
+      plan: true,
+      media: {
+        orderBy: { createdAt: "desc" },
+        take: 6
+      },
+      verificationRequests: {
+        orderBy: { createdAt: "desc" },
+        take: 5
+      }
+    }
+  });
+
+  if (!business) redirect("/admin?error=business-not-found");
+
+  const action = updateAdminBusinessAction.bind(null, business.id);
+  const adminActionToken = createAdminActionToken(admin);
+
+  return (
+    <main className="mx-auto max-w-5xl px-5 py-12">
+      <Link href="/admin" className="text-sm font-bold text-forest">Back to admin</Link>
+      <p className="mt-6 text-sm font-extrabold uppercase text-ember">Business Management</p>
+      <h1 className="text-5xl font-black tracking-normal">Edit {business.name}</h1>
+
+      {query.saved ? (
+        <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
+          Business updated.
+        </p>
+      ) : null}
+      {query.error ? (
+        <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+          Could not save this business. Check required fields and unique contact values.
+        </p>
+      ) : null}
+
+      <form action={action} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+        <input type="hidden" name="adminActionToken" value={adminActionToken} />
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Business name
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={business.name} required />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Owner
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="ownerId" defaultValue={business.ownerId ?? ""}>
+            <option value="">Unassigned</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>{user.name} - {user.email}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Category
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="categoryId" defaultValue={business.categoryId} required>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Area
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="locationId" defaultValue={business.locationId} required>
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>{location.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Listing status
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="listingStatus" defaultValue={business.listingStatus}>
+            <option value="DRAFT">Draft</option>
+            <option value="PENDING_REVIEW">Pending Review</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Verification status
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="verificationStatus" defaultValue={business.verificationStatus}>
+            <option value="UNVERIFIED">Unverified</option>
+            <option value="PENDING">Pending</option>
+            <option value="VERIFIED">Verified</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Plan
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="planId" defaultValue={business.planId ?? ""}>
+            <option value="">No plan</option>
+            {plans.map((plan) => (
+              <option key={plan.id} value={plan.id}>{plan.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Address
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="address" defaultValue={business.address} required />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Phone
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" defaultValue={business.phone ?? ""} />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          WhatsApp
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="whatsapp" defaultValue={business.whatsapp ?? ""} />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Email
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="email" type="email" defaultValue={business.email ?? ""} />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Website
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="website" type="url" defaultValue={business.website ?? ""} />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
+          Description
+          <textarea className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3" name="description" defaultValue={business.description} required />
+        </label>
+        <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white md:col-span-2">Save Business</button>
+      </form>
+
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-2xl font-black">Recent uploads</h2>
+          <div className="mt-4 grid gap-3">
+            {business.media.length ? business.media.map((item) => (
+              <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-3 text-sm font-bold text-forest">
+                {item.type} - {item.title ?? "Uploaded file"}
+              </a>
+            )) : (
+              <p className="text-sm text-slate-600">No uploads yet.</p>
+            )}
+          </div>
+        </div>
+        <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-2xl font-black">Verification history</h2>
+          <div className="mt-4 grid gap-3">
+            {business.verificationRequests.length ? business.verificationRequests.map((request) => (
+              <a key={request.id} href={request.documentUrl} target="_blank" className="rounded-tradia border border-slate-200 p-3 text-sm">
+                <strong className="block text-ink">{request.documentType}</strong>
+                <span className="text-slate-600">{request.status} - {new Date(request.createdAt).toLocaleDateString()}</span>
+              </a>
+            )) : (
+              <p className="text-sm text-slate-600">No verification requests yet.</p>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

@@ -35,6 +35,7 @@ export default async function RootLayout({
               <Link href="/businesses">Browse</Link>
               <Link href="/pricing">Pricing</Link>
               <Link href="/dashboard">Business</Link>
+              {user ? <Link href="/account">Account</Link> : null}
               <Link href="/admin">Admin</Link>
               {user ? <Link href="/logout">Logout</Link> : <Link href="/login">Login</Link>}
             </nav>
@@ -49,7 +50,7 @@ export default async function RootLayout({
         {children}
         <footer className="border-t border-slate-200 bg-ink text-white">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm md:flex-row md:items-center md:justify-between">
-            <strong>© 2026 Zamkah Technologies Limited</strong>
+            <strong>&copy; 2026 Zamkah Technologies Limited</strong>
             <div className="flex flex-wrap gap-4 text-white/80">
               <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
               <a href="https://wa.me/2349055091300">+234 905 509 1300</a>

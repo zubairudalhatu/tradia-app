@@ -33,7 +33,9 @@ export default async function AdminPage() {
     pendingVerificationRequests,
     pendingReviews,
     openReports,
-    publishedBusinesses
+    publishedBusinesses,
+    recentUsers,
+    recentBusinesses
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -92,6 +94,19 @@ export default async function AdminPage() {
         { createdAt: "desc" }
       ],
       take: 12
+    }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 12
+    }),
+    prisma.business.findMany({
+      include: {
+        category: true,
+        location: true,
+        owner: true
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 12
     })
   ]);
 
@@ -111,6 +126,51 @@ export default async function AdminPage() {
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-tradia border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <h2 className="text-2xl font-black">User management</h2>
+            <p className="mt-1 text-sm text-slate-600">Edit roles, account status, and contact details.</p>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {recentUsers.map((managedUser) => (
+              <article key={managedUser.id} className="grid gap-3 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h3 className="font-black">{managedUser.name}</h3>
+                  <p className="text-sm text-slate-600">{managedUser.email} - {managedUser.role.replace("_", " ")} - {managedUser.status}</p>
+                </div>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/users/${managedUser.id}`}>
+                  Edit
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-tradia border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <h2 className="text-2xl font-black">Business management</h2>
+            <p className="mt-1 text-sm text-slate-600">Manually update listings, status, owner, category, and location.</p>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {recentBusinesses.map((managedBusiness) => (
+              <article key={managedBusiness.id} className="grid gap-3 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h3 className="font-black">{managedBusiness.name}</h3>
+                  <p className="text-sm text-slate-600">
+                    {managedBusiness.category.name} in {managedBusiness.location.name} - {managedBusiness.listingStatus.replace("_", " ")}
+                  </p>
+                  <p className="text-xs text-slate-500">Owner: {managedBusiness.owner?.name ?? "Unassigned"}</p>
+                </div>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${managedBusiness.id}`}>
+                  Edit
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">

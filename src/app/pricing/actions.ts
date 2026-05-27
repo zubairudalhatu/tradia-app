@@ -10,7 +10,7 @@ export async function startPlanCheckoutAction(formData: FormData) {
   const user = await requireUser();
   const planId = String(formData.get("planId") ?? "");
   const businessId = String(formData.get("businessId") ?? "");
-  const paymentProvider = normalizePaymentProvider(String(formData.get("paymentProvider") ?? "paystack"));
+  const paymentProvider = normalizePaymentProvider(String(formData.get("paymentProvider") ?? "squad"));
 
   const [plan, business] = await Promise.all([
     prisma.plan.findFirst({
@@ -98,5 +98,5 @@ export async function startPlanCheckoutAction(formData: FormData) {
 }
 
 function normalizePaymentProvider(value: string) {
-  return value === "squad" ? "squad" : "paystack";
+  return value === "paystack" ? "paystack" : "squad";
 }

@@ -56,10 +56,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                         <option key={business.id} value={business.id}>{business.name}</option>
                       ))}
                     </select>
-                    <button name="paymentProvider" value="paystack" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
-                      Upgrade with Paystack
-                    </button>
-                    <button name="paymentProvider" value="squad" className="rounded-tradia bg-ink px-4 py-2 text-sm font-bold text-white">
+                    <button name="paymentProvider" value="squad" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                       Upgrade with Squad
                     </button>
                   </form>
@@ -82,10 +79,6 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 }
 
 function checkoutMessage(status: string) {
-  if (status === "paystack-not-configured") {
-    return "Paystack checkout is not configured yet. Please add PAYSTACK_SECRET_KEY in Vercel, then redeploy.";
-  }
-
   if (status === "squad-not-configured") {
     return "Squad checkout is not configured yet. Please confirm SQUAD_SECRET_KEY and SQUAD_ENVIRONMENT in Vercel, then redeploy.";
   }

@@ -43,7 +43,7 @@ export default async function HomePage() {
               />
               <select className="rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="Location">
                 <option value="">All Nigeria</option>
-                {popularLocations.slice(0, 12).map((location) => (
+                {popularLocations.map((location) => (
                   <option key={location.id} value={location.slug}>
                     {location.name}
                   </option>

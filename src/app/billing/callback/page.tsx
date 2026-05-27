@@ -14,7 +14,7 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
   const params = await searchParams;
   const reference = params.reference ?? params.trxref;
   let status: "success" | "pending" | "failed" = "pending";
-  let message = "We could not find a Paystack reference on this callback.";
+  let message = "We could not find a payment reference on this callback.";
 
   if (reference) {
     try {

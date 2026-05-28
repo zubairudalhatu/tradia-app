@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AdsenseSlot } from "@/components/adsense-slot";
 import { listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
@@ -91,6 +92,11 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <AdsenseSlot
+        slot={process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT}
+        className="mx-auto max-w-7xl px-5 pb-10"
+      />
 
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-4 px-5 py-10 md:grid-cols-5">

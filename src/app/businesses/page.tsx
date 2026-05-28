@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdsenseSlot } from "@/components/adsense-slot";
 import { BusinessCard } from "@/components/business-card";
 import { listPublishedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -96,6 +97,10 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
         </aside>
 
         <section className="grid gap-4 md:grid-cols-2">
+          <AdsenseSlot
+            slot={process.env.NEXT_PUBLIC_ADSENSE_DIRECTORY_SLOT}
+            className="md:col-span-2"
+          />
           {businesses.length ? businesses.map((business) => (
             <BusinessCard key={business.slug} business={business} />
           )) : (

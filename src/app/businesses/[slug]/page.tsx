@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { AdsenseSlot } from "@/components/adsense-slot";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
@@ -185,6 +186,11 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
           </div>
         ) : null}
       </section>
+
+      <AdsenseSlot
+        slot={process.env.NEXT_PUBLIC_ADSENSE_BUSINESS_PROFILE_SLOT}
+        className="mt-8"
+      />
 
       <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">

@@ -18,15 +18,33 @@ export type BusinessSearchFilters = {
   category?: string;
   location?: string;
   verified?: boolean;
+  open?: boolean;
+  limit?: number;
+  page?: number;
 };
 
 export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
   const search = filters.q?.trim();
+  const openNow = filters.open ? getNigeriaBusinessTime() : null;
+  const limit = clampResultLimit(filters.limit);
+  const page = Math.max(filters.page ?? 1, 1);
   const where: Prisma.BusinessWhereInput = {
     listingStatus: "PUBLISHED",
     ...(filters.verified ? { verificationStatus: "VERIFIED" } : {}),
     ...(filters.category ? { category: { slug: filters.category } } : {}),
     ...(filters.location ? { location: { slug: filters.location } } : {}),
+    ...(openNow
+      ? {
+          hours: {
+            some: {
+              dayOfWeek: openNow.dayOfWeek,
+              isClosed: false,
+              opensAt: { lte: openNow.time },
+              closesAt: { gte: openNow.time }
+            }
+          }
+        }
+      : {}),
     ...(search
       ? {
           OR: [
@@ -49,7 +67,8 @@ export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
       { verificationStatus: "desc" },
       { averageRating: "desc" },
       { createdAt: "desc" }
-    ]
+    ],
+    ...(limit ? { take: limit, skip: (page - 1) * limit } : {})
   });
 }
 
@@ -180,4 +199,27 @@ function slugify(value: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function clampResultLimit(limit?: number) {
+  if (!limit) return undefined;
+  return Math.min(Math.max(limit, 1), 100);
+}
+
+function getNigeriaBusinessTime() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(new Date());
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "Sun";
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+
+  return {
+    dayOfWeek: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(weekday),
+    time: `${hour}:${minute}`
+  };
 }

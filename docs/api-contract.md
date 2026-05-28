@@ -4,7 +4,17 @@
 
 `GET /api/businesses`
 
-Returns published businesses. Filters to add next: `q`, `category`, `location`, `verified`, `open`.
+Returns published businesses.
+
+Supported query parameters:
+
+- `q`: search by business name, description, address, category, or location.
+- `category`: category slug.
+- `location`: location slug.
+- `verified`: use `1`, `true`, or `yes` to return verified businesses only.
+- `open`: use `1`, `true`, or `yes` to return businesses open now based on Nigeria time and saved opening hours.
+- `limit`: results per page, capped at 100.
+- `page`: positive page number.
 
 `POST /api/businesses`
 

@@ -117,7 +117,12 @@ export async function submitBusinessLeadAction(businessId: string, slug: string,
     }
   });
 
-  await notifyBusinessLead(business, lead);
+  try {
+    await notifyBusinessLead(business, lead);
+  } catch (error) {
+    console.error("Business lead notification failed", error);
+  }
+
   revalidatePath("/dashboard");
   redirect(`/businesses/${slug}?enquiry=submitted`);
 }

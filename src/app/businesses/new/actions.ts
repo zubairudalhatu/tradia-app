@@ -30,12 +30,16 @@ export async function submitBusinessAction(formData: FormData) {
   }
 
   const business = await createBusiness(parsed.data, user.id);
-  await notifyBusinessSubmitted({
-    id: business.id,
-    name: business.name,
-    slug: business.slug,
-    owner: user
-  });
+  try {
+    await notifyBusinessSubmitted({
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      owner: user
+    });
+  } catch (error) {
+    console.error("Business submission notification failed", error);
+  }
 
   redirect("/dashboard?submitted=1");
 }

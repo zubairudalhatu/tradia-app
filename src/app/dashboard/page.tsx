@@ -30,9 +30,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         orderBy: { createdAt: "desc" },
         take: 3
       },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        take: 3
+      },
       _count: {
         select: {
-          contactLeads: true
+          contactLeads: true,
+          reviews: true
         }
       }
     },
@@ -42,6 +47,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const totalViews = analyticsBusinesses.reduce((sum, business) => sum + business.viewCount, 0);
   const contactClicks = analyticsBusinesses.reduce((sum, business) => sum + business.contactClickCount, 0);
   const totalLeads = businesses.reduce((sum, business) => sum + business._count.contactLeads, 0);
+  const publishedListings = businesses.filter((business) => business.listingStatus === "PUBLISHED").length;
+  const verifiedListings = businesses.filter((business) => business.verificationStatus === "VERIFIED").length;
+  const activePaidListings = businesses.filter((business) => {
+    const planState = getBusinessPlanState(business);
+    return Boolean(planState.activeSubscription && planState.benefits.name !== "Free");
+  }).length;
+  const totalReviews = businesses.reduce((sum, business) => sum + business._count.reviews, 0);
+  const leadStatusCounts = businesses
+    .flatMap((business) => business.contactLeads)
+    .reduce<Record<string, number>>((counts, lead) => {
+      counts[lead.status] = (counts[lead.status] ?? 0) + 1;
+      return counts;
+    }, {});
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
@@ -57,19 +75,57 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           Enquiry status updated.
         </p>
       ) : null}
-      <section className="mt-8 grid gap-4 lg:grid-cols-5">
+      <section className="mt-8 grid gap-4 lg:grid-cols-4">
         {[
           [String(businesses.length), "Your listings"],
+          [String(publishedListings), "Published"],
+          [String(verifiedListings), "Verified"],
+          [String(activePaidListings), "Active paid plans"],
           [String(businesses.filter((business) => business.listingStatus === "PENDING_REVIEW").length), "Pending approval"],
           [analyticsBusinesses.length ? String(totalViews) : "Locked", "Profile views"],
           [analyticsBusinesses.length ? String(contactClicks) : "Locked", "Contact clicks"],
-          [String(totalLeads), "Recent enquiries"]
+          [String(totalLeads), "Total enquiries"],
+          [String(totalReviews), "Reviews"]
         ].map(([value, label]) => (
           <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
             <strong className="block text-3xl font-black text-forest">{value}</strong>
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-6 grid gap-4 lg:grid-cols-3">
+        <article className="rounded-tradia border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-black">Lead pipeline</h2>
+          <div className="mt-4 grid gap-2 text-sm font-bold text-slate-600">
+            {["NEW", "CONTACTED", "CLOSED", "SPAM"].map((status) => (
+              <div key={status} className="flex items-center justify-between rounded-tradia bg-slate-50 px-3 py-2">
+                <span>{formatStatus(status)}</span>
+                <strong className="text-ink">{leadStatusCounts[status] ?? 0}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+        <article className="rounded-tradia border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-black">Plan health</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            {activePaidListings
+              ? `${activePaidListings} business${activePaidListings === 1 ? " is" : "es are"} currently receiving paid-plan benefits.`
+              : "No business is currently receiving paid-plan benefits."}
+          </p>
+          <Link href="/pricing" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+            View Plans
+          </Link>
+        </article>
+        <article className="rounded-tradia border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-black">Profile quality</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Complete profiles with verified status, recent photos, and fast enquiry follow-up earn more trust from visitors.
+          </p>
+          <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">
+            Add Another Business
+          </Link>
+        </article>
       </section>
 
       <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
@@ -115,8 +171,30 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business._count.contactLeads} enquiries</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.reviewCount} reviews</span>
                 </div>
+                {benefits.analyticsEnabled ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <MetricCard label="Views" value={business.viewCount} />
+                    <MetricCard label="Contact clicks" value={business.contactClickCount} />
+                    <MetricCard
+                      label="Contact rate"
+                      value={`${business.viewCount ? Math.round((business.contactClickCount / business.viewCount) * 100) : 0}%`}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-tradia border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <strong className="block">Analytics are locked for this plan.</strong>
+                    <span>Upgrade to a paid plan with analytics to see profile views, contact clicks, and performance signals.</span>
+                  </div>
+                )}
+                {planState.isExpired ? (
+                  <div className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                    <strong className="block">Your paid benefits have expired.</strong>
+                    <span>Renew this business to restore premium visibility, verification eligibility, media limits, and analytics.</span>
+                  </div>
+                ) : null}
                 {business.contactLeads.length ? (
                   <div className="mt-4 grid gap-2">
+                    <h4 className="text-sm font-black text-ink">Recent enquiries</h4>
                     {business.contactLeads.map((lead) => (
                       <div key={lead.id} className="rounded-tradia bg-slate-50 p-3 text-sm text-slate-600">
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -137,6 +215,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                             ))}
                           </div>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {business.reviews.length ? (
+                  <div className="mt-4 grid gap-2">
+                    <h4 className="text-sm font-black text-ink">Recent reviews</h4>
+                    {business.reviews.map((review) => (
+                      <div key={review.id} className="rounded-tradia bg-slate-50 p-3 text-sm text-slate-600">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <strong className="text-ink">{review.title ?? "Customer review"}</strong>
+                          <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-ink">{review.status}</span>
+                        </div>
+                        <p className="mt-1">{review.rating}/5 - {review.body}</p>
                       </div>
                     ))}
                   </div>
@@ -162,4 +254,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </section>
     </main>
   );
+}
+
+function MetricCard({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-tradia bg-slate-50 p-4">
+      <strong className="block text-2xl font-black text-ink">{value}</strong>
+      <span className="text-xs font-bold text-slate-500">{label}</span>
+    </div>
+  );
+}
+
+function formatStatus(status: string) {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

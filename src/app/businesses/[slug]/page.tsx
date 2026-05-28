@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Location } from "@prisma/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
@@ -23,15 +24,55 @@ export async function generateMetadata({ params }: BusinessPageProps): Promise<M
 
   if (!business) return {};
 
+  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const profileUrl = `${baseUrl}/businesses/${business.slug}`;
+  const stateName = getStateName(business.location);
+  const areaName = getAreaName(business.location);
+  const title = `${business.name} - ${business.category.name} in ${areaName}, ${stateName} | Tradia`;
+  const description = buildMetaDescription(
+    business.name,
+    business.category.name,
+    areaName,
+    stateName,
+    business.description,
+    business.verificationStatus === "VERIFIED"
+  );
+  const images = [
+    business.coverUrl,
+    business.logoUrl,
+    ...business.media.filter((item) => isImageMedia(item.type)).map((item) => item.url)
+  ].filter(Boolean) as string[];
+
   return {
-    title: `${business.name} | ${business.category.name} in ${business.location.name} | Tradia`,
-    description: `${business.description.slice(0, 150)}${business.description.length > 150 ? "..." : ""}`,
+    title,
+    description,
+    alternates: {
+      canonical: profileUrl
+    },
+    keywords: [
+      business.name,
+      business.category.name,
+      areaName,
+      stateName,
+      `${business.category.name} in ${stateName}`,
+      `${business.category.name} in ${areaName}`,
+      "Nigerian business directory",
+      "Tradia"
+    ],
     openGraph: {
-      title: `${business.name} on Tradia`,
-      description: business.description,
-      url: `/businesses/${business.slug}`,
-      images: business.logoUrl ? [business.logoUrl] : undefined,
+      title,
+      description,
+      url: profileUrl,
+      siteName: "Tradia",
+      locale: "en_NG",
+      images: images.length ? images.slice(0, 4) : undefined,
       type: "website"
+    },
+    twitter: {
+      card: images.length ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: images.length ? images.slice(0, 1) : undefined
     }
   };
 }
@@ -76,10 +117,8 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${profileUrl}`)}`;
   const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
-  const stateName = business.location.type === "STATE"
-    ? business.location.name.replace(/ Statewide$/, "")
-    : business.location.state ?? business.location.name;
-  const areaName = business.location.type === "STATE" ? "Statewide" : business.location.name;
+  const stateName = getStateName(business.location);
+  const areaName = getAreaName(business.location);
   const trustSignals = [
     {
       label: "Verification",
@@ -126,19 +165,39 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": `${profileUrl}#business`,
     name: business.name,
     description: business.description,
     url: profileUrl,
-    image: business.logoUrl || business.coverUrl || undefined,
+    image: [
+      business.coverUrl,
+      business.logoUrl,
+      ...imageMedia.map((item) => item.url)
+    ].filter(Boolean),
+    logo: business.logoUrl || undefined,
     telephone: business.phone || business.whatsapp || undefined,
     email: business.email || undefined,
+    category: business.category.name,
+    priceRange: activePlanName,
+    areaServed: {
+      "@type": "AdministrativeArea",
+      name: `${areaName}, ${stateName}, Nigeria`
+    },
     address: {
       "@type": "PostalAddress",
       streetAddress: business.address,
-      addressLocality: business.location.name,
-      addressRegion: business.location.state || business.location.name,
+      addressLocality: areaName,
+      addressRegion: stateName,
       addressCountry: "NG"
     },
+    openingHoursSpecification: business.hours.some((hour) => !hour.isClosed && hour.opensAt && hour.closesAt)
+      ? business.hours.filter((hour) => !hour.isClosed && hour.opensAt && hour.closesAt).map((hour) => ({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: dayName(hour.dayOfWeek),
+        opens: hour.opensAt,
+        closes: hour.closesAt
+      }))
+      : undefined,
     aggregateRating: business.reviewCount > 0
       ? {
           "@type": "AggregateRating",
@@ -617,4 +676,33 @@ function mediaTypeLabel(type: string) {
   if (type === "BROCHURE") return "Brochure";
   if (type === "DOCUMENT") return "Document";
   return "File";
+}
+
+function getStateName(location: Location) {
+  return location.type === "STATE"
+    ? location.name.replace(/ Statewide$/, "")
+    : location.state ?? location.name;
+}
+
+function getAreaName(location: Location) {
+  return location.type === "STATE" ? "Statewide" : location.name;
+}
+
+function buildMetaDescription(
+  name: string,
+  category: string,
+  area: string,
+  state: string,
+  description: string,
+  isVerified: boolean
+) {
+  const trustPhrase = isVerified ? "Verified listing" : "Business listing";
+  const summary = description.trim().replace(/\s+/g, " ");
+  const text = `${trustPhrase} for ${name}, a ${category} business in ${area}, ${state}. ${summary}`;
+
+  return text.length > 158 ? `${text.slice(0, 155).trim()}...` : text;
+}
+
+function dayName(dayOfWeek: number) {
+  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][dayOfWeek] ?? "Monday";
 }

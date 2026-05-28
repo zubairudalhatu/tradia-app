@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 const SESSION_COOKIE = "tradia_session";
+const HOST_SESSION_COOKIE = "tradia_session_host";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const ADMIN_ACTION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 type SessionPayload = {
   userId: string;
@@ -24,12 +26,18 @@ export async function createSession(userId: string) {
   const signature = sign(encodedPayload);
   const cookieStore = await cookies();
 
-  cookieStore.set(SESSION_COOKIE, `${encodedPayload}.${signature}`, {
+  const sessionValue = `${encodedPayload}.${signature}`;
+  const baseCookieOptions = {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: SESSION_MAX_AGE_SECONDS,
-    path: "/",
+    path: "/"
+  } as const;
+
+  cookieStore.set(HOST_SESSION_COOKIE, sessionValue, baseCookieOptions);
+  cookieStore.set(SESSION_COOKIE, sessionValue, {
+    ...baseCookieOptions,
     domain: getCookieDomain()
   });
 }
@@ -37,6 +45,7 @@ export async function createSession(userId: string) {
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(HOST_SESSION_COOKIE);
   const domain = getCookieDomain();
 
   if (domain) {
@@ -49,11 +58,19 @@ export async function clearSession() {
       domain
     });
   }
+
+  cookieStore.set(HOST_SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: "/"
+  });
 }
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const token = cookieStore.get(HOST_SESSION_COOKIE)?.value ?? cookieStore.get(SESSION_COOKIE)?.value;
   const payload = verify(token);
 
   if (!payload) return null;
@@ -96,7 +113,7 @@ export function createAdminActionToken(user: { id: string; role: string }) {
   const payload: AdminActionPayload = {
     userId: user.id,
     role: user.role,
-    expiresAt: Date.now() + 15 * 60 * 1000
+    expiresAt: Date.now() + ADMIN_ACTION_MAX_AGE_SECONDS * 1000
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = sign(encodedPayload);

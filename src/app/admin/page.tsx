@@ -346,9 +346,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   Reference: {payment.providerReference}
                 </p>
               </div>
-              <time className="text-sm font-bold text-slate-500" dateTime={(payment.paidAt ?? payment.createdAt).toISOString()}>
-                {(payment.paidAt ?? payment.createdAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
-              </time>
+              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                <time className="text-sm font-bold text-slate-500" dateTime={(payment.paidAt ?? payment.createdAt).toISOString()}>
+                  {(payment.paidAt ?? payment.createdAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+                </time>
+                {payment.status === "SUCCESS" ? (
+                  <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/admin/payments/${payment.id}/receipt`}>
+                    Receipt
+                  </a>
+                ) : null}
+              </div>
             </article>
           )) : (
             <p className="p-5 text-sm text-slate-600">No payments have been recorded yet.</p>

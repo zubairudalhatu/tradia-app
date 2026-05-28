@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { getPlanBenefits } from "@/lib/plans/benefits";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import type { Prisma } from "@prisma/client";
 import {
   approveBusinessAction,
@@ -123,6 +123,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         category: true,
         location: true,
         plan: true,
+        subscriptions: {
+          include: { plan: true },
+          orderBy: { endsAt: "desc" }
+        },
         featuredPlacements: {
           where: {
             status: "ACTIVE",
@@ -367,7 +371,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="divide-y divide-slate-200">
           {publishedBusinesses.map((business) => {
             const isFeatured = business.featuredPlacements.length > 0;
-            const benefits = getPlanBenefits(business.plan);
+            const benefits = getBusinessPlanState(business).benefits;
 
             return (
               <article key={business.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">

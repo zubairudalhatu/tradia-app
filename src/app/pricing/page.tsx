@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { listActivePlans } from "@/lib/queries/plans";
 import { startPlanCheckoutAction } from "./actions";
 
@@ -25,7 +26,13 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const businesses = user
     ? await prisma.business.findMany({
         where: { ownerId: user.id },
-        include: { plan: true },
+        include: {
+          plan: true,
+          subscriptions: {
+            include: { plan: true },
+            orderBy: { endsAt: "desc" }
+          }
+        },
         orderBy: { createdAt: "desc" }
       })
     : [];
@@ -41,9 +48,13 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
       ) : null}
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
-          const businessesEligibleForPlan = businesses.filter((business) => (business.plan?.annualPrice ?? 0) < plan.annualPrice);
-          const businessesOnPlan = businesses.filter((business) => business.planId === plan.id);
-          const businessesAbovePlan = businesses.filter((business) => (business.plan?.annualPrice ?? 0) > plan.annualPrice);
+          const businessesWithPlanState = businesses.map((business) => ({
+            business,
+            planState: getBusinessPlanState(business)
+          }));
+          const businessesEligibleForPlan = businessesWithPlanState.filter(({ planState }) => (planState.plan?.annualPrice ?? 0) < plan.annualPrice);
+          const businessesOnPlan = businessesWithPlanState.filter(({ planState }) => planState.plan?.id === plan.id);
+          const businessesAbovePlan = businessesWithPlanState.filter(({ planState }) => (planState.plan?.annualPrice ?? 0) > plan.annualPrice);
           const isCurrentForAnyBusiness = businessesOnPlan.length > 0;
           const isIncludedForAllBusinesses = businesses.length > 0 && businessesEligibleForPlan.length === 0 && businessesAbovePlan.length > 0;
 
@@ -59,6 +70,16 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               <p className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-forest">
                 Current plan
               </p>
+            ) : null}
+            {businessesOnPlan.length ? (
+              <div className="mt-3 grid gap-2 text-xs font-bold text-slate-600">
+                {businessesOnPlan.map(({ business, planState }) => (
+                  <p key={business.id} className="rounded-tradia bg-emerald-50 px-3 py-2 text-forest">
+                    {business.name}
+                    {planState.activeSubscription ? ` active until ${planState.activeSubscription.endsAt.toLocaleDateString()}` : ""}
+                  </p>
+                ))}
+              </div>
             ) : null}
             {isIncludedForAllBusinesses ? (
               <p className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-ink">
@@ -79,9 +100,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     <form action={startPlanCheckoutAction} className="mt-6 grid gap-3">
                       <input type="hidden" name="planId" value={plan.id} />
                       <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
-                        {businessesEligibleForPlan.map((business) => (
+                        {businessesEligibleForPlan.map(({ business, planState }) => (
                           <option key={business.id} value={business.id}>
-                            {business.name}{business.plan ? ` - currently ${business.plan.name}` : ""}
+                            {business.name} - currently {planState.benefits.name}
                           </option>
                         ))}
                       </select>

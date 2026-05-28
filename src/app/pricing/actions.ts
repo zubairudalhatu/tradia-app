@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { initializePaystackPayment } from "@/lib/payments/paystack";
 import { initializeSquadPayment } from "@/lib/payments/squad";
 
@@ -24,7 +25,13 @@ export async function startPlanCheckoutAction(formData: FormData) {
         id: businessId,
         ownerId: user.id
       },
-      include: { plan: true }
+      include: {
+        plan: true,
+        subscriptions: {
+          include: { plan: true },
+          orderBy: { endsAt: "desc" }
+        }
+      }
     })
   ]);
 
@@ -32,7 +39,9 @@ export async function startPlanCheckoutAction(formData: FormData) {
     redirect("/pricing?checkout=invalid");
   }
 
-  if (business.plan && business.plan.annualPrice >= plan.annualPrice) {
+  const planState = getBusinessPlanState(business);
+
+  if (planState.plan && planState.plan.annualPrice >= plan.annualPrice) {
     redirect("/pricing?checkout=current-plan");
   }
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { getPlanBenefits } from "@/lib/plans/benefits";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { updateLeadStatusAction } from "./actions";
 
 type DashboardPageProps = {
@@ -22,6 +22,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       category: true,
       location: true,
       plan: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      },
       contactLeads: {
         orderBy: { createdAt: "desc" },
         take: 3
@@ -34,7 +38,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     },
     orderBy: { createdAt: "desc" }
   });
-  const analyticsBusinesses = businesses.filter((business) => getPlanBenefits(business.plan).analyticsEnabled);
+  const analyticsBusinesses = businesses.filter((business) => getBusinessPlanState(business).benefits.analyticsEnabled);
   const totalViews = analyticsBusinesses.reduce((sum, business) => sum + business.viewCount, 0);
   const contactClicks = analyticsBusinesses.reduce((sum, business) => sum + business.contactClickCount, 0);
   const totalLeads = businesses.reduce((sum, business) => sum + business._count.contactLeads, 0);
@@ -80,7 +84,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
         <div className="divide-y divide-slate-200">
           {businesses.length ? businesses.map((business) => {
-            const benefits = getPlanBenefits(business.plan);
+            const planState = getBusinessPlanState(business);
+            const benefits = planState.benefits;
 
             return (
             <article key={business.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -90,7 +95,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   {business.category.name} in {business.location.name} - {business.listingStatus.replace("_", " ")}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.plan?.name ?? "Free"} plan</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.name} plan</span>
+                  {planState.activeSubscription ? (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-forest">
+                      Active until {planState.activeSubscription.endsAt.toLocaleDateString()}
+                    </span>
+                  ) : null}
+                  {planState.isExpired ? (
+                    <span className="rounded-full bg-red-50 px-3 py-1 text-red-700">Subscription expired</span>
+                  ) : null}
                   {benefits.analyticsEnabled ? (
                     <>
                       <span className="rounded-full bg-slate-100 px-3 py-1">{business.viewCount} views</span>

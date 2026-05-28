@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { notifyVerificationSubmitted } from "@/lib/notifications";
-import { getPlanBenefits, isPhotoMediaType } from "@/lib/plans/benefits";
+import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
 import { saveUpload } from "@/lib/uploads";
 import { businessCreateSchema } from "@/lib/validations/business";
@@ -50,7 +50,7 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
     redirect(`/dashboard/businesses/${businessId}/edit?error=media`);
   }
 
-  const benefits = getPlanBenefits(business.plan);
+  const { benefits } = getBusinessPlanState(business);
   if (isPhotoMediaType(normalizedMediaType)) {
     const photoCount = await prisma.media.count({
       where: {
@@ -100,7 +100,7 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
 export async function submitVerificationRequestAction(businessId: string, formData: FormData) {
   const user = await getActiveUserOrRedirect(businessId);
   const business = await getOwnedBusinessOrThrow(businessId, user.id);
-  const benefits = getPlanBenefits(business.plan);
+  const { benefits } = getBusinessPlanState(business);
   const documentType = String(formData.get("documentType") ?? "").trim();
   const notes = optionalString(formData.get("notes"));
   const file = formData.get("document");
@@ -180,7 +180,13 @@ async function getOwnedBusinessOrThrow(businessId: string, ownerId: string) {
       id: businessId,
       ownerId
     },
-    include: { plan: true }
+    include: {
+      plan: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      }
+    }
   });
 
   if (!business) {

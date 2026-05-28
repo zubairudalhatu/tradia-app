@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { getPlanBenefits, isPhotoMediaType } from "@/lib/plans/benefits";
+import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
@@ -40,6 +40,10 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       category: true,
       location: true,
       plan: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      },
       media: {
         orderBy: { createdAt: "desc" }
       },
@@ -62,7 +66,8 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   const verificationAction = submitVerificationRequestAction.bind(null, business.id);
   const responseAction = respondToReviewAction.bind(null, business.id);
   const completeness = getBusinessProfileCompleteness(business);
-  const benefits = getPlanBenefits(business.plan);
+  const planState = getBusinessPlanState(business);
+  const benefits = planState.benefits;
   const photoCount = business.media.filter((item) => isPhotoMediaType(item.type)).length;
   const canUploadPhotos = photoCount < benefits.maxPhotos;
 
@@ -78,6 +83,14 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
         <span className="rounded-full bg-slate-100 px-3 py-1">{photoCount}/{benefits.maxPhotos} photos used</span>
         <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.analyticsEnabled ? "Analytics enabled" : "Analytics locked"}</span>
         <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.canBeFeatured ? "Featured eligible" : "Featured locked"}</span>
+        {planState.activeSubscription ? (
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-forest">
+            Active until {planState.activeSubscription.endsAt.toLocaleDateString()}
+          </span>
+        ) : null}
+        {planState.isExpired ? (
+          <span className="rounded-full bg-red-50 px-3 py-1 text-red-700">Subscription expired</span>
+        ) : null}
       </div>
 
       {query.saved ? (

@@ -40,6 +40,18 @@ export async function activateSubscriptionFromPayment(input: ActivateSubscriptio
   const plan = await prisma.plan.findUniqueOrThrow({ where: { id: planId } });
 
   const startsAt = input.paidAt ?? new Date();
+  await prisma.subscription.updateMany({
+    where: {
+      businessId: payment.businessId,
+      status: "ACTIVE",
+      endsAt: { gt: startsAt }
+    },
+    data: {
+      status: "CANCELLED",
+      endsAt: startsAt
+    }
+  });
+
   const subscription = await prisma.subscription.create({
     data: {
       businessId: payment.businessId,

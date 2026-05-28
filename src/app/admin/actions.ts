@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { getPlanBenefits } from "@/lib/plans/benefits";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import {
   notifyBusinessDecision,
   notifyVerificationDecision
@@ -238,10 +238,16 @@ export async function featureBusinessAction(formData: FormData) {
   const businessId = String(formData.get("businessId") ?? "");
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    include: { plan: true }
+    include: {
+      plan: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      }
+    }
   });
 
-  if (!business || !getPlanBenefits(business.plan).canBeFeatured) {
+  if (!business || !getBusinessPlanState(business).benefits.canBeFeatured) {
     revalidatePath("/admin");
     return;
   }

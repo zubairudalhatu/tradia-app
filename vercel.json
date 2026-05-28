@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run db:deploy && npm run db:seed && npm run build",
+  "buildCommand": "PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 npm run db:deploy && npm run db:seed && npm run build",
   "installCommand": "npm install",
   "regions": ["iad1"]
 }

@@ -37,13 +37,13 @@ Required body:
 
 `POST /api/claims`
 
-Creates a pending ownership claim.
+Creates a pending ownership claim for a published business. Requires a signed-in active user.
 
 ## Verification
 
 `POST /api/verification`
 
-Creates a pending verification request.
+Creates a pending verification request for a business owned by the signed-in user. The business must be on a plan that allows verification requests.
 
 ## Reviews
 

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 const SESSION_COOKIE = "tradia_session";
@@ -28,13 +29,26 @@ export async function createSession(userId: string) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: SESSION_MAX_AGE_SECONDS,
-    path: "/"
+    path: "/",
+    domain: getCookieDomain()
   });
 }
 
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  const domain = getCookieDomain();
+
+  if (domain) {
+    cookieStore.set(SESSION_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 0,
+      path: "/",
+      domain
+    });
+  }
 }
 
 export async function getCurrentUser() {
@@ -61,7 +75,7 @@ export async function requireUser() {
   const user = await getCurrentUser();
 
   if (!user || user.status !== "ACTIVE") {
-    throw new Error("You must be signed in to continue.");
+    redirect("/login");
   }
 
   return user;
@@ -139,6 +153,22 @@ function sign(value: string) {
   return createHmac("sha256", process.env.NEXTAUTH_SECRET ?? "development-secret")
     .update(value)
     .digest("base64url");
+}
+
+function getCookieDomain() {
+  if (process.env.NODE_ENV !== "production") return undefined;
+
+  try {
+    const hostname = new URL(process.env.NEXTAUTH_URL ?? "").hostname;
+
+    if (hostname === "tradia.business" || hostname.endsWith(".tradia.business")) {
+      return ".tradia.business";
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
 }
 
 function safeEqual(left: string, right: string) {

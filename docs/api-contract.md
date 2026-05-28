@@ -87,9 +87,52 @@ Review report body:
 }
 ```
 
+## Admin Moderation
+
+All admin moderation routes require a signed-in active admin, super admin, or moderator.
+
+`POST /api/admin/businesses/:id/moderation`
+
+Body:
+
+```json
+{ "action": "approve" }
+```
+
+Allowed actions: `approve`, `reject`.
+
+`POST /api/admin/verification/:id/moderation`
+
+Body:
+
+```json
+{ "action": "approve" }
+```
+
+Allowed actions: `approve`, `reject`.
+
+`POST /api/admin/reviews/:id/moderation`
+
+Body:
+
+```json
+{ "action": "publish" }
+```
+
+Allowed actions: `publish`, `reject`, `remove`.
+
+`POST /api/admin/reports/:id/status`
+
+Body:
+
+```json
+{ "action": "resolve" }
+```
+
+Allowed actions: `resolve`, `dismiss`.
+
 ## Next API Work
 
 - Auth session enforcement.
-- Admin approve/reject routes.
 - Paystack checkout and webhook routes.
 - Search endpoint backed by PostgreSQL indexes.

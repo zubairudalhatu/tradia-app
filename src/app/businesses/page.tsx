@@ -40,14 +40,14 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+        <aside className="h-fit min-w-0 overflow-hidden rounded-tradia border border-slate-200 bg-white p-5">
           <h2 className="mb-4 font-black">Filters</h2>
           <form className="grid gap-4" action="/businesses">
             <label className="grid gap-2 text-sm font-bold text-slate-600">
               Search
               <input
-                className="rounded-tradia border border-slate-200 px-3 py-2"
+                className="min-w-0 rounded-tradia border border-slate-200 px-3 py-2"
                 name="q"
                 defaultValue={params.q ?? ""}
                 placeholder="Clinic, hotel, fashion..."
@@ -55,7 +55,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
             </label>
             <label className="grid gap-2 text-sm font-bold text-slate-600">
               Category
-              <select className="rounded-tradia border border-slate-200 px-3 py-2" name="category" defaultValue={params.category ?? ""}>
+              <select className="min-w-0 rounded-tradia border border-slate-200 px-3 py-2" name="category" defaultValue={params.category ?? ""}>
                 <option value="">All categories</option>
                 {popularCategories.map((category) => (
                   <option key={category.id} value={category.slug}>{category.name}</option>
@@ -64,7 +64,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
             </label>
             <label className="grid gap-2 text-sm font-bold text-slate-600">
               State / Area
-              <select className="rounded-tradia border border-slate-200 px-3 py-2" name="location" defaultValue={params.location ?? ""}>
+              <select className="min-w-0 rounded-tradia border border-slate-200 px-3 py-2" name="location" defaultValue={params.location ?? ""}>
                 <option value="">All Nigeria</option>
                 {locationGroups.map((state) => (
                   <optgroup key={state.id} label={state.name}>
@@ -79,7 +79,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               <input type="checkbox" name="verified" value="1" defaultChecked={params.verified === "1"} />
               Verified only
             </label>
-            <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Apply Filters</button>
+            <button className="w-full rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Apply Filters</button>
             <Link href="/businesses" className="text-sm font-bold text-forest">Clear filters</Link>
           </form>
           <h3 className="mb-3 mt-7 font-black">Categories</h3>
@@ -88,7 +88,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               <Link
                 href={`/businesses?category=${category.slug}`}
                 key={category.slug}
-                className="rounded-tradia px-3 py-2 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-forest"
+                className="min-w-0 rounded-tradia px-3 py-2 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-forest"
               >
                 {category.name}
               </Link>
@@ -96,7 +96,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
           </div>
         </aside>
 
-        <section className="grid gap-4 md:grid-cols-2">
+        <section className="grid min-w-0 gap-4 md:grid-cols-2">
           <AdsenseSlot
             slot={process.env.NEXT_PUBLIC_ADSENSE_DIRECTORY_SLOT}
             className="md:col-span-2"

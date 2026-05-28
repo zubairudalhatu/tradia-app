@@ -13,7 +13,8 @@ import {
   rejectVerificationAction,
   removeReviewAction,
   resolveReportAction,
-  unfeatureBusinessAction
+  unfeatureBusinessAction,
+  updateAdminLeadStatusAction
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +73,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     publishedBusinesses,
     recentUsers,
     recentBusinesses,
-    recentAuditLogs
+    recentAuditLogs,
+    recentLeads,
+    newLeads
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -151,25 +154,72 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       include: { actor: true },
       orderBy: { createdAt: "desc" },
       take: 8
-    })
+    }),
+    prisma.contactLead.findMany({
+      include: {
+        business: {
+          include: {
+            owner: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8
+    }),
+    prisma.contactLead.count({ where: { status: "NEW" } })
   ]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Admin</p>
       <h1 className="text-5xl font-black tracking-normal">Tradia control center</h1>
-      <section className="mt-8 grid gap-4 lg:grid-cols-4">
+      <section className="mt-8 grid gap-4 lg:grid-cols-5">
         {[
           [String(pendingListings), "Pending listings"],
           [String(verificationRequests), "Verification requests"],
           [String(reports), "Open reports"],
-          [String(publishedListings), "Published listings"]
+          [String(publishedListings), "Published listings"],
+          [String(newLeads), "New enquiries"]
         ].map(([value, label]) => (
           <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
             <strong className="block text-3xl font-black text-ink">{value}</strong>
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <h2 className="text-2xl font-black">Lead management</h2>
+          <p className="mt-1 text-sm text-slate-600">Monitor business enquiries and flag spam or closed opportunities.</p>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {recentLeads.length ? recentLeads.map((lead) => (
+            <article key={lead.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <h3 className="font-black">{lead.name} - {lead.business.name}</h3>
+                <p className="text-sm text-slate-600">{lead.email ?? lead.phone ?? "No contact"} - {lead.message}</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">
+                  Owner: {lead.business.owner?.name ?? "Unassigned"} - Status: {lead.status}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["CONTACTED", "CLOSED", "SPAM"].map((status) => (
+                  <form key={status} action={updateAdminLeadStatusAction}>
+                    <AdminActionTokenInput token={adminActionToken} />
+                    <input type="hidden" name="leadId" value={lead.id} />
+                    <input type="hidden" name="status" value={status} />
+                    <button className="rounded-tradia bg-slate-100 px-3 py-2 text-sm font-bold text-ink" disabled={lead.status === status}>
+                      {status.toLowerCase()}
+                    </button>
+                  </form>
+                ))}
+              </div>
+            </article>
+          )) : (
+            <p className="p-5 text-sm text-slate-600">No enquiries have been submitted yet.</p>
+          )}
+        </div>
       </section>
 
       <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">

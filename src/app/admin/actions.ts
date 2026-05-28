@@ -277,6 +277,28 @@ export async function unfeatureBusinessAction(formData: FormData) {
   revalidatePath("/businesses");
 }
 
+export async function updateAdminLeadStatusAction(formData: FormData) {
+  const admin = await requireAdminAction(formData);
+  const leadId = String(formData.get("leadId") ?? "");
+  const status = normalizeLeadStatus(String(formData.get("status") ?? "NEW"));
+
+  const lead = await prisma.contactLead.update({
+    where: { id: leadId },
+    data: { status },
+    include: { business: true }
+  });
+
+  await createAuditLog({
+    actorId: admin.id,
+    action: `ADMIN_MARKED_LEAD_${status}`,
+    entityType: "ContactLead",
+    entityId: lead.id,
+    metadata: { businessId: lead.businessId, businessName: lead.business.name }
+  });
+
+  revalidatePath("/admin");
+}
+
 async function requireAdminAction(formData: FormData) {
   const user = await getCurrentUser();
 
@@ -293,4 +315,12 @@ async function requireAdminAction(formData: FormData) {
   if (user) redirect("/dashboard");
 
   redirect("/login");
+}
+
+function normalizeLeadStatus(value: string) {
+  if (["NEW", "CONTACTED", "CLOSED", "SPAM"].includes(value)) {
+    return value as "NEW" | "CONTACTED" | "CLOSED" | "SPAM";
+  }
+
+  return "NEW";
 }

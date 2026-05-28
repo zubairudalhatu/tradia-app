@@ -2,9 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { updateLeadStatusAction } from "./actions";
 
 type DashboardPageProps = {
-  searchParams: Promise<{ submitted?: string }>;
+  searchParams: Promise<{ submitted?: string; lead?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       {params.submitted ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
           Your business has been submitted and is waiting for admin approval.
+        </p>
+      ) : null}
+      {params.lead === "updated" ? (
+        <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
+          Enquiry status updated.
         </p>
       ) : null}
       <section className="mt-8 grid gap-4 lg:grid-cols-5">
@@ -87,8 +93,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   <div className="mt-4 grid gap-2">
                     {business.contactLeads.map((lead) => (
                       <div key={lead.id} className="rounded-tradia bg-slate-50 p-3 text-sm text-slate-600">
-                        <strong className="block text-ink">{lead.name}</strong>
-                        <span>{lead.email ?? lead.phone ?? "No contact"} - {lead.message}</span>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <strong className="block text-ink">{lead.name}</strong>
+                            <span>{lead.email ?? lead.phone ?? "No contact"} - {lead.message}</span>
+                            <span className="mt-2 block text-xs font-black text-slate-500">Status: {lead.status}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {["CONTACTED", "CLOSED", "SPAM"].map((status) => (
+                              <form key={status} action={updateLeadStatusAction}>
+                                <input type="hidden" name="leadId" value={lead.id} />
+                                <input type="hidden" name="status" value={status} />
+                                <button className="rounded-full bg-white px-3 py-1 text-xs font-black text-ink shadow-sm" disabled={lead.status === status}>
+                                  {status.toLowerCase()}
+                                </button>
+                              </form>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

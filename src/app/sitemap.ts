@@ -20,7 +20,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   ]);
 
-  const staticRoutes = ["", "/businesses", "/pricing"].map((path) => ({
+  const staticRoutes = [
+    "",
+    "/businesses",
+    "/pricing",
+    "/about",
+    "/contact",
+    "/terms",
+    "/privacy",
+    "/verification-policy",
+    "/refund-policy"
+  ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -11,6 +12,25 @@ type BusinessPageProps = {
   searchParams: Promise<{ review?: string; report?: string }>;
 };
 
+export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const business = await getBusinessBySlug(slug);
+
+  if (!business) return {};
+
+  return {
+    title: `${business.name} | ${business.category.name} in ${business.location.name} | Tradia`,
+    description: `${business.description.slice(0, 150)}${business.description.length > 150 ? "..." : ""}`,
+    openGraph: {
+      title: `${business.name} on Tradia`,
+      description: business.description,
+      url: `/businesses/${business.slug}`,
+      images: business.logoUrl ? [business.logoUrl] : undefined,
+      type: "website"
+    }
+  };
+}
+
 export default async function BusinessPage({ params, searchParams }: BusinessPageProps) {
   const { slug } = await params;
   const query = await searchParams;
@@ -20,9 +40,37 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
 
   const reviewAction = submitReviewAction.bind(null, business.id, business.slug);
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: business.name,
+    description: business.description,
+    url: `${(process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "")}/businesses/${business.slug}`,
+    image: business.logoUrl || business.coverUrl || undefined,
+    telephone: business.phone || business.whatsapp || undefined,
+    email: business.email || undefined,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: business.address,
+      addressLocality: business.location.name,
+      addressRegion: business.location.state || business.location.name,
+      addressCountry: "NG"
+    },
+    aggregateRating: business.reviewCount > 0
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: Number(business.averageRating).toFixed(1),
+          reviewCount: business.reviewCount
+        }
+      : undefined
+  };
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="h-56 bg-gradient-to-br from-forest to-ink" />
         <div className="grid gap-8 p-6 lg:grid-cols-[1fr_320px]">

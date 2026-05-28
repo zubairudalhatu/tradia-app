@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -9,6 +10,11 @@ type PricingPageProps = {
 };
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Tradia Pricing | Business Visibility Plans",
+  description: "Start free on Tradia or upgrade for verification eligibility, more photos, analytics, and visibility features for your Nigerian business."
+};
 
 export default async function PricingPage({ searchParams }: PricingPageProps) {
   const [plans, user, params] = await Promise.all([

@@ -68,13 +68,23 @@ export default async function RootLayout({
         </header>
         {children}
         <footer className="border-t border-slate-200 bg-ink text-white">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm md:flex-row md:items-center md:justify-between">
-            <strong>&copy; 2026 Zamkah Technologies Limited</strong>
-            <div className="flex flex-wrap gap-4 text-white/80">
-              <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
-              <a href="https://wa.me/2349055091300">+234 905 509 1300</a>
-              <span>@tradiasocial</span>
+          <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 text-sm md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <strong>&copy; 2026 Zamkah Technologies Limited</strong>
+              <div className="mt-3 flex flex-wrap gap-4 text-white/80">
+                <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
+                <a href="https://wa.me/2349055091300">+234 905 509 1300</a>
+                <span>@tradiasocial</span>
+              </div>
             </div>
+            <nav className="flex flex-wrap gap-4 text-white/80 md:justify-end">
+              <Link href="/about">About</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/verification-policy">Verification</Link>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+              <Link href="/refund-policy">Refunds</Link>
+            </nav>
           </div>
         </footer>
       </body>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createBusiness } from "@/lib/queries/businesses";
 import { businessCreateSchema } from "@/lib/validations/business";
 import { getCurrentUser } from "@/lib/auth/session";
+import { notifyBusinessSubmitted } from "@/lib/notifications";
 
 export async function submitBusinessAction(formData: FormData) {
   const user = await getCurrentUser();
@@ -28,7 +29,14 @@ export async function submitBusinessAction(formData: FormData) {
     redirect("/businesses/new?error=invalid");
   }
 
-  await createBusiness(parsed.data, user.id);
+  const business = await createBusiness(parsed.data, user.id);
+  await notifyBusinessSubmitted({
+    id: business.id,
+    name: business.name,
+    slug: business.slug,
+    owner: user
+  });
+
   redirect("/dashboard?submitted=1");
 }
 

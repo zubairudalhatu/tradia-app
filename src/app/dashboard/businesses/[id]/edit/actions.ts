@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { notifyVerificationSubmitted } from "@/lib/notifications";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
 import { saveUpload } from "@/lib/uploads";
 import { businessCreateSchema } from "@/lib/validations/business";
@@ -107,6 +108,16 @@ export async function submitVerificationRequestAction(businessId: string, formDa
       status: "PENDING"
     }
   });
+
+  await notifyVerificationSubmitted(
+    {
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      owner: { name: user.name, email: user.email }
+    },
+    documentType
+  );
 
   await prisma.business.update({
     where: { id: business.id },

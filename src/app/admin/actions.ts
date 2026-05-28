@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  notifyBusinessDecision,
+  notifyVerificationDecision
+} from "@/lib/notifications";
 import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/queries/featured";
 import { refreshBusinessRating } from "@/lib/ratings";
 
@@ -11,10 +15,13 @@ export async function approveBusinessAction(formData: FormData) {
   await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
-  await prisma.business.update({
+  const business = await prisma.business.update({
     where: { id: businessId },
-    data: { listingStatus: "PUBLISHED" }
+    data: { listingStatus: "PUBLISHED" },
+    include: { owner: true }
   });
+
+  await notifyBusinessDecision(business, "approved");
 
   revalidatePath("/admin");
   revalidatePath("/businesses");
@@ -24,10 +31,13 @@ export async function rejectBusinessAction(formData: FormData) {
   await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
-  await prisma.business.update({
+  const business = await prisma.business.update({
     where: { id: businessId },
-    data: { listingStatus: "REJECTED" }
+    data: { listingStatus: "REJECTED" },
+    include: { owner: true }
   });
+
+  await notifyBusinessDecision(business, "rejected");
 
   revalidatePath("/admin");
 }
@@ -45,10 +55,16 @@ export async function approveVerificationAction(formData: FormData) {
     }
   });
 
-  await prisma.business.update({
+  const business = await prisma.business.update({
     where: { id: request.businessId },
-    data: { verificationStatus: "VERIFIED" }
+    data: { verificationStatus: "VERIFIED" },
+    include: { owner: true }
   });
+
+  const submitter = await prisma.user.findUnique({ where: { id: request.submittedBy } });
+  if (submitter) {
+    await notifyVerificationDecision(business, submitter, "approved");
+  }
 
   revalidatePath("/admin");
   revalidatePath("/businesses");
@@ -67,10 +83,16 @@ export async function rejectVerificationAction(formData: FormData) {
     }
   });
 
-  await prisma.business.update({
+  const business = await prisma.business.update({
     where: { id: request.businessId },
-    data: { verificationStatus: "REJECTED" }
+    data: { verificationStatus: "REJECTED" },
+    include: { owner: true }
   });
+
+  const submitter = await prisma.user.findUnique({ where: { id: request.submittedBy } });
+  if (submitter) {
+    await notifyVerificationDecision(business, submitter, "rejected");
+  }
 
   revalidatePath("/admin");
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import {
   approveBusinessAction,
   approveVerificationAction,
@@ -17,12 +18,47 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
-  const user = await getCurrentUser();
+type AdminPageProps = {
+  searchParams: Promise<{
+    userSearch?: string;
+    businessSearch?: string;
+    listingStatus?: string;
+    verificationStatus?: string;
+  }>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
 
   if (!user) redirect("/login");
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) redirect("/dashboard");
   const adminActionToken = createAdminActionToken(user);
+  const userSearch = params.userSearch?.trim();
+  const businessSearch = params.businessSearch?.trim();
+  const userWhere: Prisma.UserWhereInput = userSearch
+    ? {
+        OR: [
+          { name: { contains: userSearch, mode: "insensitive" } },
+          { email: { contains: userSearch, mode: "insensitive" } },
+          { phone: { contains: userSearch, mode: "insensitive" } }
+        ]
+      }
+    : {};
+  const businessWhere: Prisma.BusinessWhereInput = {
+    ...(businessSearch
+      ? {
+          OR: [
+            { name: { contains: businessSearch, mode: "insensitive" } },
+            { description: { contains: businessSearch, mode: "insensitive" } },
+            { address: { contains: businessSearch, mode: "insensitive" } },
+            { owner: { name: { contains: businessSearch, mode: "insensitive" } } },
+            { owner: { email: { contains: businessSearch, mode: "insensitive" } } }
+          ]
+        }
+      : {}),
+    ...(isListingStatus(params.listingStatus) ? { listingStatus: params.listingStatus } : {}),
+    ...(isVerificationStatus(params.verificationStatus) ? { verificationStatus: params.verificationStatus } : {})
+  };
 
   const [
     pendingListings,
@@ -96,10 +132,12 @@ export default async function AdminPage() {
       take: 12
     }),
     prisma.user.findMany({
+      where: userWhere,
       orderBy: { createdAt: "desc" },
       take: 12
     }),
     prisma.business.findMany({
+      where: businessWhere,
       include: {
         category: true,
         location: true,
@@ -133,6 +171,15 @@ export default async function AdminPage() {
           <div className="border-b border-slate-200 p-5">
             <h2 className="text-2xl font-black">User management</h2>
             <p className="mt-1 text-sm text-slate-600">Edit roles, account status, and contact details.</p>
+            <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" action="/admin">
+              <input
+                className="rounded-tradia border border-slate-200 px-4 py-3 text-sm"
+                name="userSearch"
+                defaultValue={params.userSearch ?? ""}
+                placeholder="Search name, email, or phone"
+              />
+              <button className="rounded-tradia bg-forest px-4 py-3 text-sm font-bold text-white">Search</button>
+            </form>
           </div>
           <div className="divide-y divide-slate-200">
             {recentUsers.map((managedUser) => (
@@ -153,6 +200,30 @@ export default async function AdminPage() {
           <div className="border-b border-slate-200 p-5">
             <h2 className="text-2xl font-black">Business management</h2>
             <p className="mt-1 text-sm text-slate-600">Manually update listings, status, owner, category, and location.</p>
+            <form className="mt-4 grid gap-3 sm:grid-cols-2" action="/admin">
+              <input
+                className="rounded-tradia border border-slate-200 px-4 py-3 text-sm sm:col-span-2"
+                name="businessSearch"
+                defaultValue={params.businessSearch ?? ""}
+                placeholder="Search business, owner, or address"
+              />
+              <select className="rounded-tradia border border-slate-200 px-4 py-3 text-sm" name="listingStatus" defaultValue={params.listingStatus ?? ""}>
+                <option value="">All listing statuses</option>
+                <option value="DRAFT">Draft</option>
+                <option value="PENDING_REVIEW">Pending review</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="SUSPENDED">Suspended</option>
+              </select>
+              <select className="rounded-tradia border border-slate-200 px-4 py-3 text-sm" name="verificationStatus" defaultValue={params.verificationStatus ?? ""}>
+                <option value="">All verification statuses</option>
+                <option value="UNVERIFIED">Unverified</option>
+                <option value="PENDING">Pending</option>
+                <option value="VERIFIED">Verified</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+              <button className="rounded-tradia bg-forest px-4 py-3 text-sm font-bold text-white sm:col-span-2">Apply Filters</button>
+            </form>
           </div>
           <div className="divide-y divide-slate-200">
             {recentBusinesses.map((managedBusiness) => (
@@ -366,4 +437,12 @@ export default async function AdminPage() {
 
 function AdminActionTokenInput({ token }: { token: string }) {
   return <input type="hidden" name="adminActionToken" value={token} />;
+}
+
+function isListingStatus(value?: string): value is "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "SUSPENDED" {
+  return Boolean(value && ["DRAFT", "PENDING_REVIEW", "PUBLISHED", "REJECTED", "SUSPENDED"].includes(value));
+}
+
+function isVerificationStatus(value?: string): value is "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" {
+  return Boolean(value && ["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"].includes(value));
 }

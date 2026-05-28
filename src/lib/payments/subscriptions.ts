@@ -1,5 +1,6 @@
 import { addYears } from "@/lib/time";
 import { prisma } from "@/lib/db";
+import { notifyPaymentSuccess } from "@/lib/notifications";
 
 type ActivateSubscriptionInput = {
   reference: string;
@@ -25,7 +26,10 @@ export async function activateSubscriptionFromPayment(input: ActivateSubscriptio
     return payment;
   }
 
-  const business = await prisma.business.findUniqueOrThrow({ where: { id: payment.businessId } });
+  const business = await prisma.business.findUniqueOrThrow({
+    where: { id: payment.businessId },
+    include: { owner: true }
+  });
   const paymentMetadata = payment.rawPayload as { planId?: string } | null;
   const planId = paymentMetadata?.planId ?? business.planId;
 
@@ -33,7 +37,7 @@ export async function activateSubscriptionFromPayment(input: ActivateSubscriptio
     throw new Error("Payment does not include a plan id.");
   }
 
-  await prisma.plan.findUniqueOrThrow({ where: { id: planId } });
+  const plan = await prisma.plan.findUniqueOrThrow({ where: { id: planId } });
 
   const startsAt = input.paidAt ?? new Date();
   const subscription = await prisma.subscription.create({
@@ -64,6 +68,10 @@ export async function activateSubscriptionFromPayment(input: ActivateSubscriptio
     where: { id: payment.businessId },
     data: { planId }
   });
+
+  if (business.owner) {
+    await notifyPaymentSuccess(business, business.owner, plan.name, input.amount);
+  }
 
   return updatedPayment;
 }

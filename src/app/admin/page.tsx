@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getPlanBenefits } from "@/lib/plans/benefits";
 import type { Prisma } from "@prisma/client";
 import {
   approveBusinessAction,
@@ -366,6 +367,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="divide-y divide-slate-200">
           {publishedBusinesses.map((business) => {
             const isFeatured = business.featuredPlacements.length > 0;
+            const benefits = getPlanBenefits(business.plan);
 
             return (
               <article key={business.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -380,8 +382,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <form action={featureBusinessAction}>
                     <AdminActionTokenInput token={adminActionToken} />
                     <input type="hidden" name="businessId" value={business.id} />
-                    <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" disabled={isFeatured}>
-                      Feature
+                    <button className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" disabled={isFeatured || !benefits.canBeFeatured}>
+                      {benefits.canBeFeatured ? "Feature" : "Needs Gold"}
                     </button>
                   </form>
                   <form action={unfeatureBusinessAction}>

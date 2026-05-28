@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getPlanBenefits, isPhotoMediaType } from "@/lib/plans/benefits";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
@@ -37,6 +39,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
     include: {
       category: true,
       location: true,
+      plan: true,
       media: {
         orderBy: { createdAt: "desc" }
       },
@@ -59,6 +62,9 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   const verificationAction = submitVerificationRequestAction.bind(null, business.id);
   const responseAction = respondToReviewAction.bind(null, business.id);
   const completeness = getBusinessProfileCompleteness(business);
+  const benefits = getPlanBenefits(business.plan);
+  const photoCount = business.media.filter((item) => isPhotoMediaType(item.type)).length;
+  const canUploadPhotos = photoCount < benefits.maxPhotos;
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-12">
@@ -67,6 +73,12 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       <p className="mt-4 text-lg text-slate-600">
         Update public profile details. Approval and verification status are still controlled by Tradia admins.
       </p>
+      <div className="mt-5 flex flex-wrap gap-2 text-sm font-black text-slate-600">
+        <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.name} plan</span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">{photoCount}/{benefits.maxPhotos} photos used</span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.analyticsEnabled ? "Analytics enabled" : "Analytics locked"}</span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">{benefits.canBeFeatured ? "Featured eligible" : "Featured locked"}</span>
+      </div>
 
       {query.saved ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
@@ -191,6 +203,11 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required />
           <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Upload</button>
         </form>
+        {!canUploadPhotos ? (
+          <p className="mt-4 rounded-tradia bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            Photo limit reached for your {benefits.name} plan. Upgrade to add more photos.
+          </p>
+        ) : null}
         <div className="mt-6 grid gap-3 md:grid-cols-2">
           {business.media.length ? business.media.map((item) => (
             <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-4 text-sm">
@@ -205,8 +222,13 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
 
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-black">Verification</h2>
-        <p className="mt-1 text-sm text-slate-600">Submit proof documents so admins can mark this business as verified.</p>
-        <form action={verificationAction} className="mt-5 grid gap-4 md:grid-cols-2" encType="multipart/form-data">
+        <p className="mt-1 text-sm text-slate-600">
+          {benefits.canRequestVerification
+            ? "Submit proof documents so admins can mark this business as verified."
+            : "Verification requests are available on Silver, Gold, and Platinum plans."}
+        </p>
+        {benefits.canRequestVerification ? (
+          <form action={verificationAction} className="mt-5 grid gap-4 md:grid-cols-2" encType="multipart/form-data">
           <label className="grid gap-2 text-sm font-bold text-slate-600">
             Document type
             <select className="rounded-tradia border border-slate-200 px-4 py-3" name="documentType" required>
@@ -228,7 +250,12 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white md:col-span-2">
             Submit Verification Request
           </button>
-        </form>
+          </form>
+        ) : (
+          <Link className="mt-5 inline-flex rounded-tradia bg-forest px-5 py-3 font-bold text-white" href="/pricing">
+            Upgrade for Verification
+          </Link>
+        )}
         <div className="mt-6 grid gap-3">
           {business.verificationRequests.length ? business.verificationRequests.map((request) => (
             <div key={request.id} className="rounded-tradia border border-slate-200 p-4 text-sm">
@@ -288,6 +315,14 @@ function errorMessage(error: string) {
 
   if (error === "verification") {
     return "Please choose a document type and upload a valid proof file.";
+  }
+
+  if (error === "verification-plan") {
+    return "Verification requests are available on Silver, Gold, and Platinum plans.";
+  }
+
+  if (error === "photo-limit") {
+    return "This business has reached the photo limit for its current plan. Please upgrade to upload more photos.";
   }
 
   if (error === "response") {

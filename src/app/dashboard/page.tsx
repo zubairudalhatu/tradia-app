@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getPlanBenefits } from "@/lib/plans/benefits";
 import { updateLeadStatusAction } from "./actions";
 
 type DashboardPageProps = {
@@ -20,6 +21,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     include: {
       category: true,
       location: true,
+      plan: true,
       contactLeads: {
         orderBy: { createdAt: "desc" },
         take: 3
@@ -32,8 +34,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     },
     orderBy: { createdAt: "desc" }
   });
-  const totalViews = businesses.reduce((sum, business) => sum + business.viewCount, 0);
-  const contactClicks = businesses.reduce((sum, business) => sum + business.contactClickCount, 0);
+  const analyticsBusinesses = businesses.filter((business) => getPlanBenefits(business.plan).analyticsEnabled);
+  const totalViews = analyticsBusinesses.reduce((sum, business) => sum + business.viewCount, 0);
+  const contactClicks = analyticsBusinesses.reduce((sum, business) => sum + business.contactClickCount, 0);
   const totalLeads = businesses.reduce((sum, business) => sum + business._count.contactLeads, 0);
 
   return (
@@ -54,8 +57,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         {[
           [String(businesses.length), "Your listings"],
           [String(businesses.filter((business) => business.listingStatus === "PENDING_REVIEW").length), "Pending approval"],
-          [String(totalViews), "Profile views"],
-          [String(contactClicks), "Contact clicks"],
+          [analyticsBusinesses.length ? String(totalViews) : "Locked", "Profile views"],
+          [analyticsBusinesses.length ? String(contactClicks) : "Locked", "Contact clicks"],
           [String(totalLeads), "Recent enquiries"]
         ].map(([value, label]) => (
           <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
@@ -76,7 +79,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Link>
         </div>
         <div className="divide-y divide-slate-200">
-          {businesses.length ? businesses.map((business) => (
+          {businesses.length ? businesses.map((business) => {
+            const benefits = getPlanBenefits(business.plan);
+
+            return (
             <article key={business.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h3 className="text-lg font-black">{business.name}</h3>
@@ -84,8 +90,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   {business.category.name} in {business.location.name} - {business.listingStatus.replace("_", " ")}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.viewCount} views</span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.contactClickCount} contact clicks</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.plan?.name ?? "Free"} plan</span>
+                  {benefits.analyticsEnabled ? (
+                    <>
+                      <span className="rounded-full bg-slate-100 px-3 py-1">{business.viewCount} views</span>
+                      <span className="rounded-full bg-slate-100 px-3 py-1">{business.contactClickCount} contact clicks</span>
+                    </>
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">Analytics locked</span>
+                  )}
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business._count.contactLeads} enquiries</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.reviewCount} reviews</span>
                 </div>
@@ -128,7 +141,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </Link>
               </div>
             </article>
-          )) : (
+            );
+          }) : (
             <p className="p-5 text-sm text-slate-600">You have not submitted a business yet.</p>
           )}
         </div>

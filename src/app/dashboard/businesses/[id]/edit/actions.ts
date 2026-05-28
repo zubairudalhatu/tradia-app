@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { notifyVerificationSubmitted } from "@/lib/notifications";
+import { getPlanBenefits, isPhotoMediaType } from "@/lib/plans/benefits";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
 import { saveUpload } from "@/lib/uploads";
 import { businessCreateSchema } from "@/lib/validations/business";
@@ -42,10 +43,27 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
   const user = await getActiveUserOrRedirect(businessId);
   const business = await getOwnedBusinessOrThrow(businessId, user.id);
   const mediaType = String(formData.get("mediaType") ?? "GALLERY");
+  const normalizedMediaType = normalizeMediaType(mediaType);
   const file = formData.get("file");
 
   if (!(file instanceof File) || file.size === 0) {
     redirect(`/dashboard/businesses/${businessId}/edit?error=media`);
+  }
+
+  const benefits = getPlanBenefits(business.plan);
+  if (isPhotoMediaType(normalizedMediaType)) {
+    const photoCount = await prisma.media.count({
+      where: {
+        businessId: business.id,
+        type: {
+          in: ["LOGO", "COVER", "GALLERY"]
+        }
+      }
+    });
+
+    if (photoCount >= benefits.maxPhotos) {
+      redirect(`/dashboard/businesses/${businessId}/edit?error=photo-limit`);
+    }
   }
 
   let url: string;
@@ -60,7 +78,7 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
     data: {
       businessId: business.id,
       userId: user.id,
-      type: normalizeMediaType(mediaType),
+      type: normalizedMediaType,
       url,
       title: file.name
     }
@@ -82,9 +100,14 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
 export async function submitVerificationRequestAction(businessId: string, formData: FormData) {
   const user = await getActiveUserOrRedirect(businessId);
   const business = await getOwnedBusinessOrThrow(businessId, user.id);
+  const benefits = getPlanBenefits(business.plan);
   const documentType = String(formData.get("documentType") ?? "").trim();
   const notes = optionalString(formData.get("notes"));
   const file = formData.get("document");
+
+  if (!benefits.canRequestVerification) {
+    redirect(`/dashboard/businesses/${businessId}/edit?error=verification-plan`);
+  }
 
   if (!documentType || !(file instanceof File) || file.size === 0) {
     redirect(`/dashboard/businesses/${businessId}/edit?error=verification`);
@@ -156,7 +179,8 @@ async function getOwnedBusinessOrThrow(businessId: string, ownerId: string) {
     where: {
       id: businessId,
       ownerId
-    }
+    },
+    include: { plan: true }
   });
 
   if (!business) {

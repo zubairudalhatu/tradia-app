@@ -25,6 +25,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const businesses = user
     ? await prisma.business.findMany({
         where: { ownerId: user.id },
+        include: { plan: true },
         orderBy: { createdAt: "desc" }
       })
     : [];
@@ -39,12 +40,31 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
         </p>
       ) : null}
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {plans.map((plan) => (
+        {plans.map((plan) => {
+          const businessesEligibleForPlan = businesses.filter((business) => (business.plan?.annualPrice ?? 0) < plan.annualPrice);
+          const businessesOnPlan = businesses.filter((business) => business.planId === plan.id);
+          const businessesAbovePlan = businesses.filter((business) => (business.plan?.annualPrice ?? 0) > plan.annualPrice);
+          const isCurrentForAnyBusiness = businessesOnPlan.length > 0;
+          const isIncludedForAllBusinesses = businesses.length > 0 && businessesEligibleForPlan.length === 0 && businessesAbovePlan.length > 0;
+
+          return (
           <article
             key={plan.name}
-            className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm"
+            className={`rounded-tradia border bg-white p-5 shadow-sm ${
+              isCurrentForAnyBusiness ? "border-forest ring-2 ring-emerald-100" : "border-slate-200"
+            }`}
           >
             <h2 className="text-xl font-black">{plan.name}</h2>
+            {isCurrentForAnyBusiness ? (
+              <p className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-forest">
+                Current plan
+              </p>
+            ) : null}
+            {isIncludedForAllBusinesses ? (
+              <p className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-ink">
+                Included in higher plan
+              </p>
+            ) : null}
             <p className="mt-2 text-3xl font-black text-forest">N{plan.annualPrice.toLocaleString()}</p>
             <p className="mt-1 text-sm text-slate-500">per year</p>
             <ul className="mt-5 grid gap-3 text-sm text-slate-600">
@@ -55,17 +75,25 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             {plan.annualPrice > 0 ? (
               user ? (
                 businesses.length ? (
-                  <form action={startPlanCheckoutAction} className="mt-6 grid gap-3">
-                    <input type="hidden" name="planId" value={plan.id} />
-                    <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
-                      {businesses.map((business) => (
-                        <option key={business.id} value={business.id}>{business.name}</option>
-                      ))}
-                    </select>
-                    <button name="paymentProvider" value="squad" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
-                      Upgrade with Squad
-                    </button>
-                  </form>
+                  businessesEligibleForPlan.length ? (
+                    <form action={startPlanCheckoutAction} className="mt-6 grid gap-3">
+                      <input type="hidden" name="planId" value={plan.id} />
+                      <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
+                        {businessesEligibleForPlan.map((business) => (
+                          <option key={business.id} value={business.id}>
+                            {business.name}{business.plan ? ` - currently ${business.plan.name}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button name="paymentProvider" value="squad" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+                        Upgrade with Squad
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="mt-6 rounded-tradia bg-slate-50 p-4 text-sm font-bold text-slate-600">
+                      {isCurrentForAnyBusiness ? "This plan is already active for your business." : "Your business already has this plan benefit or better."}
+                    </div>
+                  )
                 ) : (
                   <Link className="mt-6 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" href="/businesses/new">
                     Add Business First
@@ -78,7 +106,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               )
             ) : null}
           </article>
-        ))}
+        );
+        })}
       </section>
     </main>
   );
@@ -99,6 +128,10 @@ function checkoutMessage(status: string) {
 
   if (status === "failed") {
     return "Checkout could not be started by the payment provider. Please try again or choose another provider.";
+  }
+
+  if (status === "current-plan") {
+    return "This business already has that plan or a higher plan. Please choose a higher upgrade option.";
   }
 
   return "Checkout could not be started. Please try again.";

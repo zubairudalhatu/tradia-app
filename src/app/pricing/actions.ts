@@ -23,12 +23,17 @@ export async function startPlanCheckoutAction(formData: FormData) {
       where: {
         id: businessId,
         ownerId: user.id
-      }
+      },
+      include: { plan: true }
     })
   ]);
 
   if (!plan || !business) {
     redirect("/pricing?checkout=invalid");
+  }
+
+  if (business.plan && business.plan.annualPrice >= plan.annualPrice) {
+    redirect("/pricing?checkout=current-plan");
   }
 
   if (plan.annualPrice <= 0) {

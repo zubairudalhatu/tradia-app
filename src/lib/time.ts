@@ -9,3 +9,9 @@ export function addHours(date: Date, hours: number) {
   result.setHours(result.getHours() + hours);
   return result;
 }
+
+export function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
+import { addDays } from "@/lib/time";
 import type { Prisma } from "@prisma/client";
 import {
   approveBusinessAction,
@@ -35,6 +36,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (!user) redirect("/login");
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) redirect("/dashboard");
   const adminActionToken = createAdminActionToken(user);
+  const now = new Date();
+  const renewalWindowEndsAt = addDays(now, 30);
   const userSearch = params.userSearch?.trim();
   const businessSearch = params.businessSearch?.trim();
   const userWhere: Prisma.UserWhereInput = userSearch
@@ -76,7 +79,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     recentBusinesses,
     recentAuditLogs,
     recentLeads,
-    newLeads
+    newLeads,
+    expiringSubscriptionCount,
+    expiredSubscriptionCount,
+    expiringSubscriptions,
+    expiredSubscriptions
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -130,7 +137,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         featuredPlacements: {
           where: {
             status: "ACTIVE",
-            endsAt: { gte: new Date() }
+            endsAt: { gte: now }
           }
         }
       },
@@ -171,26 +178,138 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       orderBy: { createdAt: "desc" },
       take: 8
     }),
-    prisma.contactLead.count({ where: { status: "NEW" } })
+    prisma.contactLead.count({ where: { status: "NEW" } }),
+    prisma.subscription.count({
+      where: {
+        status: "ACTIVE",
+        plan: { annualPrice: { gt: 0 } },
+        endsAt: {
+          gt: now,
+          lte: renewalWindowEndsAt
+        }
+      }
+    }),
+    prisma.subscription.count({
+      where: {
+        status: "ACTIVE",
+        plan: { annualPrice: { gt: 0 } },
+        endsAt: { lte: now }
+      }
+    }),
+    prisma.subscription.findMany({
+      where: {
+        status: "ACTIVE",
+        plan: { annualPrice: { gt: 0 } },
+        endsAt: {
+          gt: now,
+          lte: renewalWindowEndsAt
+        }
+      },
+      include: {
+        plan: true,
+        business: {
+          include: {
+            owner: true
+          }
+        }
+      },
+      orderBy: { endsAt: "asc" },
+      take: 8
+    }),
+    prisma.subscription.findMany({
+      where: {
+        status: "ACTIVE",
+        plan: { annualPrice: { gt: 0 } },
+        endsAt: { lte: now }
+      },
+      include: {
+        plan: true,
+        business: {
+          include: {
+            owner: true
+          }
+        }
+      },
+      orderBy: { endsAt: "desc" },
+      take: 8
+    })
   ]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Admin</p>
       <h1 className="text-5xl font-black tracking-normal">Tradia control center</h1>
-      <section className="mt-8 grid gap-4 lg:grid-cols-5">
+      <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {[
           [String(pendingListings), "Pending listings"],
           [String(verificationRequests), "Verification requests"],
           [String(reports), "Open reports"],
           [String(publishedListings), "Published listings"],
-          [String(newLeads), "New enquiries"]
+          [String(newLeads), "New enquiries"],
+          [String(expiringSubscriptionCount), "Renewals due"],
+          [String(expiredSubscriptionCount), "Expired plans"]
         ].map(([value, label]) => (
           <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
             <strong className="block text-3xl font-black text-ink">{value}</strong>
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-tradia border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <h2 className="text-2xl font-black">Renewals due soon</h2>
+            <p className="mt-1 text-sm text-slate-600">Paid subscriptions ending in the next 30 days.</p>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {expiringSubscriptions.length ? expiringSubscriptions.map((subscription) => (
+              <article key={subscription.id} className="grid gap-3 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h3 className="font-black">{subscription.business.name}</h3>
+                  <p className="text-sm text-slate-600">
+                    {subscription.plan.name} ends {subscription.endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Owner: {subscription.business.owner?.name ?? "Unassigned"}{subscription.business.owner?.email ? ` - ${subscription.business.owner.email}` : ""}
+                  </p>
+                </div>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${subscription.businessId}`}>
+                  Open
+                </a>
+              </article>
+            )) : (
+              <p className="p-5 text-sm text-slate-600">No paid subscriptions are due within 30 days.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-tradia border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <h2 className="text-2xl font-black">Expired paid plans</h2>
+            <p className="mt-1 text-sm text-slate-600">These businesses now receive Free-level benefits until they renew.</p>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {expiredSubscriptions.length ? expiredSubscriptions.map((subscription) => (
+              <article key={subscription.id} className="grid gap-3 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h3 className="font-black">{subscription.business.name}</h3>
+                  <p className="text-sm text-slate-600">
+                    {subscription.plan.name} expired {subscription.endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Owner: {subscription.business.owner?.name ?? "Unassigned"}{subscription.business.owner?.email ? ` - ${subscription.business.owner.email}` : ""}
+                  </p>
+                </div>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${subscription.businessId}`}>
+                  Open
+                </a>
+              </article>
+            )) : (
+              <p className="p-5 text-sm text-slate-600">No paid subscriptions have expired.</p>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">

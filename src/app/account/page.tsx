@@ -1,5 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
+import { addDays } from "@/lib/time";
 import { updateAccountAction } from "./actions";
 
 type AccountPageProps = {
@@ -12,6 +16,19 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
 
   if (!user) redirect("/login?next=/account");
+
+  const businesses = await prisma.business.findMany({
+    where: { ownerId: user.id },
+    include: {
+      plan: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      }
+    },
+    orderBy: { updatedAt: "desc" }
+  });
+  const renewalWindowEndsAt = addDays(new Date(), 30);
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">
@@ -50,6 +67,43 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </div>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Save Profile</button>
       </form>
+
+      <section className="mt-8 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <h2 className="text-2xl font-black">Plan and renewal status</h2>
+          <p className="mt-1 text-sm text-slate-600">Track paid plan access for each business you manage.</p>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {businesses.length ? businesses.map((business) => {
+            const planState = getBusinessPlanState(business);
+            const activeSubscription = planState.activeSubscription;
+            const expiresSoon = Boolean(activeSubscription && activeSubscription.endsAt <= renewalWindowEndsAt);
+
+            return (
+              <article key={business.id} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h3 className="font-black">{business.name}</h3>
+                  <p className="text-sm text-slate-600">
+                    {planState.benefits.name} plan
+                    {activeSubscription ? ` - active until ${activeSubscription.endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}` : ""}
+                  </p>
+                  {expiresSoon ? (
+                    <p className="mt-2 text-sm font-bold text-amber-800">This plan is due for renewal soon.</p>
+                  ) : null}
+                  {planState.isExpired ? (
+                    <p className="mt-2 text-sm font-bold text-red-700">This paid plan has expired. Free plan benefits now apply.</p>
+                  ) : null}
+                </div>
+                <Link className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" href="/pricing">
+                  View Plans
+                </Link>
+              </article>
+            );
+          }) : (
+            <p className="p-5 text-sm text-slate-600">No businesses are attached to this account yet.</p>
+          )}
+        </div>
+      </section>
     </main>
   );
 }

@@ -28,7 +28,7 @@ export default async function HomePage() {
           <div>
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>
             <h1 className="max-w-4xl text-6xl font-black leading-[0.9] tracking-normal text-ink md:text-8xl">
-              Find trusted businesses across Nigeria.
+              List your business, connect with customers, and grow your visibility on Tradia.
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
               Tradia helps customers discover verified local businesses and gives SMEs a credible

@@ -135,9 +135,16 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                   Reference: {payment.providerReference} - {payment.paidAt ? payment.paidAt.toLocaleDateString("en-NG", { dateStyle: "medium" }) : payment.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
                 </p>
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-black ${payment.status === "SUCCESS" ? "bg-emerald-50 text-forest" : "bg-slate-100 text-ink"}`}>
-                {payment.status}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full px-3 py-1 text-xs font-black ${payment.status === "SUCCESS" ? "bg-emerald-50 text-forest" : "bg-slate-100 text-ink"}`}>
+                  {payment.status}
+                </span>
+                {payment.status === "SUCCESS" ? (
+                  <Link className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/account/payments/${payment.id}/receipt`}>
+                    Receipt
+                  </Link>
+                ) : null}
+              </div>
             </article>
           )) : (
             <p className="p-5 text-sm text-slate-600">No payments have been recorded yet.</p>

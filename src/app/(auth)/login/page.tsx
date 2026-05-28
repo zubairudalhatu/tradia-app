@@ -26,6 +26,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           Password
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="password" type="password" required />
         </label>
+        <Link className="text-sm font-bold text-forest" href="/forgot-password">
+          Forgot password?
+        </Link>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Sign In</button>
       </form>
       <p className="mt-5 text-sm text-slate-600">

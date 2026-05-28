@@ -38,7 +38,7 @@ export function getBusinessPlanState(business: BusinessPlanInput, now = new Date
   const effectivePlan = activeSubscription?.plan ?? (hasSubscriptionHistory && (business.plan?.annualPrice ?? 0) > 0 ? null : business.plan);
   const expiredSubscription = !activeSubscription
     ? subscriptions
-        .filter((subscription) => subscription.status === "ACTIVE" && subscription.endsAt <= now)
+        .filter((subscription) => (subscription.status === "ACTIVE" && subscription.endsAt <= now) || subscription.status === "EXPIRED")
         .sort((a, b) => b.endsAt.getTime() - a.endsAt.getTime())[0]
     : undefined;
 

@@ -191,7 +191,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     }),
     prisma.subscription.count({
       where: {
-        status: "ACTIVE",
+        status: { in: ["ACTIVE", "EXPIRED"] },
         plan: { annualPrice: { gt: 0 } },
         endsAt: { lte: now }
       }
@@ -218,7 +218,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     }),
     prisma.subscription.findMany({
       where: {
-        status: "ACTIVE",
+        status: { in: ["ACTIVE", "EXPIRED"] },
         plan: { annualPrice: { gt: 0 } },
         endsAt: { lte: now }
       },

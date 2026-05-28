@@ -98,6 +98,41 @@ export async function notifyPaymentSuccess(
   });
 }
 
+export async function notifySubscriptionRenewalDue(
+  business: NotificationBusiness,
+  recipient: { name: string; email: string },
+  planName: string,
+  endsAt: Date,
+  daysBefore: number
+) {
+  await sendEmail({
+    to: recipient.email,
+    subject: `Your Tradia ${planName} plan renews soon`,
+    html: paragraphEmail("Plan renewal reminder", [
+      `Hi ${recipient.name},`,
+      `${business.name}'s ${planName} plan ends on ${endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}.`,
+      `Renew within ${daysBefore} day${daysBefore === 1 ? "" : "s"} to keep premium visibility, verification eligibility, media limits, and analytics active.`
+    ], { label: "Renew Plan", url: appUrl("/pricing") })
+  });
+}
+
+export async function notifySubscriptionExpired(
+  business: NotificationBusiness,
+  recipient: { name: string; email: string },
+  planName: string,
+  endedAt: Date
+) {
+  await sendEmail({
+    to: recipient.email,
+    subject: `Your Tradia ${planName} plan has expired`,
+    html: paragraphEmail("Plan expired", [
+      `Hi ${recipient.name},`,
+      `${business.name}'s ${planName} plan expired on ${endedAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}.`,
+      "Free plan benefits now apply until the business renews."
+    ], { label: "Renew Plan", url: appUrl("/pricing") })
+  });
+}
+
 export async function notifyBusinessLead(
   business: NotificationBusiness,
   lead: { name: string; email?: string | null; phone?: string | null; message: string }

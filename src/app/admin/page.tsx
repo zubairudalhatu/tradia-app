@@ -71,7 +71,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     openReports,
     publishedBusinesses,
     recentUsers,
-    recentBusinesses
+    recentBusinesses,
+    recentAuditLogs
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -145,6 +146,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       },
       orderBy: { updatedAt: "desc" },
       take: 12
+    }),
+    prisma.auditLog.findMany({
+      include: { actor: true },
+      orderBy: { createdAt: "desc" },
+      take: 8
     })
   ]);
 
@@ -164,6 +170,30 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <h2 className="text-2xl font-black">Recent admin activity</h2>
+          <p className="mt-1 text-sm text-slate-600">Track moderation, verification, user, and listing changes.</p>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {recentAuditLogs.length ? recentAuditLogs.map((log) => (
+            <article key={log.id} className="grid gap-2 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <h3 className="font-black">{formatAuditAction(log.action)}</h3>
+                <p className="text-sm text-slate-600">
+                  {log.entityType} - {log.actor?.name ?? "System"}
+                </p>
+              </div>
+              <time className="text-sm font-bold text-slate-500" dateTime={log.createdAt.toISOString()}>
+                {log.createdAt.toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+              </time>
+            </article>
+          )) : (
+            <p className="p-5 text-sm text-slate-600">No admin activity has been recorded yet.</p>
+          )}
+        </div>
       </section>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -445,4 +475,12 @@ function isListingStatus(value?: string): value is "DRAFT" | "PENDING_REVIEW" | 
 
 function isVerificationStatus(value?: string): value is "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" {
   return Boolean(value && ["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"].includes(value));
+}
+
+function formatAuditAction(action: string) {
+  return action
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

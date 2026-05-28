@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 import { getBusinessBySlug } from "@/lib/queries/businesses";
 import { reportBusinessAction, reportReviewAction, submitReviewAction } from "./actions";
 
@@ -37,6 +38,13 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const [business, user] = await Promise.all([getBusinessBySlug(slug), getCurrentUser()]);
 
   if (!business) notFound();
+
+  if (user?.id !== business.ownerId) {
+    await prisma.business.update({
+      where: { id: business.id },
+      data: { viewCount: { increment: 1 } }
+    });
+  }
 
   const reviewAction = submitReviewAction.bind(null, business.id, business.slug);
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
@@ -93,15 +101,29 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             </div>
             <p className="text-lg leading-8 text-slate-600">{business.description}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href={`tel:${business.phone ?? ""}`} className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">
-                Call
-              </a>
-              <a
-                href={`https://wa.me/${(business.whatsapp ?? business.phone ?? "").replace("+", "")}`}
-                className="rounded-tradia bg-ember px-5 py-3 font-bold text-white"
-              >
-                WhatsApp
-              </a>
+              {business.phone ? (
+                <a href={`/businesses/${business.slug}/contact?type=phone`} className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">
+                  Call
+                </a>
+              ) : null}
+              {business.whatsapp || business.phone ? (
+                <a
+                  href={`/businesses/${business.slug}/contact?type=whatsapp`}
+                  className="rounded-tradia bg-ember px-5 py-3 font-bold text-white"
+                >
+                  WhatsApp
+                </a>
+              ) : null}
+              {business.email ? (
+                <a href={`/businesses/${business.slug}/contact?type=email`} className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
+                  Email
+                </a>
+              ) : null}
+              {business.website ? (
+                <a href={`/businesses/${business.slug}/contact?type=website`} className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
+                  Website
+                </a>
+              ) : null}
               <a href="/claims/new" className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
                 Claim Business
               </a>

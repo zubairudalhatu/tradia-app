@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
+import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import {
   notifyBusinessDecision,
@@ -12,7 +13,7 @@ import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/que
 import { refreshBusinessRating } from "@/lib/ratings";
 
 export async function approveBusinessAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
   const business = await prisma.business.update({
@@ -22,13 +23,20 @@ export async function approveBusinessAction(formData: FormData) {
   });
 
   await notifyBusinessDecision(business, "approved");
+  await createAuditLog({
+    actorId: admin.id,
+    action: "APPROVED_BUSINESS",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: { businessName: business.name }
+  });
 
   revalidatePath("/admin");
   revalidatePath("/businesses");
 }
 
 export async function rejectBusinessAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
   const business = await prisma.business.update({
@@ -38,6 +46,13 @@ export async function rejectBusinessAction(formData: FormData) {
   });
 
   await notifyBusinessDecision(business, "rejected");
+  await createAuditLog({
+    actorId: admin.id,
+    action: "REJECTED_BUSINESS",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: { businessName: business.name }
+  });
 
   revalidatePath("/admin");
 }
@@ -65,6 +80,13 @@ export async function approveVerificationAction(formData: FormData) {
   if (submitter) {
     await notifyVerificationDecision(business, submitter, "approved");
   }
+  await createAuditLog({
+    actorId: admin.id,
+    action: "APPROVED_VERIFICATION",
+    entityType: "VerificationRequest",
+    entityId: request.id,
+    metadata: { businessId: business.id, businessName: business.name }
+  });
 
   revalidatePath("/admin");
   revalidatePath("/businesses");
@@ -93,12 +115,19 @@ export async function rejectVerificationAction(formData: FormData) {
   if (submitter) {
     await notifyVerificationDecision(business, submitter, "rejected");
   }
+  await createAuditLog({
+    actorId: admin.id,
+    action: "REJECTED_VERIFICATION",
+    entityType: "VerificationRequest",
+    entityId: request.id,
+    metadata: { businessId: business.id, businessName: business.name }
+  });
 
   revalidatePath("/admin");
 }
 
 export async function publishReviewAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -107,12 +136,19 @@ export async function publishReviewAction(formData: FormData) {
   });
 
   await refreshBusinessRating(review.businessId);
+  await createAuditLog({
+    actorId: admin.id,
+    action: "PUBLISHED_REVIEW",
+    entityType: "Review",
+    entityId: review.id,
+    metadata: { businessId: review.businessId }
+  });
   revalidatePath("/admin");
   revalidatePath("/businesses");
 }
 
 export async function rejectReviewAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -121,11 +157,18 @@ export async function rejectReviewAction(formData: FormData) {
   });
 
   await refreshBusinessRating(review.businessId);
+  await createAuditLog({
+    actorId: admin.id,
+    action: "REJECTED_REVIEW",
+    entityType: "Review",
+    entityId: review.id,
+    metadata: { businessId: review.businessId }
+  });
   revalidatePath("/admin");
 }
 
 export async function removeReviewAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const reviewId = String(formData.get("reviewId") ?? "");
 
   const review = await prisma.review.update({
@@ -134,6 +177,13 @@ export async function removeReviewAction(formData: FormData) {
   });
 
   await refreshBusinessRating(review.businessId);
+  await createAuditLog({
+    actorId: admin.id,
+    action: "REMOVED_REVIEW",
+    entityType: "Review",
+    entityId: review.id,
+    metadata: { businessId: review.businessId }
+  });
   revalidatePath("/admin");
   revalidatePath("/businesses");
 }
@@ -149,6 +199,12 @@ export async function resolveReportAction(formData: FormData) {
       resolvedBy: admin.id,
       resolvedAt: new Date()
     }
+  });
+  await createAuditLog({
+    actorId: admin.id,
+    action: "RESOLVED_REPORT",
+    entityType: "Report",
+    entityId: reportId
   });
 
   revalidatePath("/admin");
@@ -166,12 +222,18 @@ export async function dismissReportAction(formData: FormData) {
       resolvedAt: new Date()
     }
   });
+  await createAuditLog({
+    actorId: admin.id,
+    action: "DISMISSED_REPORT",
+    entityType: "Report",
+    entityId: reportId
+  });
 
   revalidatePath("/admin");
 }
 
 export async function featureBusinessAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
   const existingPlacement = await prisma.featuredPlacement.findFirst({
@@ -185,6 +247,12 @@ export async function featureBusinessAction(formData: FormData) {
 
   if (!existingPlacement) {
     await createHomepagePlacement(businessId);
+    await createAuditLog({
+      actorId: admin.id,
+      action: "FEATURED_BUSINESS",
+      entityType: "Business",
+      entityId: businessId
+    });
   }
 
   revalidatePath("/admin");
@@ -193,10 +261,16 @@ export async function featureBusinessAction(formData: FormData) {
 }
 
 export async function unfeatureBusinessAction(formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
   const businessId = String(formData.get("businessId") ?? "");
 
   await deactivateBusinessPlacements(businessId);
+  await createAuditLog({
+    actorId: admin.id,
+    action: "UNFEATURED_BUSINESS",
+    entityType: "Business",
+    entityId: businessId
+  });
 
   revalidatePath("/admin");
   revalidatePath("/");

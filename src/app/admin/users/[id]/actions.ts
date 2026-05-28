@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
+import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
 export async function updateAdminUserAction(userId: string, formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
 
   const name = String(formData.get("name") ?? "").trim();
   const phone = optionalString(formData.get("phone"));
@@ -17,7 +18,7 @@ export async function updateAdminUserAction(userId: string, formData: FormData) 
   }
 
   try {
-    await prisma.user.update({
+    const managedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         name,
@@ -25,6 +26,13 @@ export async function updateAdminUserAction(userId: string, formData: FormData) 
         role,
         status
       }
+    });
+    await createAuditLog({
+      actorId: admin.id,
+      action: "UPDATED_USER",
+      entityType: "User",
+      entityId: managedUser.id,
+      metadata: { userEmail: managedUser.email, role: managedUser.role, status: managedUser.status }
     });
   } catch {
     redirect(`/admin/users/${userId}?error=save`);

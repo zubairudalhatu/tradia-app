@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
+import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
 export async function updateAdminBusinessAction(businessId: string, formData: FormData) {
-  await requireAdminAction(formData);
+  const admin = await requireAdminAction(formData);
 
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -21,7 +22,7 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   }
 
   try {
-    await prisma.business.update({
+    const business = await prisma.business.update({
       where: { id: businessId },
       data: {
         name,
@@ -38,6 +39,13 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
         listingStatus: normalizeListingStatus(String(formData.get("listingStatus") ?? "DRAFT")),
         verificationStatus: normalizeVerificationStatus(String(formData.get("verificationStatus") ?? "UNVERIFIED"))
       }
+    });
+    await createAuditLog({
+      actorId: admin.id,
+      action: "UPDATED_BUSINESS",
+      entityType: "Business",
+      entityId: business.id,
+      metadata: { businessName: business.name }
     });
   } catch {
     redirect(`/admin/businesses/${businessId}?error=save`);

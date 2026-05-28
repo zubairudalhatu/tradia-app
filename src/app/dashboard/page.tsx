@@ -63,6 +63,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <p className="text-sm text-slate-600">
                   {business.category.name} in {business.location.name} - {business.listingStatus.replace("_", " ")}
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.viewCount} views</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.contactClickCount} contact clicks</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{business.reviewCount} reviews</span>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-ink">

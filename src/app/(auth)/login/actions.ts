@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextPath = getSafeNextPath(formData.get("next"));
 
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -20,5 +21,13 @@ export async function loginAction(formData: FormData) {
   }
 
   await createSession(user.id);
-  redirect(user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard");
+  redirect(nextPath ?? (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard"));
+}
+
+function getSafeNextPath(value: FormDataEntryValue | null) {
+  const nextPath = String(value ?? "").trim();
+
+  if (!nextPath.startsWith("/") || nextPath.startsWith("//")) return null;
+
+  return nextPath;
 }

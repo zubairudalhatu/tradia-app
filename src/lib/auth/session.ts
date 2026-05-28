@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
@@ -25,6 +26,7 @@ export async function createSession(userId: string) {
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = sign(encodedPayload);
   const cookieStore = await cookies();
+  const cookieDomain = await getCookieDomain();
 
   const sessionValue = `${encodedPayload}.${signature}`;
   const baseCookieOptions = {
@@ -38,7 +40,7 @@ export async function createSession(userId: string) {
   cookieStore.set(HOST_SESSION_COOKIE, sessionValue, baseCookieOptions);
   cookieStore.set(SESSION_COOKIE, sessionValue, {
     ...baseCookieOptions,
-    domain: getCookieDomain()
+    domain: cookieDomain
   });
 }
 
@@ -46,7 +48,7 @@ export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
   cookieStore.delete(HOST_SESSION_COOKIE);
-  const domain = getCookieDomain();
+  const domain = await getCookieDomain();
 
   if (domain) {
     cookieStore.set(SESSION_COOKIE, "", {
@@ -172,20 +174,25 @@ function sign(value: string) {
     .digest("base64url");
 }
 
-function getCookieDomain() {
+async function getCookieDomain() {
   if (process.env.NODE_ENV !== "production") return undefined;
 
-  try {
-    const hostname = new URL(process.env.NEXTAUTH_URL ?? "").hostname;
+  const requestHost = (await headers()).get("host")?.split(":")[0];
+  const hostname = requestHost ?? getConfiguredHostname();
 
-    if (hostname === "tradia.business" || hostname.endsWith(".tradia.business")) {
-      return ".tradia.business";
-    }
-  } catch {
-    return undefined;
+  if (hostname === "tradia.business" || hostname?.endsWith(".tradia.business")) {
+    return ".tradia.business";
   }
 
   return undefined;
+}
+
+function getConfiguredHostname() {
+  try {
+    return new URL(process.env.NEXTAUTH_URL ?? "").hostname;
+  } catch {
+    return undefined;
+  }
 }
 
 function safeEqual(left: string, right: string) {

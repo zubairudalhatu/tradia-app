@@ -2,17 +2,17 @@ import Link from "next/link";
 import { loginAction } from "./actions";
 
 type LoginPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams;
+  const params = await searchParams;
 
   return (
     <main className="mx-auto max-w-md px-5 py-16">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
       <h1 className="text-4xl font-black tracking-normal">Sign in to Tradia</h1>
-      {error ? (
+      {params.error ? (
         <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           Invalid login details or inactive account.
         </p>
@@ -26,6 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           Password
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="password" type="password" required />
         </label>
+        {isSafeNextPath(params.next) ? <input type="hidden" name="next" value={params.next} /> : null}
         <Link className="text-sm font-bold text-forest" href="/forgot-password">
           Forgot password?
         </Link>
@@ -36,4 +37,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </p>
     </main>
   );
+}
+
+function isSafeNextPath(value?: string) {
+  return Boolean(value?.startsWith("/") && !value.startsWith("//"));
 }

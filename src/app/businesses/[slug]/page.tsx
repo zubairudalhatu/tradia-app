@@ -407,20 +407,57 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
 
         <aside className="grid gap-6">
           <section className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-black">Send enquiry</h2>
-            <p className="mt-1 text-sm text-slate-600">Send a short message to this business owner.</p>
+            <div className="rounded-tradia bg-ink p-5 text-white">
+              <p className="text-xs font-black uppercase text-emerald-200">Business enquiry</p>
+              <h2 className="mt-2 text-2xl font-black">Send a message to {business.name}</h2>
+              <p className="mt-2 text-sm leading-6 text-white/75">
+                Tradia will save your enquiry and notify the business owner. Add either your email or phone so they can respond.
+              </p>
+            </div>
             {query.enquiry === "submitted" ? (
-              <p className="mt-3 rounded-tradia bg-emerald-50 p-3 text-sm font-bold text-forest">Enquiry sent successfully.</p>
+              <p className="mt-4 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
+                Enquiry sent successfully. The business owner has been notified.
+              </p>
             ) : null}
             {query.enquiry === "invalid" ? (
-              <p className="mt-3 rounded-tradia bg-red-50 p-3 text-sm font-bold text-red-700">Please add your name, message, and either email or phone.</p>
+              <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+                Please add your name, a message of at least 10 characters, and either email or phone.
+              </p>
             ) : null}
             <form action={leadAction} className="mt-5 grid gap-3">
-              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="name" placeholder="Your name" required />
-              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="email" type="email" placeholder="Email address" />
-              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="phone" placeholder="Phone number" />
-              <textarea className="min-h-24 rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="message" placeholder="What do you need?" required />
-              <button className="rounded-tradia bg-forest px-4 py-2 font-bold text-white">Send Enquiry</button>
+              <label className="grid gap-2 text-sm font-bold text-slate-600">
+                Your name
+                <input className="rounded-tradia border border-slate-200 px-3 py-3 text-sm" name="name" placeholder="Enter your full name" required minLength={2} />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <label className="grid gap-2 text-sm font-bold text-slate-600">
+                  Email address
+                  <input className="rounded-tradia border border-slate-200 px-3 py-3 text-sm" name="email" type="email" placeholder="you@example.com" />
+                </label>
+                <label className="grid gap-2 text-sm font-bold text-slate-600">
+                  Phone number
+                  <input className="rounded-tradia border border-slate-200 px-3 py-3 text-sm" name="phone" type="tel" placeholder="+234..." />
+                </label>
+              </div>
+              <p className="-mt-1 text-xs font-semibold text-slate-500">Provide at least one: email or phone.</p>
+              <label className="grid gap-2 text-sm font-bold text-slate-600">
+                Message
+                <textarea
+                  className="min-h-32 rounded-tradia border border-slate-200 px-3 py-3 text-sm"
+                  name="message"
+                  placeholder="Tell the business what you need, preferred timing, quantity, budget, or any important details."
+                  required
+                  minLength={10}
+                />
+              </label>
+              <button className="rounded-tradia bg-forest px-4 py-3 font-bold text-white transition hover:bg-forest/90">
+                Send Message
+              </button>
+              <div className="grid gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-semibold text-slate-600">
+                <span>Stored securely in the owner dashboard</span>
+                <span>Email notification sent when delivery is configured</span>
+                <span>No payment is required to send an enquiry</span>
+              </div>
             </form>
           </section>
 

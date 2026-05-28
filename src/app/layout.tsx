@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { SocialLinks } from "@/components/social-links";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -72,11 +71,6 @@ export default async function RootLayout({
           <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 text-sm md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <strong>&copy; 2026 Zamkah Technologies Limited</strong>
-              <div className="mt-3 flex flex-wrap gap-4 text-white/80">
-                <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
-                <a href="https://wa.me/2349055091300">+234 905 509 1300</a>
-                <SocialLinks compact showHandle />
-              </div>
             </div>
             <nav className="flex flex-wrap gap-4 text-white/80 md:justify-end">
               <Link href="/about">About</Link>

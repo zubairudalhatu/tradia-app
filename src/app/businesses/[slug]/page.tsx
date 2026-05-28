@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { getBusinessBySlug } from "@/lib/queries/businesses";
 import { reportBusinessAction, reportReviewAction, submitReviewAction } from "./actions";
 
@@ -48,6 +49,8 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
 
   const reviewAction = submitReviewAction.bind(null, business.id, business.slug);
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
+  const completeness = getBusinessProfileCompleteness(business);
+  const gallery = business.media.filter((item) => ["GALLERY", "COVER", "LOGO"].includes(item.type));
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -80,7 +83,10 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
-        <div className="h-56 bg-gradient-to-br from-forest to-ink" />
+        <div
+          className="h-56 bg-gradient-to-br from-forest to-ink bg-cover bg-center"
+          style={business.coverUrl ? { backgroundImage: `url(${business.coverUrl})` } : undefined}
+        />
         <div className="grid gap-8 p-6 lg:grid-cols-[1fr_320px]">
           <div>
             <div className="mb-5 flex flex-wrap items-center gap-4">
@@ -141,24 +147,37 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 <dd className="font-bold">{business.location.name}</dd>
               </div>
               <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Address</dt>
+                <dd className="text-right font-bold">{business.address}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Rating</dt>
                 <dd className="font-bold">{Number(business.averageRating).toFixed(1)}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Status</dt>
-                <dd className="font-bold">{business.listingStatus}</dd>
+                <dt className="text-slate-500">Verification</dt>
+                <dd className="font-bold">{business.verificationStatus}</dd>
               </div>
             </dl>
+            <div className="mt-5 rounded-tradia bg-slate-50 p-4">
+              <h3 className="font-black">Trust signals</h3>
+              <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                <span>{business.verificationStatus === "VERIFIED" ? "Verified by Tradia" : "Verification not completed yet"}</span>
+                <span>{business.reviewCount} published reviews</span>
+                <span>{business.media.length} media items uploaded</span>
+                <span>{completeness.percentage}% profile completeness</span>
+              </div>
+            </div>
           </aside>
         </div>
-        {business.media.length ? (
+        {gallery.length ? (
           <div className="border-t border-slate-200 p-6">
-            <h2 className="mb-4 text-2xl font-black">Business media</h2>
+            <h2 className="mb-4 text-2xl font-black">Photos and media</h2>
             <div className="grid gap-3 md:grid-cols-3">
-              {business.media.slice(0, 6).map((item) => (
-                <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-4 text-sm">
-                  <strong className="block text-ink">{item.type}</strong>
-                  <span className="text-slate-600">{item.title ?? item.url}</span>
+              {gallery.slice(0, 6).map((item) => (
+                <a key={item.id} href={item.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+                  <img className="h-44 w-full object-cover transition group-hover:scale-105" src={item.url} alt={item.title ?? business.name} />
+                  <span className="block px-4 py-3 text-sm font-bold text-ink">{item.title ?? item.type}</span>
                 </a>
               ))}
             </div>

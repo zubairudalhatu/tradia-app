@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 import {
@@ -57,6 +58,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   const mediaAction = uploadBusinessMediaAction.bind(null, business.id);
   const verificationAction = submitVerificationRequestAction.bind(null, business.id);
   const responseAction = respondToReviewAction.bind(null, business.id);
+  const completeness = getBusinessProfileCompleteness(business);
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-12">
@@ -91,6 +93,30 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           Review response saved.
         </p>
       ) : null}
+
+      <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black">Profile completeness</h2>
+            <p className="mt-1 text-sm text-slate-600">Complete profiles look more credible and convert more visitors into enquiries.</p>
+          </div>
+          <strong className="text-4xl font-black text-forest">{completeness.percentage}%</strong>
+        </div>
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full rounded-full bg-forest" style={{ width: `${completeness.percentage}%` }} />
+        </div>
+        {completeness.missing.length ? (
+          <div className="mt-5 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+            {completeness.missing.slice(0, 6).map((item) => (
+              <span key={item} className="rounded-tradia bg-slate-50 px-3 py-2 font-bold">{item}</span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-tradia bg-emerald-50 p-3 text-sm font-bold text-forest">
+            This profile is in excellent shape.
+          </p>
+        )}
+      </section>
 
       <form action={action} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold text-slate-600">

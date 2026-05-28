@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { MobileMenu } from "@/components/mobile-menu";
 import { getCurrentUser } from "@/lib/auth/session";
 import "./globals.css";
 
@@ -28,6 +29,8 @@ export default async function RootLayout({
 }>) {
   const user = await getCurrentUser();
   const canAccessAdmin = Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
+  const navLinkClass =
+    "rounded-tradia px-3 py-2 transition hover:bg-white hover:text-forest hover:shadow-md focus-visible:bg-white focus-visible:text-forest focus-visible:shadow-md focus-visible:outline-none";
 
   return (
     <html lang="en">
@@ -44,32 +47,15 @@ export default async function RootLayout({
             <Link href="/" className="block w-40" aria-label="Tradia home">
               <Image src="/brand/tradia-logo.png" alt="Tradia" width={320} height={93} priority />
             </Link>
-            <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
-              <Link href="/businesses">Browse</Link>
-              <Link href="/pricing">Pricing</Link>
-              <Link href="/dashboard">Business</Link>
-              {user ? <Link href="/account">Account</Link> : null}
-              {canAccessAdmin ? <Link href="/admin">Admin</Link> : null}
-              {user ? <Link href="/logout">Logout</Link> : <Link href="/login">Login</Link>}
+            <nav className="hidden items-center gap-1 text-sm font-semibold text-slate-600 md:flex">
+              <Link className={navLinkClass} href="/businesses">Browse</Link>
+              <Link className={navLinkClass} href="/pricing">Pricing</Link>
+              <Link className={navLinkClass} href="/dashboard">Business</Link>
+              {user ? <Link className={navLinkClass} href="/account">Account</Link> : null}
+              {canAccessAdmin ? <Link className={navLinkClass} href="/admin">Admin</Link> : null}
+              {user ? <Link className={navLinkClass} href="/logout">Logout</Link> : <Link className={navLinkClass} href="/login">Login</Link>}
             </nav>
-            <details className="relative md:hidden">
-              <summary className="cursor-pointer list-none rounded-tradia border border-slate-200 px-3 py-2 text-sm font-bold text-ink">
-                Menu
-              </summary>
-              <nav className="absolute right-0 top-12 z-50 grid w-48 gap-1 rounded-tradia border border-slate-200 bg-white p-2 text-sm font-bold text-slate-700 shadow-xl">
-                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/businesses">Browse</Link>
-                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/pricing">Pricing</Link>
-                <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/dashboard">Business</Link>
-                {user ? <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/account">Account</Link> : null}
-                {canAccessAdmin ? <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/admin">Admin</Link> : null}
-                <Link className="rounded-tradia px-3 py-2 text-forest hover:bg-emerald-50" href="/businesses/new">Add Business</Link>
-                {user ? (
-                  <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/logout">Logout</Link>
-                ) : (
-                  <Link className="rounded-tradia px-3 py-2 hover:bg-slate-50" href="/login">Login</Link>
-                )}
-              </nav>
-            </details>
+            <MobileMenu isSignedIn={Boolean(user)} canAccessAdmin={canAccessAdmin} />
             <Link
               href="/businesses/new"
               className="hidden rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white sm:inline-flex"

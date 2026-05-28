@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
 import { listPublishedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -20,7 +21,16 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
 
   return {
     title: `Businesses in ${area.name} | Tradia`,
-    description: `Find verified businesses in ${area.name} on Tradia. Browse local services, shops, schools, clinics, hotels, and more.`
+    description: `Find verified businesses in ${area.name} on Tradia. Browse local services, shops, schools, clinics, hotels, and more.`,
+    alternates: {
+      canonical: `/locations/${area.slug}`
+    },
+    openGraph: {
+      title: `Businesses in ${area.name} | Tradia`,
+      description: `Browse trusted businesses in ${area.name} with reviews, contact details, and verification signals.`,
+      url: `/locations/${area.slug}`,
+      type: "website"
+    }
   };
 }
 
@@ -34,9 +44,20 @@ export default async function LocationPage({ params }: LocationPageProps) {
   ]);
 
   if (!area) notFound();
+  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "Locations", href: "/businesses" },
+    { label: area.name }
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
+      />
+      <Breadcrumbs items={breadcrumbs} />
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Location</p>
         <h1 className="text-5xl font-black tracking-normal">Businesses in {area.name}</h1>
@@ -84,6 +105,13 @@ export default async function LocationPage({ params }: LocationPageProps) {
           )}
         </section>
       </div>
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-black">Find businesses in {area.name}</h2>
+        <p className="mt-3 leading-7 text-slate-600">
+          Tradia helps customers compare businesses in {area.name} by category, verification status, reviews, and direct contact options.
+          Business owners can improve visibility by keeping profiles complete, uploading useful media, and requesting verification.
+        </p>
+      </section>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
 import { listPublishedBusinesses } from "@/lib/queries/businesses";
 import { getActiveCategoryBySlug, listActiveCategories } from "@/lib/queries/categories";
@@ -20,7 +21,16 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   return {
     title: `${category.name} Businesses in Nigeria | Tradia`,
-    description: `Find verified ${category.name.toLowerCase()} businesses across Nigeria on Tradia. Browse trusted local listings, contacts, reviews, and business profiles.`
+    description: `Find verified ${category.name.toLowerCase()} businesses across Nigeria on Tradia. Browse trusted local listings, contacts, reviews, and business profiles.`,
+    alternates: {
+      canonical: `/categories/${category.slug}`
+    },
+    openGraph: {
+      title: `${category.name} Businesses in Nigeria | Tradia`,
+      description: `Discover trusted ${category.name.toLowerCase()} businesses across Nigeria on Tradia.`,
+      url: `/categories/${category.slug}`,
+      type: "website"
+    }
   };
 }
 
@@ -34,9 +44,20 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   ]);
 
   if (!category) notFound();
+  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "Categories", href: "/businesses" },
+    { label: category.name }
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
+      />
+      <Breadcrumbs items={breadcrumbs} />
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Category</p>
         <h1 className="text-5xl font-black tracking-normal">{category.name} businesses in Nigeria</h1>
@@ -84,6 +105,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           )}
         </section>
       </div>
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-black">Compare {category.name.toLowerCase()} businesses</h2>
+        <p className="mt-3 leading-7 text-slate-600">
+          Use Tradia to find {category.name.toLowerCase()} providers with public profiles, media, contact buttons, reviews, and verification signals.
+          Filter by area to discover businesses closer to your customers or community.
+        </p>
+      </section>
     </main>
   );
 }

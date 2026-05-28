@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
 import { listPublishedBusinesses } from "@/lib/queries/businesses";
 import { getActiveCategoryBySlug, listActiveCategories } from "@/lib/queries/categories";
@@ -23,7 +24,16 @@ export async function generateMetadata({ params }: CategoryLocationPageProps): P
 
   return {
     title: `${category.name} in ${area.name} | Tradia`,
-    description: `Find verified ${category.name.toLowerCase()} businesses in ${area.name}. Compare trusted local profiles, reviews, and contact details on Tradia.`
+    description: `Find verified ${category.name.toLowerCase()} businesses in ${area.name}. Compare trusted local profiles, reviews, and contact details on Tradia.`,
+    alternates: {
+      canonical: `/locations/${area.slug}/categories/${category.slug}`
+    },
+    openGraph: {
+      title: `${category.name} in ${area.name} | Tradia`,
+      description: `Compare trusted ${category.name.toLowerCase()} businesses in ${area.name} with reviews, verification, and contact details.`,
+      url: `/locations/${area.slug}/categories/${category.slug}`,
+      type: "website"
+    }
   };
 }
 
@@ -38,9 +48,21 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
   ]);
 
   if (!area || !category) notFound();
+  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: area.name, href: `/locations/${area.slug}` },
+    { label: category.name, href: `/categories/${category.slug}` },
+    { label: `${category.name} in ${area.name}` }
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
+      />
+      <Breadcrumbs items={breadcrumbs} />
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Local Search</p>
         <h1 className="text-5xl font-black tracking-normal">{category.name} in {area.name}</h1>
@@ -88,6 +110,13 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
           )}
         </section>
       </div>
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-black">{category.name} businesses serving {area.name}</h2>
+        <p className="mt-3 leading-7 text-slate-600">
+          This page helps customers find relevant {category.name.toLowerCase()} businesses in {area.name} and helps listed businesses earn stronger discovery through
+          complete profiles, contact tracking, reviews, and verification.
+        </p>
+      </section>
     </main>
   );
 }

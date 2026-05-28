@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
+import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { getBusinessBySlug } from "@/lib/queries/businesses";
 import { reportBusinessAction, reportReviewAction, submitBusinessLeadAction, submitReviewAction } from "./actions";
@@ -52,13 +54,70 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
   const leadAction = submitBusinessLeadAction.bind(null, business.id, business.slug);
   const completeness = getBusinessProfileCompleteness(business);
+  const planState = getBusinessPlanState(business);
+  const benefits = planState.benefits;
   const gallery = business.media.filter((item) => ["GALLERY", "COVER", "LOGO"].includes(item.type));
+  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const isVerified = business.verificationStatus === "VERIFIED";
+  const hasDirectContact = Boolean(business.phone || business.whatsapp || business.email || business.website);
+  const contactMethods = [
+    business.phone ? "Phone" : null,
+    business.whatsapp ? "WhatsApp" : null,
+    business.email ? "Email" : null,
+    business.website ? "Website" : null
+  ].filter(Boolean);
+  const activePlanName = benefits.name;
+  const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
+  const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
+  const trustSignals = [
+    {
+      label: "Verification",
+      value: isVerified ? "Verified by Tradia" : verificationLabel(business.verificationStatus),
+      strong: isVerified
+    },
+    {
+      label: "Plan level",
+      value: `${activePlanName} listing`,
+      strong: activePlanName !== "Free"
+    },
+    {
+      label: "Profile",
+      value: `${completeness.percentage}% complete`,
+      strong: completeness.percentage >= 70
+    },
+    {
+      label: "Reviews",
+      value: `${business.reviewCount} published`,
+      strong: business.reviewCount > 0
+    },
+    {
+      label: "Media",
+      value: `${business.media.length} uploaded`,
+      strong: business.media.length >= 3
+    },
+    {
+      label: "Contact",
+      value: hasDirectContact ? `${contactMethods.length} contact channel${contactMethods.length === 1 ? "" : "s"}` : "Limited contact details",
+      strong: hasDirectContact
+    },
+    {
+      label: "Recent update",
+      value: `Updated ${lastUpdated}`,
+      strong: daysSince(business.updatedAt) <= 90
+    }
+  ];
+  const breadcrumbs = [
+    { label: "Businesses", href: "/businesses" },
+    { label: business.category.name, href: `/businesses?category=${business.category.slug}` },
+    { label: business.location.name, href: `/businesses?location=${business.location.slug}` },
+    { label: business.name }
+  ];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: business.name,
     description: business.description,
-    url: `${(process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "")}/businesses/${business.slug}`,
+    url: `${baseUrl}/businesses/${business.slug}`,
     image: business.logoUrl || business.coverUrl || undefined,
     telephone: business.phone || business.whatsapp || undefined,
     email: business.email || undefined,
@@ -84,28 +143,50 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
+      />
+      <Breadcrumbs items={breadcrumbs} />
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
-        <div
-          className="h-56 bg-gradient-to-br from-forest to-ink bg-cover bg-center"
-          style={business.coverUrl ? { backgroundImage: `url(${business.coverUrl})` } : undefined}
-        />
-        <div className="grid gap-8 p-6 lg:grid-cols-[1fr_320px]">
-          <div>
-            <div className="mb-5 flex flex-wrap items-center gap-4">
+        <div className="relative">
+          <div
+            className="h-64 bg-gradient-to-br from-forest to-ink bg-cover bg-center"
+            style={business.coverUrl ? { backgroundImage: `url(${business.coverUrl})` } : undefined}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
+          <div className="absolute bottom-5 left-5 right-5 flex flex-wrap items-end justify-between gap-4">
+            <div className="flex items-end gap-4">
               {business.logoUrl ? (
-                <img className="h-20 w-20 rounded-tradia border border-slate-200 object-cover" src={business.logoUrl} alt="" />
-              ) : null}
-              <div>
-                <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <h1 className="text-4xl font-black tracking-normal">{business.name}</h1>
-                  {business.verificationStatus === "VERIFIED" ? (
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-black text-forest">
-                      Verified
-                    </span>
-                  ) : null}
+                <img className="h-24 w-24 rounded-tradia border-4 border-white bg-white object-cover shadow-lg" src={business.logoUrl} alt="" />
+              ) : (
+                <div className="grid h-24 w-24 place-items-center rounded-tradia border-4 border-white bg-white text-3xl font-black text-forest shadow-lg">
+                  {business.name.charAt(0)}
                 </div>
-                <p className="text-sm font-bold text-slate-500">{business.category.name} in {business.location.name}</p>
+              )}
+              <div>
+                <p className="mb-2 text-sm font-black text-white/80">{business.category.name} in {business.location.name}</p>
+                <h1 className="max-w-3xl text-4xl font-black tracking-normal text-white md:text-5xl">{business.name}</h1>
               </div>
+            </div>
+            {isVerified ? (
+              <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-forest shadow-sm">
+                Verified by Tradia
+              </span>
+            ) : (
+              <span className="rounded-full bg-white/95 px-4 py-2 text-sm font-black text-ink shadow-sm">
+                {verificationLabel(business.verificationStatus)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="grid gap-8 p-6 lg:grid-cols-[1fr_340px]">
+          <div>
+            <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <TrustMetric label="Rating" value={`${Number(business.averageRating).toFixed(1)} / 5`} />
+              <TrustMetric label="Plan" value={activePlanName} />
+              <TrustMetric label="Profile" value={`${completeness.percentage}%`} />
+              <TrustMetric label="Contact" value={hasDirectContact ? "Available" : "Limited"} />
             </div>
             <p className="text-lg leading-8 text-slate-600">{business.description}</p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -136,6 +217,17 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 Claim Business
               </a>
             </div>
+            <div className="mt-6 rounded-tradia border border-slate-200 bg-slate-50 p-5">
+              <h2 className="text-xl font-black">Why customers can trust this listing</h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {trustSignals.map((signal) => (
+                  <div key={signal.label} className="rounded-tradia bg-white p-4">
+                    <strong className={signal.strong ? "text-forest" : "text-ink"}>{signal.value}</strong>
+                    <span className="mt-1 block text-xs font-bold uppercase text-slate-400">{signal.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <aside className="rounded-tradia border border-slate-200 p-5">
             <h2 className="mb-4 font-black">Business details</h2>
@@ -158,18 +250,41 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Verification</dt>
-                <dd className="font-bold">{business.verificationStatus}</dd>
+                <dd className="font-bold">{verificationLabel(business.verificationStatus)}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Plan level</dt>
+                <dd className="font-bold">{activePlanName}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Listed since</dt>
+                <dd className="text-right font-bold">{listedSince}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Last updated</dt>
+                <dd className="text-right font-bold">{lastUpdated}</dd>
               </div>
             </dl>
-            <div className="mt-5 rounded-tradia bg-slate-50 p-4">
-              <h3 className="font-black">Trust signals</h3>
+            <div className="mt-5 rounded-tradia bg-emerald-50 p-4">
+              <h3 className="font-black text-forest">Trust summary</h3>
               <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                <span>{business.verificationStatus === "VERIFIED" ? "Verified by Tradia" : "Verification not completed yet"}</span>
-                <span>{business.reviewCount} published reviews</span>
-                <span>{business.media.length} media items uploaded</span>
+                <span>{isVerified ? "Business documents have been reviewed by Tradia." : "This business has not completed verification yet."}</span>
+                <span>{activePlanName} listing level{planState.activeSubscription ? ` active until ${planState.activeSubscription.endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}` : ""}</span>
+                <span>{hasDirectContact ? `Available through ${contactMethods.join(", ")}` : "Direct contact details are limited"}</span>
                 <span>{completeness.percentage}% profile completeness</span>
+                <span>Updated {lastUpdated}</span>
               </div>
             </div>
+            {completeness.missing.length ? (
+              <div className="mt-5 rounded-tradia bg-slate-50 p-4">
+                <h3 className="font-black">Profile still missing</h3>
+                <ul className="mt-3 grid gap-2 text-sm text-slate-600">
+                  {completeness.missing.slice(0, 4).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </aside>
         </div>
         {gallery.length ? (
@@ -317,4 +432,24 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
       </section>
     </main>
   );
+}
+
+function TrustMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-tradia border border-slate-200 bg-white p-4">
+      <strong className="block text-2xl font-black text-ink">{value}</strong>
+      <span className="text-xs font-bold uppercase text-slate-400">{label}</span>
+    </div>
+  );
+}
+
+function verificationLabel(status: string) {
+  if (status === "VERIFIED") return "Verified by Tradia";
+  if (status === "PENDING") return "Verification pending";
+  if (status === "REJECTED") return "Verification not approved";
+  return "Not yet verified";
+}
+
+function daysSince(date: Date) {
+  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
 }

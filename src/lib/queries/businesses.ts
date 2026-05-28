@@ -114,6 +114,10 @@ export function getBusinessBySlug(slug: string) {
       ...businessInclude,
       hours: true,
       media: true,
+      subscriptions: {
+        include: { plan: true },
+        orderBy: { endsAt: "desc" }
+      },
       reviews: {
         where: { status: "PUBLISHED" },
         include: { user: true },

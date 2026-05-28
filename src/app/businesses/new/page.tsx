@@ -44,7 +44,7 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
       <h1 className="text-5xl font-black tracking-normal">Add your business</h1>
       {params.error ? (
         <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
-          Please complete the required business details.
+          Please complete the required business details. Description must be at least 20 characters.
         </p>
       ) : null}
       <form action={submitBusinessAction} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
@@ -97,9 +97,13 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
           <textarea
             className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3"
             name="description"
-            placeholder="Tell customers what you offer"
+            minLength={20}
+            placeholder="Tell customers what you offer. Minimum 20 characters."
             required
           />
+          <span className="text-xs font-semibold text-slate-500">
+            Minimum 20 characters. Example: Advertising agency helping businesses with branding, media buying, and campaigns.
+          </span>
         </label>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white md:col-span-2">
           Submit for Approval

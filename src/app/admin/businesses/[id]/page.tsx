@@ -64,7 +64,9 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
       ) : null}
       {query.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          Could not save this business. Check required fields and unique contact values.
+          {query.error === "invalid"
+            ? "Could not save this business. Description must be at least 20 characters and all required fields must be completed."
+            : "Could not save this business. Check required fields and unique contact values."}
         </p>
       ) : null}
 
@@ -153,7 +155,17 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
           Description
-          <textarea className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3" name="description" defaultValue={business.description} required />
+          <textarea
+            className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3"
+            name="description"
+            defaultValue={business.description}
+            minLength={20}
+            placeholder="Tell customers what this business offers. Minimum 20 characters."
+            required
+          />
+          <span className="text-xs font-semibold text-slate-500">
+            Minimum 20 characters so the listing has enough detail for visitors.
+          </span>
         </label>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white md:col-span-2">Save Business</button>
       </form>

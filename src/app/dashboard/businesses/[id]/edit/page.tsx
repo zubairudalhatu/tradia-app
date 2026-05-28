@@ -190,7 +190,17 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
           Description
-          <textarea className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3" name="description" defaultValue={business.description} required />
+          <textarea
+            className="min-h-32 rounded-tradia border border-slate-200 px-4 py-3"
+            name="description"
+            defaultValue={business.description}
+            minLength={20}
+            placeholder="Tell customers what this business offers. Minimum 20 characters."
+            required
+          />
+          <span className="text-xs font-semibold text-slate-500">
+            Minimum 20 characters so customers understand what the business offers.
+          </span>
         </label>
         <div className="grid gap-2 rounded-tradia bg-slate-50 p-4 text-sm text-slate-600 md:col-span-2">
           <span><strong>Status:</strong> {business.listingStatus.replace("_", " ")}</span>
@@ -318,6 +328,10 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
 }
 
 function errorMessage(error: string) {
+  if (error === "invalid") {
+    return "Please check the required fields. Description must be at least 20 characters.";
+  }
+
   if (error === "upload-storage") {
     return "Uploads are not configured yet. Please add Cloudinary credentials in Vercel before uploading media or verification documents.";
   }

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const businessCreateSchema = z.object({
   name: z.string().min(2),
-  description: z.string().min(20),
+  description: z.string().min(20, "Business description must be at least 20 characters."),
   categoryId: z.string().min(1),
   locationId: z.string().min(1),
   address: z.string().min(5),

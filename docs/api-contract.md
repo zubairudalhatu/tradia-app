@@ -45,10 +45,51 @@ Creates a pending ownership claim.
 
 Creates a pending verification request.
 
+## Reviews
+
+`POST /api/reviews`
+
+Creates or updates the signed-in user's pending review for a published business. Reviews require admin moderation before they affect public ratings.
+
+Required body:
+
+```json
+{
+  "businessId": "business_id",
+  "rating": 5,
+  "title": "Helpful service",
+  "body": "The team responded quickly and handled the work professionally."
+}
+```
+
+## Reports
+
+`POST /api/reports`
+
+Creates a report for a published business or review. Requires a signed-in active user.
+
+Business report body:
+
+```json
+{
+  "businessId": "business_id",
+  "type": "Incorrect information",
+  "message": "The listed phone number appears to be wrong."
+}
+```
+
+Review report body:
+
+```json
+{
+  "reviewId": "review_id",
+  "message": "This review looks abusive or unrelated to the business."
+}
+```
+
 ## Next API Work
 
 - Auth session enforcement.
 - Admin approve/reject routes.
 - Paystack checkout and webhook routes.
-- Reviews and reports routes.
 - Search endpoint backed by PostgreSQL indexes.

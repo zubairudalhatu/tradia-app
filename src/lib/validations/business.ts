@@ -24,3 +24,20 @@ export const verificationCreateSchema = z.object({
   documentUrl: z.string().url(),
   notes: z.string().optional()
 });
+
+export const reviewCreateSchema = z.object({
+  businessId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  title: z.string().trim().min(2).optional(),
+  body: z.string().trim().min(10)
+});
+
+export const reportCreateSchema = z.object({
+  businessId: z.string().min(1).optional(),
+  reviewId: z.string().min(1).optional(),
+  type: z.string().trim().min(2).default("Business report"),
+  message: z.string().trim().min(10)
+}).refine((input) => input.businessId || input.reviewId, {
+  message: "A businessId or reviewId is required.",
+  path: ["businessId"]
+});

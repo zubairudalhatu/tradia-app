@@ -46,7 +46,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           {checkoutMessage(params.checkout)}
         </p>
       ) : null}
-      <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-8 grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
           const businessesWithPlanState = businesses.map((business) => ({
             business,
@@ -61,7 +61,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           return (
           <article
             key={plan.name}
-            className={`rounded-tradia border bg-white p-5 shadow-sm ${
+            className={`min-w-0 overflow-hidden rounded-tradia border bg-white p-5 shadow-sm ${
               isCurrentForAnyBusiness ? "border-forest ring-2 ring-emerald-100" : "border-slate-200"
             }`}
           >
@@ -74,7 +74,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             {businessesOnPlan.length ? (
               <div className="mt-3 grid gap-2 text-xs font-bold text-slate-600">
                 {businessesOnPlan.map(({ business, planState }) => (
-                  <p key={business.id} className="rounded-tradia bg-emerald-50 px-3 py-2 text-forest">
+                  <p key={business.id} className="break-words rounded-tradia bg-emerald-50 px-3 py-2 text-forest">
                     {business.name}
                     {planState.activeSubscription ? ` active until ${planState.activeSubscription.endsAt.toLocaleDateString()}` : ""}
                   </p>
@@ -97,16 +97,16 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               user ? (
                 businesses.length ? (
                   businessesEligibleForPlan.length ? (
-                    <form action={startPlanCheckoutAction} className="mt-6 grid gap-3">
+                    <form action={startPlanCheckoutAction} className="mt-6 grid min-w-0 gap-3">
                       <input type="hidden" name="planId" value={plan.id} />
-                      <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
+                      <select className="block w-full min-w-0 max-w-full truncate rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
                         {businessesEligibleForPlan.map(({ business, planState }) => (
                           <option key={business.id} value={business.id}>
                             {business.name} - currently {planState.benefits.name}
                           </option>
                         ))}
                       </select>
-                      <button name="paymentProvider" value="squad" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+                      <button name="paymentProvider" value="squad" className="w-full rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                         Upgrade with Squad
                       </button>
                     </form>

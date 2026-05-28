@@ -176,6 +176,11 @@ model Business {
 
   @@index([categoryId, locationId, listingStatus])
   @@index([verificationStatus])
+  @@index([ownerId], map: "Business_ownerId_idx")
+  @@index([planId], map: "Business_planId_idx")
+  @@index([listingStatus, updatedAt], map: "Business_listingStatus_updatedAt_idx")
+  @@index([listingStatus, verificationStatus], map: "Business_listingStatus_verificationStatus_idx")
+  @@index([listingStatus, averageRating, createdAt], map: "Business_listingStatus_averageRating_createdAt_idx")
 }
 
 model ContactLead {
@@ -207,6 +212,8 @@ model Category {
   isActive    Boolean    @default(true)
   businesses  Business[]
   featuredPlacements FeaturedPlacement[]
+
+  @@index([isActive, sortOrder], map: "Category_isActive_sortOrder_idx")
 }
 
 model Location {
@@ -224,6 +231,8 @@ model Location {
   featuredPlacements FeaturedPlacement[]
 
   @@unique([type, slug, parentId])
+  @@index([parentId, isActive, name], map: "Location_parentId_isActive_name_idx")
+  @@index([isActive, type, name], map: "Location_isActive_type_name_idx")
 }
 
 model BusinessHour {
@@ -236,6 +245,7 @@ model BusinessHour {
   isClosed    Boolean  @default(false)
 
   @@unique([businessId, dayOfWeek])
+  @@index([dayOfWeek, isClosed, opensAt, closesAt], map: "BusinessHour_openNow_idx")
 }
 
 model Media {
@@ -267,6 +277,8 @@ model Review {
   reports          Report[]
 
   @@unique([businessId, userId])
+  @@index([businessId, status, createdAt], map: "Review_businessId_status_createdAt_idx")
+  @@index([status, createdAt], map: "Review_status_createdAt_idx")
 }
 
 model VerificationRequest {
@@ -284,6 +296,9 @@ model VerificationRequest {
   reviewer     User?         @relation("VerificationReviewer", fields: [reviewedBy], references: [id])
   reviewedAt   DateTime?
   createdAt    DateTime      @default(now())
+
+  @@index([status, createdAt], map: "VerificationRequest_status_createdAt_idx")
+  @@index([businessId, status], map: "VerificationRequest_businessId_status_idx")
 }
 
 model BusinessClaim {
@@ -300,6 +315,9 @@ model BusinessClaim {
   reviewer    User?         @relation("ClaimReviewer", fields: [reviewedBy], references: [id])
   reviewedAt  DateTime?
   createdAt   DateTime      @default(now())
+
+  @@index([status, createdAt], map: "BusinessClaim_status_createdAt_idx")
+  @@index([businessId, status], map: "BusinessClaim_businessId_status_idx")
 }
 
 model Plan {
@@ -330,6 +348,9 @@ model Subscription {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   payments          Payment[]
+
+  @@index([businessId, status, endsAt], map: "Subscription_businessId_status_endsAt_idx")
+  @@index([status, endsAt], map: "Subscription_status_endsAt_idx")
 }
 
 model Payment {
@@ -348,6 +369,11 @@ model Payment {
   paidAt            DateTime?
   rawPayload        Json?
   createdAt         DateTime      @default(now())
+
+  @@index([status, createdAt], map: "Payment_status_createdAt_idx")
+  @@index([userId, createdAt], map: "Payment_userId_createdAt_idx")
+  @@index([businessId, createdAt], map: "Payment_businessId_createdAt_idx")
+  @@index([provider, status, createdAt], map: "Payment_provider_status_createdAt_idx")
 }
 
 model Report {
@@ -364,6 +390,10 @@ model Report {
   resolvedBy  String?
   resolvedAt  DateTime?
   createdAt   DateTime     @default(now())
+
+  @@index([status, createdAt], map: "Report_status_createdAt_idx")
+  @@index([businessId, status], map: "Report_businessId_status_idx")
+  @@index([reviewId, status], map: "Report_reviewId_status_idx")
 }
 
 model FeaturedPlacement {
@@ -379,6 +409,10 @@ model FeaturedPlacement {
   endsAt        DateTime
   status        String    @default("ACTIVE")
   createdAt     DateTime  @default(now())
+
+  @@index([status, endsAt], map: "FeaturedPlacement_status_endsAt_idx")
+  @@index([businessId, status, endsAt], map: "FeaturedPlacement_businessId_status_endsAt_idx")
+  @@index([locationId, categoryId, status, endsAt], map: "FeaturedPlacement_locationId_categoryId_status_endsAt_idx")
 }
 
 model AuditLog {
@@ -390,4 +424,7 @@ model AuditLog {
   entityId   String
   metadata   Json?
   createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt], map: "AuditLog_actorId_createdAt_idx")
+  @@index([entityType, entityId, createdAt], map: "AuditLog_entityType_entityId_createdAt_idx")
 }

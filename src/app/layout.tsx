@@ -26,6 +26,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5482232753323076"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <header className="sticky top-0 z-40 border-b border-slate-200 bg-paper/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4">

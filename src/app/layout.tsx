@@ -13,7 +13,12 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     shortcut: "/icon.png",
     apple: "/icon.png"
-  }
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? {
+        google: process.env.GOOGLE_SITE_VERIFICATION
+      }
+    : undefined
 };
 
 export default async function RootLayout({

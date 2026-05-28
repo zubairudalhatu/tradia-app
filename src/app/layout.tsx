@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
+import { SocialLinks } from "@/components/social-links";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -74,13 +75,7 @@ export default async function RootLayout({
               <div className="mt-3 flex flex-wrap gap-4 text-white/80">
                 <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
                 <a href="https://wa.me/2349055091300">+234 905 509 1300</a>
-                <span className="flex flex-wrap gap-2" aria-label="Tradia social media handles">
-                  <span title="X">X</span>
-                  <span title="Instagram">IG</span>
-                  <span title="Facebook">FB</span>
-                  <span title="TikTok">TT</span>
-                  <span>@tradiabusiness</span>
-                </span>
+                <SocialLinks compact showHandle />
               </div>
             </div>
             <nav className="flex flex-wrap gap-4 text-white/80 md:justify-end">

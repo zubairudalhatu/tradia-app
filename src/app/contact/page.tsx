@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SocialLinks } from "@/components/social-links";
 import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export default function ContactPage() {
     <TrustPage
       eyebrow="Contact"
       title="Contact Tradia"
-      intro="Reach the Tradia team for listing, verification, billing, or partnership support."
+      intro="Reach the Tradia team for listing, premium services, verification, billing, or partnership support."
     >
       <p>
         Email: <a className="font-bold text-forest" href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
@@ -19,11 +20,10 @@ export default function ContactPage() {
       <p>
         WhatsApp: <a className="font-bold text-forest" href="https://wa.me/2349055091300">+234 905 509 1300</a>
       </p>
-      <p>
-        Social media: <span className="font-bold">X</span>, <span className="font-bold">Instagram</span>,{" "}
-        <span className="font-bold">Facebook</span>, and <span className="font-bold">TikTok</span>{" "}
-        <span className="font-bold text-forest">@tradiabusiness</span>
-      </p>
+      <div>
+        <p className="font-bold text-ink">Social media</p>
+        <SocialLinks className="mt-2 text-forest" showHandle />
+      </div>
       <p>Company: Zamkah Technologies Limited</p>
     </TrustPage>
   );

@@ -28,6 +28,17 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     },
     orderBy: { updatedAt: "desc" }
   });
+  const payments = await prisma.payment.findMany({
+    where: { userId: user.id },
+    include: {
+      business: true,
+      subscription: {
+        include: { plan: true }
+      }
+    },
+    orderBy: { createdAt: "desc" },
+    take: 10
+  });
   const renewalWindowEndsAt = addDays(new Date(), 30);
 
   return (
@@ -104,6 +115,43 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           )}
         </div>
       </section>
+
+      <section className="mt-8 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <h2 className="text-2xl font-black">Payment history</h2>
+          <p className="mt-1 text-sm text-slate-600">Recent subscription payments connected to this account.</p>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {payments.length ? payments.map((payment) => (
+            <article key={payment.id} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <h3 className="font-black">
+                  {payment.subscription?.plan.name ?? "Plan payment"} - {formatAmount(payment.amount, payment.currency)}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {payment.business?.name ?? "Business"} - {payment.provider} - {payment.status}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Reference: {payment.providerReference} - {payment.paidAt ? payment.paidAt.toLocaleDateString("en-NG", { dateStyle: "medium" }) : payment.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                </p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-black ${payment.status === "SUCCESS" ? "bg-emerald-50 text-forest" : "bg-slate-100 text-ink"}`}>
+                {payment.status}
+              </span>
+            </article>
+          )) : (
+            <p className="p-5 text-sm text-slate-600">No payments have been recorded yet.</p>
+          )}
+        </div>
+      </section>
     </main>
   );
+}
+
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0
+  }).format(amount);
 }

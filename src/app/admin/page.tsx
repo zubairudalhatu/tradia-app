@@ -83,7 +83,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     expiringSubscriptionCount,
     expiredSubscriptionCount,
     expiringSubscriptions,
-    expiredSubscriptions
+    expiredSubscriptions,
+    recentPayments
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -232,6 +233,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       },
       orderBy: { endsAt: "desc" },
       take: 8
+    }),
+    prisma.payment.findMany({
+      include: {
+        user: true,
+        business: true,
+        subscription: {
+          include: { plan: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10
     })
   ]);
 
@@ -309,6 +321,38 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <p className="p-5 text-sm text-slate-600">No paid subscriptions have expired.</p>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <h2 className="text-2xl font-black">Payment history</h2>
+          <p className="mt-1 text-sm text-slate-600">Review recent checkout attempts, successful payments, and provider references.</p>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {recentPayments.length ? recentPayments.map((payment) => (
+            <article key={payment.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <h3 className="font-black">
+                  {payment.business?.name ?? "Unknown business"} - {formatAmount(payment.amount, payment.currency)}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {payment.subscription?.plan.name ?? "Pending plan"} - {payment.provider} - {payment.status}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Customer: {payment.user.name} - {payment.user.email}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Reference: {payment.providerReference}
+                </p>
+              </div>
+              <time className="text-sm font-bold text-slate-500" dateTime={(payment.paidAt ?? payment.createdAt).toISOString()}>
+                {(payment.paidAt ?? payment.createdAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+              </time>
+            </article>
+          )) : (
+            <p className="p-5 text-sm text-slate-600">No payments have been recorded yet.</p>
+          )}
         </div>
       </section>
 
@@ -642,6 +686,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 function AdminActionTokenInput({ token }: { token: string }) {
   return <input type="hidden" name="adminActionToken" value={token} />;
+}
+
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0
+  }).format(amount);
 }
 
 function isListingStatus(value?: string): value is "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "SUSPENDED" {

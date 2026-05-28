@@ -16,11 +16,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const businesses = await prisma.business.findMany({
     where: { ownerId: user.id },
-    include: { category: true, location: true },
+    include: {
+      category: true,
+      location: true,
+      contactLeads: {
+        orderBy: { createdAt: "desc" },
+        take: 3
+      },
+      _count: {
+        select: {
+          contactLeads: true
+        }
+      }
+    },
     orderBy: { createdAt: "desc" }
   });
   const totalViews = businesses.reduce((sum, business) => sum + business.viewCount, 0);
   const contactClicks = businesses.reduce((sum, business) => sum + business.contactClickCount, 0);
+  const totalLeads = businesses.reduce((sum, business) => sum + business._count.contactLeads, 0);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
@@ -31,12 +44,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           Your business has been submitted and is waiting for admin approval.
         </p>
       ) : null}
-      <section className="mt-8 grid gap-4 lg:grid-cols-4">
+      <section className="mt-8 grid gap-4 lg:grid-cols-5">
         {[
           [String(businesses.length), "Your listings"],
           [String(businesses.filter((business) => business.listingStatus === "PENDING_REVIEW").length), "Pending approval"],
           [String(totalViews), "Profile views"],
-          [String(contactClicks), "Contact clicks"]
+          [String(contactClicks), "Contact clicks"],
+          [String(totalLeads), "Recent enquiries"]
         ].map(([value, label]) => (
           <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
             <strong className="block text-3xl font-black text-forest">{value}</strong>
@@ -66,8 +80,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-slate-600">
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.viewCount} views</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.contactClickCount} contact clicks</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{business._count.contactLeads} enquiries</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.reviewCount} reviews</span>
                 </div>
+                {business.contactLeads.length ? (
+                  <div className="mt-4 grid gap-2">
+                    {business.contactLeads.map((lead) => (
+                      <div key={lead.id} className="rounded-tradia bg-slate-50 p-3 text-sm text-slate-600">
+                        <strong className="block text-ink">{lead.name}</strong>
+                        <span>{lead.email ?? lead.phone ?? "No contact"} - {lead.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-ink">

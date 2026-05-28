@@ -97,3 +97,22 @@ export async function notifyPaymentSuccess(
     ], { label: "Go to Dashboard", url: appUrl("/dashboard") })
   });
 }
+
+export async function notifyBusinessLead(
+  business: NotificationBusiness,
+  lead: { name: string; email?: string | null; phone?: string | null; message: string }
+) {
+  if (!business.owner?.email) return;
+
+  await sendEmail({
+    to: business.owner.email,
+    subject: `New Tradia enquiry for ${business.name}`,
+    html: paragraphEmail("New business enquiry", [
+      `Hi ${business.owner.name},`,
+      `${lead.name} sent an enquiry for ${business.name}.`,
+      lead.email ? `Email: ${lead.email}` : "",
+      lead.phone ? `Phone: ${lead.phone}` : "",
+      `Message: ${lead.message}`
+    ].filter(Boolean), { label: "Open Dashboard", url: appUrl("/dashboard") })
+  });
+}

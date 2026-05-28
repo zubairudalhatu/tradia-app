@@ -5,13 +5,13 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { getBusinessBySlug } from "@/lib/queries/businesses";
-import { reportBusinessAction, reportReviewAction, submitReviewAction } from "./actions";
+import { reportBusinessAction, reportReviewAction, submitBusinessLeadAction, submitReviewAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 type BusinessPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ review?: string; report?: string }>;
+  searchParams: Promise<{ review?: string; report?: string; enquiry?: string }>;
 };
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
@@ -49,6 +49,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
 
   const reviewAction = submitReviewAction.bind(null, business.id, business.slug);
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
+  const leadAction = submitBusinessLeadAction.bind(null, business.id, business.slug);
   const completeness = getBusinessProfileCompleteness(business);
   const gallery = business.media.filter((item) => ["GALLERY", "COVER", "LOGO"].includes(item.type));
   const structuredData = {
@@ -231,6 +232,24 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         </div>
 
         <aside className="grid gap-6">
+          <section className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-black">Send enquiry</h2>
+            <p className="mt-1 text-sm text-slate-600">Send a short message to this business owner.</p>
+            {query.enquiry === "submitted" ? (
+              <p className="mt-3 rounded-tradia bg-emerald-50 p-3 text-sm font-bold text-forest">Enquiry sent successfully.</p>
+            ) : null}
+            {query.enquiry === "invalid" ? (
+              <p className="mt-3 rounded-tradia bg-red-50 p-3 text-sm font-bold text-red-700">Please add your name, message, and either email or phone.</p>
+            ) : null}
+            <form action={leadAction} className="mt-5 grid gap-3">
+              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="name" placeholder="Your name" required />
+              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="email" type="email" placeholder="Email address" />
+              <input className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="phone" placeholder="Phone number" />
+              <textarea className="min-h-24 rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="message" placeholder="What do you need?" required />
+              <button className="rounded-tradia bg-forest px-4 py-2 font-bold text-white">Send Enquiry</button>
+            </form>
+          </section>
+
           <section className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-black">Leave a review</h2>
             <p className="mt-1 text-sm text-slate-600">Reviews are held for moderation before publishing.</p>

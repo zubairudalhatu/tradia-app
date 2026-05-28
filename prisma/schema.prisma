@@ -88,6 +88,13 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+  SPAM
+}
+
 model User {
   id              String           @id @default(cuid())
   name            String
@@ -165,9 +172,26 @@ model Business {
   payments          Payment[]
   reports           Report[]
   featuredPlacements FeaturedPlacement[]
+  contactLeads      ContactLead[]
 
   @@index([categoryId, locationId, listingStatus])
   @@index([verificationStatus])
+}
+
+model ContactLead {
+  id          String     @id @default(cuid())
+  businessId  String
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  email       String?
+  phone       String?
+  message     String
+  source      String     @default("PROFILE")
+  status      LeadStatus @default(NEW)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([businessId, status, createdAt])
 }
 
 model Category {

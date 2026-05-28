@@ -286,7 +286,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     Owner: {subscription.business.owner?.name ?? "Unassigned"}{subscription.business.owner?.email ? ` - ${subscription.business.owner.email}` : ""}
                   </p>
                 </div>
-                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${subscription.businessId}`}>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={adminBusinessHref(subscription.businessId, adminActionToken)}>
                   Open
                 </a>
               </article>
@@ -313,7 +313,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     Owner: {subscription.business.owner?.name ?? "Unassigned"}{subscription.business.owner?.email ? ` - ${subscription.business.owner.email}` : ""}
                   </p>
                 </div>
-                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${subscription.businessId}`}>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={adminBusinessHref(subscription.businessId, adminActionToken)}>
                   Open
                 </a>
               </article>
@@ -351,7 +351,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   {(payment.paidAt ?? payment.createdAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
                 </time>
                 {payment.status === "SUCCESS" ? (
-                  <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/admin/payments/${payment.id}/receipt`}>
+                  <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/admin/payments/${payment.id}/receipt?adminActionToken=${encodeURIComponent(adminActionToken)}`}>
                     Receipt
                   </a>
                 ) : null}
@@ -443,7 +443,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <h3 className="font-black">{managedUser.name}</h3>
                   <p className="text-sm text-slate-600">{managedUser.email} - {managedUser.role.replace("_", " ")} - {managedUser.status}</p>
                 </div>
-                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/users/${managedUser.id}`}>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={adminUserHref(managedUser.id, adminActionToken)}>
                   Edit
                 </a>
               </article>
@@ -490,7 +490,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </p>
                   <p className="text-xs text-slate-500">Owner: {managedBusiness.owner?.name ?? "Unassigned"}</p>
                 </div>
-                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${managedBusiness.id}`}>
+                <a className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={adminBusinessHref(managedBusiness.id, adminActionToken)}>
                   Edit
                 </a>
               </article>
@@ -693,6 +693,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 function AdminActionTokenInput({ token }: { token: string }) {
   return <input type="hidden" name="adminActionToken" value={token} />;
+}
+
+function adminUserHref(userId: string, token: string) {
+  return `/admin/users/${userId}?adminActionToken=${encodeURIComponent(token)}`;
+}
+
+function adminBusinessHref(businessId: string, token: string) {
+  return `/admin/businesses/${businessId}?adminActionToken=${encodeURIComponent(token)}`;
 }
 
 function formatAmount(amount: number, currency: string) {

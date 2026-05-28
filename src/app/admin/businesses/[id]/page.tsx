@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
+import { createAdminActionToken, getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
@@ -8,13 +8,13 @@ import { updateAdminBusinessAction } from "./actions";
 
 type AdminBusinessPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ adminActionToken?: string; error?: string; saved?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBusinessPage({ params, searchParams }: AdminBusinessPageProps) {
-  const [{ id }, query, admin, categories, locationGroups, users, plans] = await Promise.all([
+  const [{ id }, query, sessionAdmin, categories, locationGroups, users, plans] = await Promise.all([
     params,
     searchParams,
     getCurrentUser(),
@@ -23,8 +23,9 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
     prisma.user.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
     prisma.plan.findMany({ where: { isActive: true }, orderBy: { annualPrice: "asc" } })
   ]);
+  const admin = sessionAdmin ?? await getAdminFromActionToken(query.adminActionToken);
 
-  if (!admin) redirect("/login?next=/admin");
+  if (!admin) redirect(`/login?next=/admin/businesses/${id}`);
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(admin.role)) redirect("/dashboard");
 
   const business = await prisma.business.findUnique({

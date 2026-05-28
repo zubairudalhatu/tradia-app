@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
+import { createAdminActionToken, getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { updateAdminUserAction } from "./actions";
 
 type AdminUserPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ adminActionToken?: string; error?: string; saved?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUserPage({ params, searchParams }: AdminUserPageProps) {
-  const [{ id }, query, admin] = await Promise.all([params, searchParams, getCurrentUser()]);
+  const [{ id }, query, sessionAdmin] = await Promise.all([params, searchParams, getCurrentUser()]);
+  const admin = sessionAdmin ?? await getAdminFromActionToken(query.adminActionToken);
 
-  if (!admin) redirect("/login?next=/admin");
+  if (!admin) redirect(`/login?next=/admin/users/${id}`);
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(admin.role)) redirect("/dashboard");
 
   const user = await prisma.user.findUnique({
@@ -100,7 +101,7 @@ export default async function AdminUserPage({ params, searchParams }: AdminUserP
                 <h3 className="font-black">{business.name}</h3>
                 <p className="text-sm text-slate-600">{business.category.name} in {business.location.name} - {business.listingStatus.replace("_", " ")}</p>
               </div>
-              <Link className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${business.id}`}>
+              <Link className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href={`/admin/businesses/${business.id}?adminActionToken=${encodeURIComponent(adminActionToken)}`}>
                 Edit Business
               </Link>
             </article>

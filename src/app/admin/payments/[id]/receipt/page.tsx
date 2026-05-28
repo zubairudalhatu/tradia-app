@@ -1,17 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
 type AdminPaymentReceiptPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ adminActionToken?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPaymentReceiptPage({ params }: AdminPaymentReceiptPageProps) {
-  const [{ id }, user] = await Promise.all([params, getCurrentUser()]);
+export default async function AdminPaymentReceiptPage({ params, searchParams }: AdminPaymentReceiptPageProps) {
+  const [{ id }, query, sessionUser] = await Promise.all([params, searchParams, getCurrentUser()]);
+  const user = sessionUser ?? await getAdminFromActionToken(query.adminActionToken);
 
   if (!user) redirect(`/login?next=/admin/payments/${id}/receipt`);
   if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) redirect("/dashboard");

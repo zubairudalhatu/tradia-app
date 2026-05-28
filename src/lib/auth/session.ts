@@ -38,10 +38,11 @@ export async function createSession(userId: string) {
   } as const;
 
   cookieStore.set(HOST_SESSION_COOKIE, sessionValue, baseCookieOptions);
-  cookieStore.set(SESSION_COOKIE, sessionValue, {
-    ...baseCookieOptions,
-    domain: cookieDomain
-  });
+  cookieStore.set(
+    SESSION_COOKIE,
+    sessionValue,
+    cookieDomain ? { ...baseCookieOptions, domain: cookieDomain } : baseCookieOptions
+  );
 }
 
 export async function clearSession() {

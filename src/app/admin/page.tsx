@@ -27,6 +27,8 @@ type AdminPageProps = {
     businessSearch?: string;
     listingStatus?: string;
     verificationStatus?: string;
+    paymentSearch?: string;
+    paymentStatus?: string;
   }>;
 };
 
@@ -40,6 +42,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const renewalWindowEndsAt = addDays(now, 30);
   const userSearch = params.userSearch?.trim();
   const businessSearch = params.businessSearch?.trim();
+  const paymentSearch = params.paymentSearch?.trim();
   const userWhere: Prisma.UserWhereInput = userSearch
     ? {
         OR: [
@@ -63,6 +66,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       : {}),
     ...(isListingStatus(params.listingStatus) ? { listingStatus: params.listingStatus } : {}),
     ...(isVerificationStatus(params.verificationStatus) ? { verificationStatus: params.verificationStatus } : {})
+  };
+  const paymentWhere: Prisma.PaymentWhereInput = {
+    ...(paymentSearch
+      ? {
+          OR: [
+            { providerReference: { contains: paymentSearch, mode: "insensitive" } },
+            { provider: { contains: paymentSearch, mode: "insensitive" } },
+            { user: { name: { contains: paymentSearch, mode: "insensitive" } } },
+            { user: { email: { contains: paymentSearch, mode: "insensitive" } } },
+            { business: { name: { contains: paymentSearch, mode: "insensitive" } } }
+          ]
+        }
+      : {}),
+    ...(isPaymentStatus(params.paymentStatus) ? { status: params.paymentStatus } : {})
   };
 
   const [
@@ -235,6 +252,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       take: 8
     }),
     prisma.payment.findMany({
+      where: paymentWhere,
       include: {
         user: true,
         business: true,
@@ -243,7 +261,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         }
       },
       orderBy: { createdAt: "desc" },
-      take: 10
+      take: paymentSearch || params.paymentStatus ? 25 : 10
     })
   ]);
 
@@ -328,6 +346,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="border-b border-slate-200 p-5">
           <h2 className="text-2xl font-black">Payment history</h2>
           <p className="mt-1 text-sm text-slate-600">Review recent checkout attempts, successful payments, and provider references.</p>
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_auto]" action="/admin">
+            <input
+              className="rounded-tradia border border-slate-200 px-4 py-3 text-sm"
+              name="paymentSearch"
+              defaultValue={params.paymentSearch ?? ""}
+              placeholder="Search customer, business, provider, reference"
+            />
+            <select className="rounded-tradia border border-slate-200 px-4 py-3 text-sm" name="paymentStatus" defaultValue={params.paymentStatus ?? ""}>
+              <option value="">All statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="SUCCESS">Success</option>
+              <option value="FAILED">Failed</option>
+              <option value="REFUNDED">Refunded</option>
+            </select>
+            <button className="rounded-tradia bg-forest px-4 py-3 text-sm font-bold text-white">
+              Filter
+            </button>
+          </form>
         </div>
         <div className="divide-y divide-slate-200">
           {recentPayments.length ? recentPayments.map((payment) => (
@@ -717,6 +753,10 @@ function isListingStatus(value?: string): value is "DRAFT" | "PENDING_REVIEW" | 
 
 function isVerificationStatus(value?: string): value is "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" {
   return Boolean(value && ["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"].includes(value));
+}
+
+function isPaymentStatus(value?: string): value is "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED" {
+  return Boolean(value && ["PENDING", "SUCCESS", "FAILED", "REFUNDED"].includes(value));
 }
 
 function formatAuditAction(action: string) {

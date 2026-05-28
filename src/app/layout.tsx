@@ -74,7 +74,7 @@ export default async function RootLayout({
               <div className="mt-3 flex flex-wrap gap-4 text-white/80">
                 <a href="mailto:tradia@zamkah.com.ng">tradia@zamkah.com.ng</a>
                 <a href="https://wa.me/2349055091300">+234 905 509 1300</a>
-                <span>@tradiasocial</span>
+                <span>@tradiabusiness</span>
               </div>
             </div>
             <nav className="flex flex-wrap gap-4 text-white/80 md:justify-end">

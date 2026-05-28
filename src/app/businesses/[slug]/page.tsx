@@ -56,7 +56,11 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const completeness = getBusinessProfileCompleteness(business);
   const planState = getBusinessPlanState(business);
   const benefits = planState.benefits;
-  const gallery = business.media.filter((item) => ["GALLERY", "COVER", "LOGO"].includes(item.type));
+  const imageMedia = business.media.filter((item) => isImageMedia(item.type));
+  const gallery = imageMedia.filter((item) => item.type !== "LOGO");
+  const documentMedia = business.media.filter((item) => !isImageMedia(item.type));
+  const primaryMedia = gallery[0] ?? imageMedia[0];
+  const supportingMedia = gallery.filter((item) => item.id !== primaryMedia?.id).slice(0, 4);
   const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
   const isVerified = business.verificationStatus === "VERIFIED";
   const hasDirectContact = Boolean(business.phone || business.whatsapp || business.email || business.website);
@@ -157,15 +161,16 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
       <Breadcrumbs items={breadcrumbs} />
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="relative">
-          <div
-            className="h-64 bg-gradient-to-br from-forest to-ink bg-cover bg-center"
-            style={business.coverUrl ? { backgroundImage: `url(${business.coverUrl})` } : undefined}
-          />
+          {business.coverUrl ? (
+            <img className="h-64 w-full bg-slate-100 object-cover" src={business.coverUrl} alt={`${business.name} cover image`} />
+          ) : (
+            <div className="h-64 bg-gradient-to-br from-forest to-ink" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5 flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-end gap-4">
               {business.logoUrl ? (
-                <img className="h-24 w-24 rounded-tradia border-4 border-white bg-white object-cover shadow-lg" src={business.logoUrl} alt="" />
+                <img className="h-24 w-24 rounded-tradia border-4 border-white bg-white object-contain p-2 shadow-lg" src={business.logoUrl} alt={`${business.name} logo`} />
               ) : (
                 <div className="grid h-24 w-24 place-items-center rounded-tradia border-4 border-white bg-white text-3xl font-black text-forest shadow-lg">
                   {business.name.charAt(0)}
@@ -296,17 +301,56 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             ) : null}
           </aside>
         </div>
-        {gallery.length ? (
+        {(primaryMedia || documentMedia.length) ? (
           <div className="border-t border-slate-200 p-6">
-            <h2 className="mb-4 text-2xl font-black">Photos and media</h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              {gallery.slice(0, 6).map((item) => (
-                <a key={item.id} href={item.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
-                  <img className="h-44 w-full object-cover transition group-hover:scale-105" src={item.url} alt={item.title ?? business.name} />
-                  <span className="block px-4 py-3 text-sm font-bold text-ink">{item.title ?? item.type}</span>
-                </a>
-              ))}
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-black">Photos and documents</h2>
+                <p className="mt-1 text-sm text-slate-600">Visual proof, business photos, menus, brochures, and public documents uploaded by the owner.</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-black text-slate-600">
+                {business.media.length} upload{business.media.length === 1 ? "" : "s"}
+              </span>
             </div>
+            {primaryMedia ? (
+              <div className="mt-5 grid gap-3 lg:grid-cols-[1.35fr_1fr]">
+                <a href={primaryMedia.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+                  <img className="h-80 w-full object-cover transition duration-300 group-hover:scale-105" src={primaryMedia.url} alt={primaryMedia.title ?? `${business.name} media`} />
+                  <span className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-ink">
+                    <span>{primaryMedia.title ?? mediaTypeLabel(primaryMedia.type)}</span>
+                    <span className="rounded-full bg-white px-2 py-1 text-xs text-slate-500">{mediaTypeLabel(primaryMedia.type)}</span>
+                  </span>
+                </a>
+                {supportingMedia.length ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {supportingMedia.map((item) => (
+                      <a key={item.id} href={item.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+                        <img className="h-36 w-full object-cover transition duration-300 group-hover:scale-105" src={item.url} alt={item.title ?? `${business.name} media`} />
+                        <span className="block truncate px-3 py-2 text-sm font-bold text-ink">{item.title ?? mediaTypeLabel(item.type)}</span>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid place-items-center rounded-tradia border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm font-bold text-slate-500">
+                    More uploaded photos will appear here.
+                  </div>
+                )}
+              </div>
+            ) : null}
+            {documentMedia.length ? (
+              <div className="mt-6">
+                <h3 className="text-lg font-black">Documents and resources</h3>
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  {documentMedia.map((item) => (
+                    <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 bg-white p-4 transition hover:border-forest/30 hover:shadow-sm">
+                      <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase text-slate-500">{mediaTypeLabel(item.type)}</span>
+                      <strong className="mt-3 block text-ink">{item.title ?? "Uploaded document"}</strong>
+                      <span className="mt-2 block text-sm font-semibold text-forest">View file</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -522,4 +566,18 @@ function daysSince(date: Date) {
 
 function displayWebsite(url: string) {
   return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+}
+
+function isImageMedia(type: string) {
+  return ["LOGO", "COVER", "GALLERY"].includes(type);
+}
+
+function mediaTypeLabel(type: string) {
+  if (type === "LOGO") return "Logo";
+  if (type === "COVER") return "Cover image";
+  if (type === "GALLERY") return "Photo";
+  if (type === "MENU") return "Menu";
+  if (type === "BROCHURE") return "Brochure";
+  if (type === "DOCUMENT") return "Document";
+  return "File";
 }

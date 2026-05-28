@@ -19,7 +19,11 @@ export default function ContactPage() {
       <p>
         WhatsApp: <a className="font-bold text-forest" href="https://wa.me/2349055091300">+234 905 509 1300</a>
       </p>
-      <p>Social media: <span className="font-bold">@tradiabusiness</span> on X, Instagram, Facebook, and TikTok.</p>
+      <p>
+        Social media: <span className="font-bold">X</span>, <span className="font-bold">Instagram</span>,{" "}
+        <span className="font-bold">Facebook</span>, and <span className="font-bold">TikTok</span>{" "}
+        <span className="font-bold text-forest">@tradiabusiness</span>
+      </p>
       <p>Company: Zamkah Technologies Limited</p>
     </TrustPage>
   );

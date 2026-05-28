@@ -67,8 +67,15 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
     business.website ? "Website" : null
   ].filter(Boolean);
   const activePlanName = benefits.name;
+  const profileUrl = `${baseUrl}/businesses/${business.slug}`;
+  const shareText = `View ${business.name} on Tradia`;
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${profileUrl}`)}`;
   const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
+  const stateName = business.location.type === "STATE"
+    ? business.location.name.replace(/ Statewide$/, "")
+    : business.location.state ?? business.location.name;
+  const areaName = business.location.type === "STATE" ? "Statewide" : business.location.name;
   const trustSignals = [
     {
       label: "Verification",
@@ -117,7 +124,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
     "@type": "LocalBusiness",
     name: business.name,
     description: business.description,
-    url: `${baseUrl}/businesses/${business.slug}`,
+    url: profileUrl,
     image: business.logoUrl || business.coverUrl || undefined,
     telephone: business.phone || business.whatsapp || undefined,
     email: business.email || undefined,
@@ -165,7 +172,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 </div>
               )}
               <div>
-                <p className="mb-2 text-sm font-black text-white/80">{business.category.name} in {business.location.name}</p>
+                <p className="mb-2 text-sm font-black text-white/80">{business.category.name} in {areaName}, {stateName}</p>
                 <h1 className="max-w-3xl text-4xl font-black tracking-normal text-white md:text-5xl">{business.name}</h1>
               </div>
             </div>
@@ -189,33 +196,54 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               <TrustMetric label="Contact" value={hasDirectContact ? "Available" : "Limited"} />
             </div>
             <p className="text-lg leading-8 text-slate-600">{business.description}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {business.phone ? (
-                <a href={`/businesses/${business.slug}/contact?type=phone`} className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">
-                  Call
-                </a>
+                <ContactAction
+                  href={`/businesses/${business.slug}/contact?type=phone`}
+                  label="Call business"
+                  value={business.phone}
+                  tone="primary"
+                />
               ) : null}
               {business.whatsapp || business.phone ? (
-                <a
+                <ContactAction
                   href={`/businesses/${business.slug}/contact?type=whatsapp`}
-                  className="rounded-tradia bg-ember px-5 py-3 font-bold text-white"
-                >
-                  WhatsApp
-                </a>
+                  label="WhatsApp"
+                  value={business.whatsapp ?? business.phone ?? ""}
+                  tone="accent"
+                />
               ) : null}
               {business.email ? (
-                <a href={`/businesses/${business.slug}/contact?type=email`} className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
-                  Email
-                </a>
+                <ContactAction
+                  href={`/businesses/${business.slug}/contact?type=email`}
+                  label="Email"
+                  value={business.email}
+                />
               ) : null}
               {business.website ? (
-                <a href={`/businesses/${business.slug}/contact?type=website`} className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
-                  Website
-                </a>
+                <ContactAction
+                  href={`/businesses/${business.slug}/contact?type=website`}
+                  label="Website"
+                  value={displayWebsite(business.website)}
+                />
               ) : null}
-              <a href="/claims/new" className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a href={whatsappShareUrl} target="_blank" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+                Share on WhatsApp
+              </a>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`} target="_blank" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+                Share on X
+              </a>
+              <a href="/claims/new" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
                 Claim Business
               </a>
+            </div>
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              <InfoCard label="Category" value={business.category.name} href={`/businesses?category=${business.category.slug}`} />
+              <InfoCard label="State" value={stateName} href={`/businesses?location=${business.location.slug}`} />
+              <InfoCard label="Area" value={areaName} href={`/businesses?location=${business.location.slug}`} />
+              <InfoCard label="Address" value={business.address} />
             </div>
             <div className="mt-6 rounded-tradia border border-slate-200 bg-slate-50 p-5">
               <h2 className="text-xl font-black">Why customers can trust this listing</h2>
@@ -231,39 +259,20 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
           </div>
           <aside className="rounded-tradia border border-slate-200 p-5">
             <h2 className="mb-4 font-black">Business details</h2>
-            <dl className="grid gap-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Category</dt>
-                <dd className="font-bold">{business.category.name}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Location</dt>
-                <dd className="font-bold">{business.location.name}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Address</dt>
-                <dd className="text-right font-bold">{business.address}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Rating</dt>
-                <dd className="font-bold">{Number(business.averageRating).toFixed(1)}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Verification</dt>
-                <dd className="font-bold">{verificationLabel(business.verificationStatus)}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Plan level</dt>
-                <dd className="font-bold">{activePlanName}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Listed since</dt>
-                <dd className="text-right font-bold">{listedSince}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Last updated</dt>
-                <dd className="text-right font-bold">{lastUpdated}</dd>
-              </div>
+            <dl className="grid gap-1 text-sm">
+              <DetailRow label="Category" value={business.category.name} />
+              <DetailRow label="State" value={stateName} />
+              <DetailRow label="Area" value={areaName} />
+              <DetailRow label="Address" value={business.address} />
+              {business.phone ? <DetailRow label="Phone" value={business.phone} /> : null}
+              {business.whatsapp ? <DetailRow label="WhatsApp" value={business.whatsapp} /> : null}
+              {business.email ? <DetailRow label="Email" value={business.email} /> : null}
+              {business.website ? <DetailRow label="Website" value={displayWebsite(business.website)} /> : null}
+              <DetailRow label="Rating" value={Number(business.averageRating).toFixed(1)} />
+              <DetailRow label="Verification" value={verificationLabel(business.verificationStatus)} />
+              <DetailRow label="Plan level" value={activePlanName} />
+              <DetailRow label="Listed since" value={listedSince} />
+              <DetailRow label="Last updated" value={lastUpdated} />
             </dl>
             <div className="mt-5 rounded-tradia bg-emerald-50 p-4">
               <h3 className="font-black text-forest">Trust summary</h3>
@@ -443,6 +452,63 @@ function TrustMetric({ label, value }: { label: string; value: number | string }
   );
 }
 
+function ContactAction({
+  href,
+  label,
+  value,
+  tone = "neutral"
+}: {
+  href: string;
+  label: string;
+  value: string;
+  tone?: "primary" | "accent" | "neutral";
+}) {
+  const toneClass = tone === "primary"
+    ? "bg-forest text-white hover:bg-forest/90"
+    : tone === "accent"
+      ? "bg-ember text-white hover:bg-ember/90"
+      : "bg-slate-100 text-ink hover:bg-slate-200";
+
+  return (
+    <a href={href} className={`rounded-tradia px-4 py-3 font-bold transition ${toneClass}`}>
+      <span className="block text-sm">{label}</span>
+      <span className="mt-1 block truncate text-xs font-semibold opacity-80">{value}</span>
+    </a>
+  );
+}
+
+function InfoCard({ label, value, href }: { label: string; value: string; href?: string }) {
+  const content = (
+    <>
+      <span className="text-xs font-black uppercase text-slate-400">{label}</span>
+      <strong className="mt-1 block text-ink">{value}</strong>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="rounded-tradia border border-slate-200 bg-white p-4 transition hover:border-forest/30 hover:shadow-sm">
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-tradia border border-slate-200 bg-white p-4">
+      {content}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="grid gap-1 border-b border-slate-100 py-3 last:border-b-0">
+      <dt className="text-xs font-black uppercase text-slate-400">{label}</dt>
+      <dd className="break-words font-bold text-ink">{value}</dd>
+    </div>
+  );
+}
+
 function verificationLabel(status: string) {
   if (status === "VERIFIED") return "Verified by Tradia";
   if (status === "PENDING") return "Verification pending";
@@ -452,4 +518,8 @@ function verificationLabel(status: string) {
 
 function daysSince(date: Date) {
   return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function displayWebsite(url: string) {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }

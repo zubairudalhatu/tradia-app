@@ -65,7 +65,9 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
       {query.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
           {query.error === "invalid"
-            ? "Could not save this business. Description must be at least 20 characters and all required fields must be completed."
+            ? "Could not save this business. Description must be at least 20 characters, and all required fields must be completed."
+            : query.error === "slug-taken"
+              ? "That business page username is already in use. Please choose another one."
             : "Could not save this business. Check required fields and unique contact values."}
         </p>
       ) : null}
@@ -75,6 +77,24 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Business name
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={business.name} required />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Business page username
+          <div className="flex overflow-hidden rounded-tradia border border-slate-200 bg-white">
+            <span className="flex items-center bg-slate-50 px-3 text-sm font-bold text-slate-500">tradia.business/businesses/</span>
+            <input
+              className="min-w-0 flex-1 px-4 py-3 outline-none"
+              name="slug"
+              defaultValue={business.slug}
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              minLength={3}
+              maxLength={80}
+              required
+            />
+          </div>
+          <span className="text-xs font-semibold text-slate-500">
+            Public URL text for this listing. Use lowercase letters, numbers, and hyphens only.
+          </span>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Owner

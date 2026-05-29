@@ -12,6 +12,13 @@ export const businessCreateSchema = z.object({
   website: z.string().url().optional()
 });
 
+export const businessProfileUpdateSchema = businessCreateSchema.extend({
+  slug: z.string()
+    .min(3, "Business page username must be at least 3 characters.")
+    .max(80, "Business page username is too long.")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens only.")
+});
+
 export const claimCreateSchema = z.object({
   businessId: z.string().min(1),
   message: z.string().min(10),

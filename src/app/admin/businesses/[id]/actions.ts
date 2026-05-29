@@ -10,6 +10,7 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   const admin = await requireAdminAction(formData);
 
   const name = String(formData.get("name") ?? "").trim();
+  const slug = normalizeSlug(formData.get("slug"));
   const description = String(formData.get("description") ?? "").trim();
   const categoryId = String(formData.get("categoryId") ?? "");
   const locationId = String(formData.get("locationId") ?? "");
@@ -17,8 +18,13 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   const ownerId = optionalString(formData.get("ownerId"));
   const planId = optionalString(formData.get("planId"));
 
-  if (name.length < 2 || description.length < 20 || address.length < 5 || !categoryId || !locationId) {
+  if (name.length < 2 || slug.length < 3 || description.length < 20 || address.length < 5 || !categoryId || !locationId) {
     redirect(`/admin/businesses/${businessId}?error=invalid`);
+  }
+
+  const existingSlugOwner = await prisma.business.findUnique({ where: { slug } });
+  if (existingSlugOwner && existingSlugOwner.id !== businessId) {
+    redirect(`/admin/businesses/${businessId}?error=slug-taken`);
   }
 
   try {
@@ -26,6 +32,7 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
       where: { id: businessId },
       data: {
         name,
+        slug,
         description,
         categoryId,
         locationId,
@@ -53,6 +60,7 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
 
   revalidatePath("/admin");
   revalidatePath("/businesses");
+  revalidatePath(`/businesses/${slug}`);
   redirect(`/admin/businesses/${businessId}?saved=1`);
 }
 
@@ -72,6 +80,15 @@ async function requireAdminAction(formData: FormData) {
 function optionalString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length ? text : null;
+}
+
+function normalizeSlug(value: FormDataEntryValue | null) {
+  return String(value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/https?:\/\/(?:www\.)?tradia\.business\/businesses\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function normalizeListingStatus(value: string) {

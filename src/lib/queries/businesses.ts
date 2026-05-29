@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { activePlacementWhere } from "@/lib/queries/featured";
-import type { businessCreateSchema } from "@/lib/validations/business";
+import type { businessCreateSchema, businessProfileUpdateSchema } from "@/lib/validations/business";
 import type { Prisma } from "@prisma/client";
 import type { z } from "zod";
 
@@ -154,7 +154,7 @@ export async function createBusiness(input: z.infer<typeof businessCreateSchema>
 export async function updateOwnedBusiness(
   businessId: string,
   ownerId: string,
-  input: z.infer<typeof businessCreateSchema>
+  input: z.infer<typeof businessProfileUpdateSchema>
 ) {
   const business = await prisma.business.findFirst({
     where: {
@@ -167,10 +167,18 @@ export async function updateOwnedBusiness(
     throw new Error("Business not found or not owned by current user.");
   }
 
+  if (input.slug !== business.slug) {
+    const existing = await prisma.business.findUnique({ where: { slug: input.slug } });
+    if (existing) {
+      throw new Error("BUSINESS_SLUG_TAKEN");
+    }
+  }
+
   return prisma.business.update({
     where: { id: businessId },
     data: {
       name: input.name,
+      slug: input.slug,
       description: input.description,
       categoryId: input.categoryId,
       locationId: input.locationId,
@@ -198,11 +206,13 @@ async function uniqueBusinessSlug(name: string) {
 }
 
 function slugify(value: string) {
-  return value
+  const slug = value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+  return slug || "business";
 }
 
 function clampResultLimit(limit?: number) {

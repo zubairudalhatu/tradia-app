@@ -8,12 +8,13 @@ import { notifyVerificationSubmitted } from "@/lib/notifications";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
 import { saveUpload } from "@/lib/uploads";
-import { businessCreateSchema } from "@/lib/validations/business";
+import { businessProfileUpdateSchema } from "@/lib/validations/business";
 
 export async function updateBusinessProfileAction(businessId: string, formData: FormData) {
   const user = await requireUser();
-  const parsed = businessCreateSchema.safeParse({
+  const parsed = businessProfileUpdateSchema.safeParse({
     name: formData.get("name"),
+    slug: normalizeSlug(formData.get("slug")),
     description: formData.get("description"),
     categoryId: formData.get("categoryId"),
     locationId: formData.get("locationId"),
@@ -28,15 +29,34 @@ export async function updateBusinessProfileAction(businessId: string, formData: 
     redirect(`/dashboard/businesses/${businessId}/edit?error=invalid`);
   }
 
-  await updateOwnedBusiness(businessId, user.id, parsed.data);
-  revalidatePath("/dashboard");
-  revalidatePath(`/dashboard/businesses/${businessId}/edit`);
+  try {
+    const business = await updateOwnedBusiness(businessId, user.id, parsed.data);
+    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/businesses/${businessId}/edit`);
+    revalidatePath(`/businesses/${business.slug}`);
+  } catch (error) {
+    if (error instanceof Error && error.message === "BUSINESS_SLUG_TAKEN") {
+      redirect(`/dashboard/businesses/${businessId}/edit?error=slug-taken`);
+    }
+
+    throw error;
+  }
+
   redirect(`/dashboard/businesses/${businessId}/edit?saved=1`);
 }
 
 function optionalString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length ? text : undefined;
+}
+
+function normalizeSlug(value: FormDataEntryValue | null) {
+  return String(value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/https?:\/\/(?:www\.)?tradia\.business\/businesses\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export async function uploadBusinessMediaAction(businessId: string, formData: FormData) {

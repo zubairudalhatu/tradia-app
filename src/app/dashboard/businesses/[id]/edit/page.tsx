@@ -149,6 +149,24 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={business.name} required />
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Business page username
+          <div className="flex overflow-hidden rounded-tradia border border-slate-200 bg-white">
+            <span className="flex items-center bg-slate-50 px-3 text-sm font-bold text-slate-500">tradia.business/businesses/</span>
+            <input
+              className="min-w-0 flex-1 px-4 py-3 outline-none"
+              name="slug"
+              defaultValue={business.slug}
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              minLength={3}
+              maxLength={80}
+              required
+            />
+          </div>
+          <span className="text-xs font-semibold text-slate-500">
+            Use lowercase letters, numbers, and hyphens only. Example: in-flight-media-and-technologies-limited.
+          </span>
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
           Category
           <select className="rounded-tradia border border-slate-200 px-4 py-3" name="categoryId" defaultValue={business.categoryId} required>
             {categories.map((category) => (
@@ -329,7 +347,11 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
 
 function errorMessage(error: string) {
   if (error === "invalid") {
-    return "Please check the required fields. Description must be at least 20 characters.";
+    return "Please check the required fields. Description must be at least 20 characters, and the business page username must use letters, numbers, and hyphens.";
+  }
+
+  if (error === "slug-taken") {
+    return "That business page username is already in use. Please choose another one.";
   }
 
   if (error === "upload-storage") {

@@ -80,7 +80,7 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
       userId: user.id,
       type: normalizedMediaType,
       url,
-      title: file.name
+      title: null
     }
   });
 

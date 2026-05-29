@@ -235,7 +235,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           {business.media.length ? business.media.map((item) => (
             <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-4 text-sm">
               <strong className="block text-ink">{item.type}</strong>
-              <span className="text-slate-600">{item.title ?? item.url}</span>
+              <span className="text-slate-600">Uploaded {item.type.toLowerCase()} file</span>
             </a>
           )) : (
             <p className="text-sm text-slate-600">No media uploaded yet.</p>

@@ -176,7 +176,7 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
           <div className="mt-4 grid gap-3">
             {business.media.length ? business.media.map((item) => (
               <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-3 text-sm font-bold text-forest">
-                {item.type} - {item.title ?? "Uploaded file"}
+                {item.type} - Uploaded file
               </a>
             )) : (
               <p className="text-sm text-slate-600">No uploads yet.</p>

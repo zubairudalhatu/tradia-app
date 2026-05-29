@@ -46,7 +46,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
       <h1 className="text-5xl font-black tracking-normal">Your profile</h1>
       <p className="mt-4 text-lg text-slate-600">
-        Keep your contact details current so Tradia can connect listings, reviews, and verification activity to the right person.
+        Keep your display name, phone number, and contact details current so Tradia can connect listings, reviews, and verification activity to the right person.
       </p>
 
       {params.saved ? (
@@ -62,8 +62,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
       <form action={updateAccountAction} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
-          Full name
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={user.name} required />
+          Display name / username
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={user.name} required minLength={2} />
+          <span className="text-xs font-semibold text-slate-500">
+            This is the name shown on your account, reviews, and business activity.
+          </span>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Email

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
+import { addYears } from "@/lib/time";
+import type { Prisma } from "@prisma/client";
 
 export async function updateAdminBusinessAction(businessId: string, formData: FormData) {
   const admin = await requireAdminAction(formData);
@@ -28,25 +30,31 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   }
 
   try {
-    const business = await prisma.business.update({
-      where: { id: businessId },
-      data: {
-        name,
-        slug,
-        description,
-        categoryId,
-        locationId,
-        address,
-        ownerId,
-        planId,
-        phone: optionalString(formData.get("phone")),
-        whatsapp: optionalString(formData.get("whatsapp")),
-        email: optionalString(formData.get("email")),
-        website: optionalString(formData.get("website")),
-        listingStatus: normalizeListingStatus(String(formData.get("listingStatus") ?? "DRAFT")),
-        verificationStatus: normalizeVerificationStatus(String(formData.get("verificationStatus") ?? "UNVERIFIED"))
-      }
+    const business = await prisma.$transaction(async (tx) => {
+      const updatedBusiness = await tx.business.update({
+        where: { id: businessId },
+        data: {
+          name,
+          slug,
+          description,
+          categoryId,
+          locationId,
+          address,
+          ownerId,
+          planId,
+          phone: optionalString(formData.get("phone")),
+          whatsapp: optionalString(formData.get("whatsapp")),
+          email: optionalString(formData.get("email")),
+          website: optionalString(formData.get("website")),
+          listingStatus: normalizeListingStatus(String(formData.get("listingStatus") ?? "DRAFT")),
+          verificationStatus: normalizeVerificationStatus(String(formData.get("verificationStatus") ?? "UNVERIFIED"))
+        }
+      });
+
+      await syncAdminAssignedSubscription(tx, businessId, planId, admin.id);
+      return updatedBusiness;
     });
+
     await createAuditLog({
       actorId: admin.id,
       action: "UPDATED_BUSINESS",
@@ -62,6 +70,71 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   revalidatePath("/businesses");
   revalidatePath(`/businesses/${slug}`);
   redirect(`/admin/businesses/${businessId}?saved=1`);
+}
+
+async function syncAdminAssignedSubscription(
+  tx: Prisma.TransactionClient,
+  businessId: string,
+  planId: string | null,
+  adminId: string
+) {
+  const now = new Date();
+  const activeSubscription = await tx.subscription.findFirst({
+    where: {
+      businessId,
+      status: "ACTIVE",
+      endsAt: { gt: now }
+    },
+    orderBy: { endsAt: "desc" }
+  });
+  const selectedPlan = planId ? await tx.plan.findUnique({ where: { id: planId } }) : null;
+  const isPaidPlan = Boolean(selectedPlan && selectedPlan.annualPrice > 0);
+
+  if (!isPaidPlan) {
+    if (activeSubscription) {
+      await tx.subscription.updateMany({
+        where: {
+          businessId,
+          status: "ACTIVE",
+          endsAt: { gt: now }
+        },
+        data: {
+          status: "CANCELLED",
+          endsAt: now
+        }
+      });
+    }
+
+    return;
+  }
+
+  if (activeSubscription?.planId === planId) {
+    return;
+  }
+
+  await tx.subscription.updateMany({
+    where: {
+      businessId,
+      status: "ACTIVE",
+      endsAt: { gt: now }
+    },
+    data: {
+      status: "CANCELLED",
+      endsAt: now
+    }
+  });
+
+  await tx.subscription.create({
+    data: {
+      businessId,
+      planId: planId!,
+      status: "ACTIVE",
+      startsAt: now,
+      endsAt: addYears(now, 1),
+      paymentProvider: "ADMIN",
+      providerReference: `admin-${Date.now()}-${businessId.slice(0, 8)}-${adminId.slice(0, 8)}`
+    }
+  });
 }
 
 async function requireAdminAction(formData: FormData) {

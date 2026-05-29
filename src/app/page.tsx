@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
@@ -6,6 +7,26 @@ import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Nigeria Business Directory for Verified Local Businesses",
+  description: "Discover verified businesses across Nigeria on Tradia. Find local services, view reviews, explore categories, and list your business for better visibility.",
+  keywords: [
+    "Nigeria business directory",
+    "verified businesses in Nigeria",
+    "find businesses in Nigeria",
+    "list your business in Nigeria",
+    "local business listings Nigeria",
+    "trusted business directory Nigeria",
+    "business discovery platform Nigeria"
+  ],
+  openGraph: {
+    title: "Tradia | Nigeria Business Directory for Verified Local Businesses",
+    description: "Discover verified businesses across Nigeria, compare reviews and contact details, and list your Nigerian business for better visibility.",
+    url: "/",
+    type: "website"
+  }
+};
 
 export default async function HomePage() {
   const [featuredBusinesses, popularCategories, locationGroups] = await Promise.all([
@@ -32,8 +53,9 @@ export default async function HomePage() {
               Grow your visibility on Tradia.
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
-              Tradia helps customers discover verified local businesses and gives SMEs a credible
-              digital presence with reviews, claims, verification, and subscriptions.
+              Tradia is a Nigeria business directory that helps customers discover verified local
+              businesses and gives SMEs a credible digital presence with reviews, claims,
+              verification, and visibility plans.
             </p>
             <form action="/businesses" className="mt-8 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:grid-cols-[1fr_180px_auto]">
               <input

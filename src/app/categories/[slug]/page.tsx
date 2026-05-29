@@ -22,6 +22,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   return {
     title: `${category.name} Businesses in Nigeria | Tradia`,
     description: `Find verified ${category.name.toLowerCase()} businesses across Nigeria on Tradia. Browse trusted local listings, contacts, reviews, and business profiles.`,
+    keywords: [
+      `${category.name.toLowerCase()} businesses in Nigeria`,
+      `${category.name.toLowerCase()} companies in Nigeria`,
+      `verified ${category.name.toLowerCase()} businesses`,
+      `find ${category.name.toLowerCase()} businesses in Nigeria`,
+      "Nigeria business directory",
+      "local business listings Nigeria"
+    ],
     alternates: {
       canonical: `/categories/${category.slug}`
     },

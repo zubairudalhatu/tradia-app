@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { BusinessCard } from "@/components/business-card";
@@ -15,6 +16,25 @@ type BusinessesPageProps = {
 };
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Browse Nigerian Businesses | Verified Business Directory",
+  description: "Search Tradia's Nigeria business directory by name, category, service, location, and verification status. Find trusted local businesses and SME listings.",
+  keywords: [
+    "find businesses in Nigeria",
+    "verified businesses in Nigeria",
+    "local business directory Nigeria",
+    "online business listing Nigeria",
+    "trusted businesses in Nigeria",
+    "business directory in Nigeria"
+  ],
+  openGraph: {
+    title: "Browse Nigerian Businesses on Tradia",
+    description: "Find verified businesses, local services, reviews, and contact details across Nigeria.",
+    url: "/businesses",
+    type: "website"
+  }
+};
 
 export default async function BusinessesPage({ searchParams }: BusinessesPageProps) {
   const params = await searchParams;
@@ -36,7 +56,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Directory</p>
         <h1 className="text-5xl font-black tracking-normal">Browse Nigerian businesses</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Search by name, category, service, location, and verification status.
+          Search Nigeria business listings by name, category, service, location, and verification status.
         </p>
       </div>
 

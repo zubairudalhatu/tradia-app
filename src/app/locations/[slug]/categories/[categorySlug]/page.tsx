@@ -25,6 +25,14 @@ export async function generateMetadata({ params }: CategoryLocationPageProps): P
   return {
     title: `${category.name} in ${area.name} | Tradia`,
     description: `Find verified ${category.name.toLowerCase()} businesses in ${area.name}. Compare trusted local profiles, reviews, and contact details on Tradia.`,
+    keywords: [
+      `${category.name.toLowerCase()} in ${area.name}`,
+      `${category.name.toLowerCase()} businesses in ${area.name}`,
+      `verified ${category.name.toLowerCase()} businesses in ${area.name}`,
+      `find ${category.name.toLowerCase()} in ${area.name}`,
+      `local business listings ${area.name}`,
+      "Nigeria business directory"
+    ],
     alternates: {
       canonical: `/locations/${area.slug}/categories/${category.slug}`
     },

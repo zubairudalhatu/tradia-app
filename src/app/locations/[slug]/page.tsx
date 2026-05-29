@@ -22,6 +22,15 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   return {
     title: `Businesses in ${area.name} | Tradia`,
     description: `Find verified businesses in ${area.name} on Tradia. Browse local services, shops, schools, clinics, hotels, and more.`,
+    keywords: [
+      `businesses in ${area.name}`,
+      `verified businesses in ${area.name}`,
+      `find businesses in ${area.name}`,
+      `local business listings ${area.name}`,
+      `${area.name} online business directory`,
+      "Nigeria business directory",
+      "verified businesses in Nigeria"
+    ],
     alternates: {
       canonical: `/locations/${area.slug}`
     },

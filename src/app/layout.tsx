@@ -8,8 +8,23 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
-  title: "Tradia - Nigeria's Trusted Business Directory",
-  description: "Discover, verify, and connect with trusted Nigerian businesses across all 36 states and the FCT.",
+  title: {
+    default: "Tradia | Nigeria Business Directory for Verified Local Businesses",
+    template: "%s | Tradia"
+  },
+  description: "Discover verified businesses across Nigeria on Tradia. Find local services, view reviews, explore categories, and list your business for better visibility.",
+  keywords: [
+    "Nigeria business directory",
+    "business directory in Nigeria",
+    "verified businesses in Nigeria",
+    "find businesses in Nigeria",
+    "list your business in Nigeria",
+    "local business directory Nigeria",
+    "trusted business directory Nigeria",
+    "online business listing Nigeria",
+    "business discovery platform Nigeria",
+    "SME business listing Nigeria"
+  ],
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

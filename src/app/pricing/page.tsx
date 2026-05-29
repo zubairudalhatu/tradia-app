@@ -13,8 +13,23 @@ type PricingPageProps = {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Tradia Pricing | Business Visibility Plans",
-  description: "Start free on Tradia or upgrade for verification eligibility, more photos, analytics, and visibility features for your Nigerian business."
+  title: "List Your Business in Nigeria | Tradia Pricing",
+  description: "List your business online in Nigeria with Tradia. Start free or upgrade for verification eligibility, more photos, analytics, and stronger SME visibility.",
+  keywords: [
+    "list your business in Nigeria",
+    "free business listing Nigeria",
+    "business listing website Nigeria",
+    "promote my business in Nigeria",
+    "online visibility for SMEs in Nigeria",
+    "advertise my business in Nigeria",
+    "SME visibility platform Nigeria"
+  ],
+  openGraph: {
+    title: "List Your Business in Nigeria with Tradia",
+    description: "Create a business profile, improve visibility, request verification, add photos, and reach customers across Nigeria.",
+    url: "/pricing",
+    type: "website"
+  }
 };
 
 export default async function PricingPage({ searchParams }: PricingPageProps) {

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ReceiptDownloadButton } from "@/components/receipt-download-button";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -42,7 +43,7 @@ export default async function AdminPaymentReceiptPage({ params, searchParams }: 
         <Link className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink" href="/admin">
           Back to Admin
         </Link>
-        <p className="text-sm font-bold text-slate-500">Admin receipt copy for support and reconciliation.</p>
+        <ReceiptDownloadButton />
       </div>
 
       <section className="rounded-tradia border border-slate-200 bg-white p-8 shadow-sm">

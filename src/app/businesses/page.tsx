@@ -42,7 +42,8 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
     q: params.q,
     category: params.category,
     location: params.location,
-    verified: params.verified === "1"
+    verified: params.verified === "1",
+    rotate: true
   };
   const [businesses, popularCategories, locationGroups] = await Promise.all([
     listPublishedBusinesses(filters),

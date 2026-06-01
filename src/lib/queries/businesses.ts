@@ -21,9 +21,10 @@ export type BusinessSearchFilters = {
   open?: boolean;
   limit?: number;
   page?: number;
+  rotate?: boolean;
 };
 
-export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
+export async function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
   const search = filters.q?.trim();
   const openNow = filters.open ? getNigeriaBusinessTime() : null;
   const limit = clampResultLimit(filters.limit);
@@ -58,7 +59,7 @@ export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
       : {})
   };
 
-  return prisma.business.findMany({
+  const businesses = await prisma.business.findMany({
     where,
     include: businessInclude,
     orderBy: [
@@ -70,6 +71,8 @@ export function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
     ],
     ...(limit ? { take: limit, skip: (page - 1) * limit } : {})
   });
+
+  return filters.rotate ? rotateBusinessResults(businesses) : businesses;
 }
 
 export function listFeaturedBusinesses(limit = 3) {
@@ -218,6 +221,13 @@ function slugify(value: string) {
 function clampResultLimit(limit?: number) {
   if (!limit) return undefined;
   return Math.min(Math.max(limit, 1), 100);
+}
+
+function rotateBusinessResults<T>(businesses: T[]) {
+  if (businesses.length <= 1) return businesses;
+
+  const start = Math.floor(Math.random() * businesses.length);
+  return [...businesses.slice(start), ...businesses.slice(0, start)];
 }
 
 function getNigeriaBusinessTime() {

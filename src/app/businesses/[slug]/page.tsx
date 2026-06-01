@@ -115,6 +115,10 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const profileUrl = `${baseUrl}/businesses/${business.slug}`;
   const shareText = `View ${business.name} on Tradia`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${profileUrl}`)}`;
+  const canEditBusiness = user?.id === business.ownerId || Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
+  const editBusinessHref = user?.id === business.ownerId
+    ? `/dashboard/businesses/${business.id}/edit`
+    : `/admin/businesses/${business.id}`;
   const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const stateName = getStateName(business.location);
@@ -302,6 +306,11 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               <a href="/claims/new" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
                 Claim Business
               </a>
+              {canEditBusiness ? (
+                <Link href={editBusinessHref} className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white transition hover:bg-forest/90">
+                  Edit Business
+                </Link>
+              ) : null}
             </div>
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               <InfoCard label="Category" value={business.category.name} href={`/businesses?category=${business.category.slug}`} />

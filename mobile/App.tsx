@@ -1,4 +1,5 @@
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,8 +18,8 @@ import {
   View
 } from "react-native";
 import { WebView } from "react-native-webview";
-import { accountUrl, addBusinessUrl, businessUrl, getBusiness, listBusinesses } from "./src/api";
-import type { BusinessDetail as BusinessDetailData, BusinessMedia, BusinessSummary } from "./src/types";
+import { accountUrl, addBusinessUrl, businessUrl, getBusiness, listBusinesses, listCategories, listLocations } from "./src/api";
+import type { BusinessDetail as BusinessDetailData, BusinessMedia, BusinessSummary, CategoryFilter, LocationFilter, LocationGroup } from "./src/types";
 
 const brandLogo = require("./assets/tradia-logo.png");
 
@@ -29,14 +30,23 @@ type WebScreenState = {
 
 export default function App() {
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
+  const [categories, setCategories] = useState<CategoryFilter[]>([]);
+  const [locationGroups, setLocationGroups] = useState<LocationGroup[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessSummary | null>(null);
   const [webScreen, setWebScreen] = useState<WebScreenState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadBusinesses(nextQuery = query, refreshing = false) {
+  async function loadBusinesses(
+    nextQuery = query,
+    refreshing = false,
+    overrides: Partial<{ category: string; location: string; verified: boolean }> = {}
+  ) {
     if (refreshing) {
       setIsRefreshing(true);
     } else {
@@ -46,7 +56,12 @@ export default function App() {
     setError(null);
 
     try {
-      const items = await listBusinesses(nextQuery);
+      const items = await listBusinesses({
+        q: nextQuery,
+        category: (overrides.category ?? selectedCategory) || undefined,
+        location: (overrides.location ?? selectedLocation) || undefined,
+        verified: overrides.verified ?? verifiedOnly
+      });
       setBusinesses(items);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Something went wrong.");
@@ -58,9 +73,48 @@ export default function App() {
 
   useEffect(() => {
     void loadBusinesses("");
+    void loadFilters();
   }, []);
 
   const featuredCount = useMemo(() => businesses.filter(isFeatured).length, [businesses]);
+  const statewideLocations = useMemo(() => getStatewideLocations(locationGroups), [locationGroups]);
+  const hasActiveFilters = Boolean(selectedCategory || selectedLocation || verifiedOnly || query.trim());
+
+  async function loadFilters() {
+    try {
+      const [nextCategories, nextLocations] = await Promise.all([
+        listCategories(),
+        listLocations()
+      ]);
+      setCategories(nextCategories);
+      setLocationGroups(nextLocations);
+    } catch {
+      // Directory search still works when filter metadata is temporarily unavailable.
+    }
+  }
+
+  function applyCategory(slug: string) {
+    setSelectedCategory(slug);
+    void loadBusinesses(query, false, { category: slug });
+  }
+
+  function applyLocation(slug: string) {
+    setSelectedLocation(slug);
+    void loadBusinesses(query, false, { location: slug });
+  }
+
+  function applyVerifiedOnly(value: boolean) {
+    setVerifiedOnly(value);
+    void loadBusinesses(query, false, { verified: value });
+  }
+
+  function clearFilters() {
+    setQuery("");
+    setSelectedCategory("");
+    setSelectedLocation("");
+    setVerifiedOnly(false);
+    void loadBusinesses("", false, { category: "", location: "", verified: false });
+  }
 
   if (webScreen) {
     return (
@@ -119,6 +173,43 @@ export default function App() {
               <Pressable style={styles.searchButton} onPress={() => loadBusinesses(query)}>
                 <Text style={styles.searchButtonText}>Search</Text>
               </Pressable>
+            </View>
+
+            <FilterSection title="Categories">
+              <FilterChip label="All" selected={!selectedCategory} onPress={() => applyCategory("")} />
+              {categories.map((category) => (
+                <FilterChip
+                  key={category.id}
+                  label={category.name}
+                  selected={selectedCategory === category.slug}
+                  onPress={() => applyCategory(category.slug)}
+                />
+              ))}
+            </FilterSection>
+
+            <FilterSection title="State">
+              <FilterChip label="All Nigeria" selected={!selectedLocation} onPress={() => applyLocation("")} />
+              {statewideLocations.map((location) => (
+                <FilterChip
+                  key={location.id}
+                  label={location.name.replace(/ Statewide$/, "")}
+                  selected={selectedLocation === location.slug}
+                  onPress={() => applyLocation(location.slug)}
+                />
+              ))}
+            </FilterSection>
+
+            <View style={styles.filterTools}>
+              <FilterChip
+                label="Verified only"
+                selected={verifiedOnly}
+                onPress={() => applyVerifiedOnly(!verifiedOnly)}
+              />
+              {hasActiveFilters ? (
+                <Pressable style={styles.clearFiltersButton} onPress={clearFilters}>
+                  <Text style={styles.clearFiltersText}>Clear filters</Text>
+                </Pressable>
+              ) : null}
             </View>
 
             <View style={styles.quickStats}>
@@ -370,6 +461,27 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function FilterSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <View style={styles.filterSection}>
+      <Text style={styles.filterTitle}>{title}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterStrip}>
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
+function FilterChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable style={[styles.filterChip, selected ? styles.filterChipSelected : null]} onPress={onPress}>
+      <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Badge({ label, tone }: { label: string; tone: "success" | "accent" | "neutral" }) {
   const badgeStyle = tone === "success" ? styles.badgeSuccess : tone === "accent" ? styles.badgeAccent : styles.badgeNeutral;
   const textStyle = tone === "success" ? styles.badgeSuccessText : tone === "accent" ? styles.badgeAccentText : styles.badgeNeutralText;
@@ -391,6 +503,12 @@ function ActionButton({ label, onPress }: { label: string; onPress: () => void }
 
 function isFeatured(business: BusinessSummary) {
   return Boolean(business.featuredPlacements?.length || business.plan?.canBeFeatured);
+}
+
+function getStatewideLocations(locationGroups: LocationGroup[]): LocationFilter[] {
+  return locationGroups
+    .map((state) => state.children.find((location) => location.name.endsWith("Statewide")) ?? state.children[0])
+    .filter((location): location is LocationFilter => Boolean(location));
 }
 
 function openUrl(url: string) {
@@ -554,6 +672,56 @@ const styles = StyleSheet.create({
   searchButtonText: {
     color: "#ffffff",
     fontSize: 16,
+    fontWeight: "900"
+  },
+  filterSection: {
+    marginTop: 16
+  },
+  filterTitle: {
+    color: "#082441",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 8
+  },
+  filterStrip: {
+    gap: 8,
+    paddingRight: 12
+  },
+  filterChip: {
+    backgroundColor: "#ffffff",
+    borderColor: "#dbe4ef",
+    borderRadius: 999,
+    borderWidth: 1,
+    maxWidth: 190,
+    paddingHorizontal: 14,
+    paddingVertical: 9
+  },
+  filterChipSelected: {
+    backgroundColor: "#0b7f55",
+    borderColor: "#0b7f55"
+  },
+  filterChipText: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  filterChipTextSelected: {
+    color: "#ffffff"
+  },
+  filterTools: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 16
+  },
+  clearFiltersButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  clearFiltersText: {
+    color: "#0b7f55",
+    fontSize: 13,
     fontWeight: "900"
   },
   quickStats: {

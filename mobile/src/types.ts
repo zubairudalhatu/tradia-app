@@ -62,3 +62,23 @@ export type BusinessDetail = BusinessSummary & {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type CategoryFilter = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  icon?: string | null;
+};
+
+export type LocationFilter = {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  state?: string | null;
+};
+
+export type LocationGroup = LocationFilter & {
+  children: LocationFilter[];
+};

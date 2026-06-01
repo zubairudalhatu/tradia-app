@@ -32,6 +32,9 @@
     },
     "extra": {
       "apiBaseUrl": "https://www.tradia.business"
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

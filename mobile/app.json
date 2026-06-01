@@ -35,10 +35,14 @@
       }
     },
     "extra": {
-      "apiBaseUrl": "https://www.tradia.business"
+      "apiBaseUrl": "https://www.tradia.business",
+      "eas": {
+        "projectId": "f29d87ab-f149-4701-a6c5-7b733c9ed13f"
+      }
     },
     "plugins": [
       "expo-asset"
-    ]
+    ],
+    "owner": "zamkah"
   }
 }

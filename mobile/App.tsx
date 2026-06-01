@@ -16,15 +16,22 @@ import {
   StatusBar as NativeStatusBar,
   View
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { accountUrl, addBusinessUrl, businessUrl, listBusinesses } from "./src/api";
 import type { BusinessSummary } from "./src/types";
 
 const brandLogo = require("./assets/tradia-logo.png");
 
+type WebScreenState = {
+  title: string;
+  url: string;
+};
+
 export default function App() {
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
   const [query, setQuery] = useState("");
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessSummary | null>(null);
+  const [webScreen, setWebScreen] = useState<WebScreenState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +62,21 @@ export default function App() {
 
   const featuredCount = useMemo(() => businesses.filter(isFeatured).length, [businesses]);
 
+  if (webScreen) {
+    return (
+      <InAppWebScreen
+        screen={webScreen}
+        onBack={() => setWebScreen(null)}
+      />
+    );
+  }
+
   if (selectedBusiness) {
     return (
       <BusinessDetail
         business={selectedBusiness}
         onBack={() => setSelectedBusiness(null)}
+        onOpenInApp={(screen) => setWebScreen(screen)}
       />
     );
   }
@@ -69,7 +86,7 @@ export default function App() {
       <ExpoStatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <View style={styles.header}>
         <Image source={brandLogo} style={styles.logo} resizeMode="contain" />
-        <Pressable style={styles.headerButton} onPress={() => openUrl(accountUrl())}>
+        <Pressable style={styles.headerButton} onPress={() => setWebScreen({ title: "Account", url: accountUrl() })}>
           <Text style={styles.headerButtonText}>Account</Text>
         </Pressable>
       </View>
@@ -110,7 +127,7 @@ export default function App() {
               <Stat label="Verified" value={String(businesses.filter((item) => item.verificationStatus === "VERIFIED").length)} />
             </View>
 
-            <Pressable style={styles.addBusinessButton} onPress={() => openUrl(addBusinessUrl())}>
+            <Pressable style={styles.addBusinessButton} onPress={() => setWebScreen({ title: "Add Business", url: addBusinessUrl() })}>
               <Text style={styles.addBusinessButtonText}>Add Business</Text>
             </Pressable>
 
@@ -132,7 +149,45 @@ export default function App() {
   );
 }
 
-function BusinessDetail({ business, onBack }: { business: BusinessSummary; onBack: () => void }) {
+function InAppWebScreen({ screen, onBack }: { screen: WebScreenState; onBack: () => void }) {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return (
+    <SafeAreaView style={[styles.safeArea, styles.androidSafeArea]}>
+      <ExpoStatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
+      <View style={styles.webHeader}>
+        <Pressable onPress={onBack} style={styles.webBackButton}>
+          <Text style={styles.webBackButtonText}>Back</Text>
+        </Pressable>
+        <Text style={styles.webTitle} numberOfLines={1}>{screen.title}</Text>
+        <Pressable onPress={() => openUrl(screen.url)} style={styles.webOpenButton}>
+          <Text style={styles.webOpenButtonText}>Open</Text>
+        </Pressable>
+      </View>
+      {isLoading ? (
+        <View style={styles.webLoader}>
+          <ActivityIndicator color="#0b7f55" />
+        </View>
+      ) : null}
+      <WebView
+        source={{ uri: screen.url }}
+        style={styles.webView}
+        startInLoadingState
+        onLoadEnd={() => setIsLoading(false)}
+      />
+    </SafeAreaView>
+  );
+}
+
+function BusinessDetail({
+  business,
+  onBack,
+  onOpenInApp
+}: {
+  business: BusinessSummary;
+  onBack: () => void;
+  onOpenInApp: (screen: WebScreenState) => void;
+}) {
   const rating = Number(business.averageRating || 0).toFixed(1);
   const locationLabel = business.location.state
     ? `${business.location.name}, ${business.location.state}`
@@ -180,7 +235,7 @@ function BusinessDetail({ business, onBack }: { business: BusinessSummary; onBac
             {business.website ? <ActionButton label="Website" onPress={() => openUrl(business.website ?? "")} /> : null}
           </View>
 
-          <Pressable style={styles.profileButton} onPress={() => openUrl(businessUrl(business.slug))}>
+          <Pressable style={styles.profileButton} onPress={() => onOpenInApp({ title: business.name, url: businessUrl(business.slug) })}>
             <Text style={styles.profileButtonText}>Open Full Profile</Text>
           </Pressable>
         </View>
@@ -299,6 +354,57 @@ const styles = StyleSheet.create({
   headerButtonText: {
     color: "#082441",
     fontWeight: "800"
+  },
+  webHeader: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderBottomColor: "#e2e8f0",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10
+  },
+  webBackButton: {
+    backgroundColor: "#eff6f3",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9
+  },
+  webBackButtonText: {
+    color: "#0b7f55",
+    fontWeight: "900"
+  },
+  webTitle: {
+    color: "#082441",
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "900",
+    textAlign: "center"
+  },
+  webOpenButton: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9
+  },
+  webOpenButtonText: {
+    color: "#082441",
+    fontWeight: "900"
+  },
+  webView: {
+    flex: 1
+  },
+  webLoader: {
+    alignItems: "center",
+    backgroundColor: "#fbfbf8",
+    bottom: 0,
+    justifyContent: "center",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 72,
+    zIndex: 2
   },
   content: {
     padding: 20,

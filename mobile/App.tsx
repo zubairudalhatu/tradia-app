@@ -250,9 +250,12 @@ function InAppWebScreen({ screen, onBack }: { screen: WebScreenState; onBack: ()
         <Pressable onPress={onBack} style={styles.webBackButton}>
           <Text style={styles.webBackButtonText}>Back</Text>
         </Pressable>
-        <Text style={styles.webTitle} numberOfLines={1}>{screen.title}</Text>
+        <View style={styles.webTitleWrap}>
+          <Text style={styles.webBrand}>Tradia</Text>
+          <Text style={styles.webTitle} numberOfLines={1}>{screen.title}</Text>
+        </View>
         <Pressable onPress={() => openUrl(screen.url)} style={styles.webOpenButton}>
-          <Text style={styles.webOpenButtonText}>Open</Text>
+          <Text style={styles.webOpenButtonText}>Browser</Text>
         </Pressable>
       </View>
       {isLoading ? (
@@ -574,35 +577,47 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e2e8f0",
     borderBottomWidth: 1,
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
+    gap: 8,
+    paddingHorizontal: 12,
     paddingVertical: 10
   },
   webBackButton: {
-    backgroundColor: "#eff6f3",
+    backgroundColor: "#0b7f55",
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     paddingVertical: 9
   },
   webBackButtonText: {
-    color: "#0b7f55",
+    color: "#ffffff",
     fontWeight: "900"
+  },
+  webTitleWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  webBrand: {
+    color: "#0b7f55",
+    fontSize: 11,
+    fontWeight: "900",
+    textAlign: "center",
+    textTransform: "uppercase"
   },
   webTitle: {
     color: "#082441",
-    flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "900",
+    marginTop: 2,
     textAlign: "center"
   },
   webOpenButton: {
     backgroundColor: "#f1f5f9",
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 9
   },
   webOpenButtonText: {
     color: "#082441",
+    fontSize: 12,
     fontWeight: "900"
   },
   webView: {

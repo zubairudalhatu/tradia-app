@@ -1,10 +1,11 @@
-import { StatusBar } from "expo-status-bar";
+import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
   Linking,
+  Platform,
   Pressable,
   RefreshControl,
   SafeAreaView,
@@ -12,6 +13,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  StatusBar as NativeStatusBar,
   View
 } from "react-native";
 import { accountUrl, addBusinessUrl, businessUrl, listBusinesses } from "./src/api";
@@ -63,8 +65,8 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeArea, styles.androidSafeArea]}>
+      <ExpoStatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <View style={styles.header}>
         <Image source={brandLogo} style={styles.logo} resizeMode="contain" />
         <Pressable style={styles.headerButton} onPress={() => openUrl(accountUrl())}>
@@ -137,8 +139,8 @@ function BusinessDetail({ business, onBack }: { business: BusinessSummary; onBac
     : business.location.name;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeArea, styles.androidSafeArea]}>
+      <ExpoStatusBar style="dark" backgroundColor="#fbfbf8" translucent={false} />
       <ScrollView contentContainerStyle={styles.detailContent}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>Back to directory</Text>
@@ -271,6 +273,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fbfbf8"
   },
+  androidSafeArea: {
+    paddingTop: Platform.OS === "android" ? NativeStatusBar.currentHeight ?? 0 : 0
+  },
   header: {
     alignItems: "center",
     backgroundColor: "#ffffff",
@@ -278,18 +283,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14
+    paddingHorizontal: 18,
+    paddingVertical: 12
   },
   logo: {
-    height: 44,
-    width: 170
+    height: 40,
+    width: 150
   },
   headerButton: {
     backgroundColor: "#eff6f3",
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10
+    paddingHorizontal: 12,
+    paddingVertical: 9
   },
   headerButtonText: {
     color: "#082441",

@@ -17,8 +17,8 @@ import {
   View
 } from "react-native";
 import { WebView } from "react-native-webview";
-import { accountUrl, addBusinessUrl, businessUrl, listBusinesses } from "./src/api";
-import type { BusinessSummary } from "./src/types";
+import { accountUrl, addBusinessUrl, businessUrl, getBusiness, listBusinesses } from "./src/api";
+import type { BusinessDetail as BusinessDetailData, BusinessMedia, BusinessSummary } from "./src/types";
 
 const brandLogo = require("./assets/tradia-logo.png");
 
@@ -73,7 +73,7 @@ export default function App() {
 
   if (selectedBusiness) {
     return (
-      <BusinessDetail
+      <BusinessDetailScreen
         business={selectedBusiness}
         onBack={() => setSelectedBusiness(null)}
         onOpenInApp={(screen) => setWebScreen(screen)}
@@ -179,7 +179,7 @@ function InAppWebScreen({ screen, onBack }: { screen: WebScreenState; onBack: ()
   );
 }
 
-function BusinessDetail({
+function BusinessDetailScreen({
   business,
   onBack,
   onOpenInApp
@@ -188,10 +188,48 @@ function BusinessDetail({
   onBack: () => void;
   onOpenInApp: (screen: WebScreenState) => void;
 }) {
-  const rating = Number(business.averageRating || 0).toFixed(1);
-  const locationLabel = business.location.state
-    ? `${business.location.name}, ${business.location.state}`
-    : business.location.name;
+  const [detail, setDetail] = useState<BusinessDetailData | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(true);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const displayBusiness = detail ?? business;
+  const rating = Number(displayBusiness.averageRating || 0).toFixed(1);
+  const locationLabel = displayBusiness.location.state
+    ? `${displayBusiness.location.name}, ${displayBusiness.location.state}`
+    : displayBusiness.location.name;
+  const imageMedia = detail?.media.filter((item) => isImageMediaType(item.type)).slice(0, 8) ?? [];
+  const reviewCount = detail?.reviewCount ?? displayBusiness.reviewCount ?? detail?.reviews.length ?? 0;
+  const contactCount = [
+    displayBusiness.phone,
+    displayBusiness.whatsapp,
+    displayBusiness.email,
+    displayBusiness.website
+  ].filter(Boolean).length;
+
+  useEffect(() => {
+    let isActive = true;
+    setIsDetailLoading(true);
+    setDetailError(null);
+
+    getBusiness(business.slug)
+      .then((nextDetail) => {
+        if (isActive) setDetail(nextDetail);
+      })
+      .catch((loadError) => {
+        if (isActive) {
+          setDetailError(loadError instanceof Error ? loadError.message : "Unable to load this business.");
+        }
+      })
+      .finally(() => {
+        if (isActive) setIsDetailLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [business.slug]);
+
+  const coverUrl = displayBusiness.coverUrl || imageMedia.find((item) => item.type === "COVER")?.url;
+  const logoUrl = displayBusiness.logoUrl || imageMedia.find((item) => item.type === "LOGO")?.url;
 
   return (
     <SafeAreaView style={[styles.safeArea, styles.androidSafeArea]}>
@@ -201,46 +239,99 @@ function BusinessDetail({
           <Text style={styles.backButtonText}>Back to directory</Text>
         </Pressable>
 
-        {business.coverUrl ? (
-          <Image source={{ uri: cropImageUrl(business.coverUrl, "cover") }} style={styles.coverImage} />
+        {coverUrl ? (
+          <Image source={{ uri: cropImageUrl(coverUrl, "cover") }} style={styles.coverImage} />
         ) : (
           <View style={styles.coverFallback} />
         )}
 
         <View style={styles.detailCard}>
-          {business.logoUrl ? (
-            <Image source={{ uri: cropImageUrl(business.logoUrl, "logo") }} style={styles.detailLogo} resizeMode="contain" />
+          {logoUrl ? (
+            <Image source={{ uri: cropImageUrl(logoUrl, "logo") }} style={styles.detailLogo} resizeMode="contain" />
           ) : (
             <View style={styles.detailLogoFallback}>
-              <Text style={styles.detailLogoFallbackText}>{business.name.charAt(0)}</Text>
+              <Text style={styles.detailLogoFallbackText}>{displayBusiness.name.charAt(0)}</Text>
             </View>
           )}
-          <Text style={styles.detailName}>{business.name}</Text>
-          <Text style={styles.detailMeta}>{business.category.name} in {locationLabel}</Text>
+          <Text style={styles.detailName}>{displayBusiness.name}</Text>
+          <Text style={styles.detailMeta}>{displayBusiness.category.name} in {locationLabel}</Text>
 
           <View style={styles.badgeRow}>
-            <Badge label={business.verificationStatus === "VERIFIED" ? "Verified" : "Pending verification"} tone={business.verificationStatus === "VERIFIED" ? "success" : "neutral"} />
+            <Badge label={displayBusiness.verificationStatus === "VERIFIED" ? "Verified" : "Pending verification"} tone={displayBusiness.verificationStatus === "VERIFIED" ? "success" : "neutral"} />
             <Badge label={`${rating} rating`} tone="neutral" />
-            {isFeatured(business) ? <Badge label="Featured" tone="accent" /> : null}
+            <Badge label={`${reviewCount} review${reviewCount === 1 ? "" : "s"}`} tone="neutral" />
+            {isFeatured(displayBusiness) ? <Badge label="Featured" tone="accent" /> : null}
           </View>
 
-          <Text style={styles.detailDescription}>{business.description}</Text>
+          {isDetailLoading ? (
+            <View style={styles.inlineLoader}>
+              <ActivityIndicator color="#0b7f55" />
+              <Text style={styles.inlineLoaderText}>Loading full profile...</Text>
+            </View>
+          ) : null}
+          {detailError ? <Text style={styles.detailError}>{detailError}</Text> : null}
+
+          <Text style={styles.detailDescription}>{displayBusiness.description}</Text>
+
+          <View style={styles.infoPanel}>
+            <Text style={styles.infoPanelTitle}>Business information</Text>
+            {displayBusiness.address ? <DetailInfo label="Address" value={displayBusiness.address} /> : null}
+            <DetailInfo label="Contact channels" value={`${contactCount || "Limited"} available`} />
+            <DetailInfo label="Category" value={displayBusiness.category.name} />
+            <DetailInfo label="Location" value={locationLabel} />
+          </View>
+
+          {imageMedia.length ? (
+            <View style={styles.mediaSection}>
+              <Text style={styles.infoPanelTitle}>Photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaStrip}>
+                {imageMedia.map((item) => (
+                  <Image key={item.id} source={{ uri: cropImageUrl(item.url, item.type === "COVER" ? "cover" : "logo") }} style={styles.mediaThumb} />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {detail?.reviews.length ? (
+            <View style={styles.reviewsSection}>
+              <Text style={styles.infoPanelTitle}>Recent reviews</Text>
+              {detail.reviews.map((review) => (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewTitle}>{review.title ?? "Customer review"}</Text>
+                    <Text style={styles.reviewRating}>{review.rating}/5</Text>
+                  </View>
+                  <Text style={styles.reviewAuthor}>By {review.userName}</Text>
+                  <Text style={styles.reviewBody} numberOfLines={4}>{review.body}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           <View style={styles.actionGrid}>
-            {business.phone ? <ActionButton label="Call" onPress={() => openUrl(`tel:${business.phone}`)} /> : null}
-            {business.whatsapp || business.phone ? (
-              <ActionButton label="WhatsApp" onPress={() => openUrl(`https://wa.me/${cleanPhone(business.whatsapp ?? business.phone ?? "")}`)} />
+            {displayBusiness.phone ? <ActionButton label="Call" onPress={() => openUrl(`tel:${displayBusiness.phone}`)} /> : null}
+            {displayBusiness.whatsapp || displayBusiness.phone ? (
+              <ActionButton label="WhatsApp" onPress={() => openUrl(`https://wa.me/${cleanPhone(displayBusiness.whatsapp ?? displayBusiness.phone ?? "")}`)} />
             ) : null}
-            {business.email ? <ActionButton label="Email" onPress={() => openUrl(`mailto:${business.email}`)} /> : null}
-            {business.website ? <ActionButton label="Website" onPress={() => openUrl(business.website ?? "")} /> : null}
+            {displayBusiness.email ? <ActionButton label="Email" onPress={() => openUrl(`mailto:${displayBusiness.email}`)} /> : null}
+            {displayBusiness.website ? <ActionButton label="Website" onPress={() => openUrl(displayBusiness.website ?? "")} /> : null}
           </View>
 
-          <Pressable style={styles.profileButton} onPress={() => onOpenInApp({ title: business.name, url: businessUrl(business.slug) })}>
+          <Pressable style={styles.profileButton} onPress={() => onOpenInApp({ title: displayBusiness.name, url: businessUrl(displayBusiness.slug) })}>
             <Text style={styles.profileButtonText}>Open Full Profile</Text>
           </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function DetailInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailInfoRow}>
+      <Text style={styles.detailInfoLabel}>{label}</Text>
+      <Text style={styles.detailInfoValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -309,6 +400,10 @@ function openUrl(url: string) {
 
 function cleanPhone(value: string) {
   return value.replace(/\D/g, "");
+}
+
+function isImageMediaType(type: BusinessMedia["type"]) {
+  return ["LOGO", "COVER", "GALLERY"].includes(type);
 }
 
 function cropImageUrl(url: string, mode: "cover" | "logo") {
@@ -682,6 +777,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
     marginTop: 18
+  },
+  inlineLoader: {
+    alignItems: "center",
+    backgroundColor: "#eff6f3",
+    borderRadius: 8,
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+    padding: 12
+  },
+  inlineLoaderText: {
+    color: "#0b7f55",
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  detailError: {
+    backgroundColor: "#fee2e2",
+    borderRadius: 8,
+    color: "#b91c1c",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 14,
+    padding: 12
+  },
+  infoPanel: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 18,
+    padding: 14
+  },
+  infoPanelTitle: {
+    color: "#082441",
+    fontSize: 17,
+    fontWeight: "900"
+  },
+  detailInfoRow: {
+    borderTopColor: "#e2e8f0",
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12
+  },
+  detailInfoLabel: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase"
+  },
+  detailInfoValue: {
+    color: "#082441",
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 21,
+    marginTop: 4
+  },
+  mediaSection: {
+    marginTop: 18
+  },
+  mediaStrip: {
+    gap: 10,
+    paddingTop: 12
+  },
+  mediaThumb: {
+    backgroundColor: "#e2e8f0",
+    borderRadius: 8,
+    height: 112,
+    width: 150
+  },
+  reviewsSection: {
+    marginTop: 18
+  },
+  reviewCard: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 10,
+    padding: 12
+  },
+  reviewHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10
+  },
+  reviewTitle: {
+    color: "#082441",
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "900"
+  },
+  reviewRating: {
+    color: "#0b7f55",
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  reviewAuthor: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 4
+  },
+  reviewBody: {
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8
   },
   actionGrid: {
     flexDirection: "row",

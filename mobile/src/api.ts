@@ -1,4 +1,4 @@
-import type { BusinessSummary } from "./types";
+import type { BusinessDetail, BusinessSummary } from "./types";
 
 const apiBaseUrl = "https://www.tradia.business";
 
@@ -16,6 +16,17 @@ export async function listBusinesses(query = "") {
   }
 
   const payload = await response.json() as { data: BusinessSummary[] };
+  return payload.data;
+}
+
+export async function getBusiness(slug: string) {
+  const response = await fetch(`${apiBaseUrl}/api/businesses/${encodeURIComponent(slug)}`);
+
+  if (!response.ok) {
+    throw new Error("Unable to load this business.");
+  }
+
+  const payload = await response.json() as { data: BusinessDetail };
   return payload.data;
 }
 

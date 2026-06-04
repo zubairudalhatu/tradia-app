@@ -4,8 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
-const SESSION_COOKIE = "tradia_session";
-const HOST_SESSION_COOKIE = "tradia_session_host";
+export const SESSION_COOKIE = "tradia_session_v2";
+export const HOST_SESSION_COOKIE = "tradia_session_host_v2";
+export const LEGACY_SESSION_COOKIES = ["tradia_session", "tradia_session_host"];
+export const ALL_SESSION_COOKIES = [SESSION_COOKIE, HOST_SESSION_COOKIE, ...LEGACY_SESSION_COOKIES];
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const ADMIN_ACTION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
@@ -47,35 +49,30 @@ export async function createSession(userId: string) {
 
 export async function clearSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
-  cookieStore.delete(HOST_SESSION_COOKIE);
   const domain = await getCookieDomain();
 
-  if (domain) {
-    cookieStore.set(SESSION_COOKIE, "", {
+  for (const name of ALL_SESSION_COOKIES) {
+    cookieStore.delete(name);
+
+    if (domain) {
+      cookieStore.set(name, "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 0,
+        path: "/",
+        domain
+      });
+    }
+
+    cookieStore.set(name, "", {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge: 0,
-      path: "/",
-      domain
+      path: "/"
     });
   }
-
-  cookieStore.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-    path: "/"
-  });
-  cookieStore.set(HOST_SESSION_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-    path: "/"
-  });
 }
 
 export async function getCurrentUser() {

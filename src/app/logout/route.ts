@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearSession } from "@/lib/auth/session";
+import { ALL_SESSION_COOKIES, clearSession } from "@/lib/auth/session";
 
 export async function GET() {
   await clearSession();
@@ -13,7 +13,7 @@ export async function GET() {
     path: "/"
   };
 
-  for (const name of ["tradia_session", "tradia_session_host"]) {
+  for (const name of ALL_SESSION_COOKIES) {
     response.cookies.set(name, "", expiredCookie);
     response.cookies.set(name, "", { ...expiredCookie, domain: ".tradia.business" });
     response.cookies.set(name, "", { ...expiredCookie, domain: "tradia.business" });

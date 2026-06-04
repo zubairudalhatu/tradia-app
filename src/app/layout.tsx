@@ -104,7 +104,7 @@ export default async function RootLayout({
               <Link className={navLinkClass} href="/dashboard">Business</Link>
               {user ? <Link className={navLinkClass} href="/account">Account</Link> : null}
               {canAccessAdmin ? <Link className={navLinkClass} href="/admin">Admin</Link> : null}
-              {user ? <Link className={navLinkClass} href="/logout">Logout</Link> : <Link className={navLinkClass} href="/login">Login</Link>}
+              {user ? <a className={navLinkClass} href="/logout">Logout</a> : <Link className={navLinkClass} href="/login">Login</Link>}
             </nav>
             <MobileMenu isSignedIn={Boolean(user)} canAccessAdmin={canAccessAdmin} />
             <Link

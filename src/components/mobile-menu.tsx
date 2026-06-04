@@ -46,7 +46,7 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
             Add Business
           </Link>
           {isSignedIn ? (
-            <Link className={menuLinkClass} href="/logout" onClick={closeMenu}>Logout</Link>
+            <a className={menuLinkClass} href="/logout" onClick={closeMenu}>Logout</a>
           ) : (
             <Link className={menuLinkClass} href="/login" onClick={closeMenu}>Login</Link>
           )}

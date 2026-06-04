@@ -73,7 +73,13 @@ export async function approveVerificationAction(formData: FormData) {
 
   const business = await prisma.business.update({
     where: { id: request.businessId },
-    data: { verificationStatus: "VERIFIED" },
+    data: {
+      verificationStatus: "VERIFIED",
+      verificationGrantedAt: new Date(),
+      verificationGrantedBy: admin.id,
+      verificationRevokedAt: null,
+      verificationRevokedBy: null
+    },
     include: { owner: true }
   });
 
@@ -106,9 +112,13 @@ export async function rejectVerificationAction(formData: FormData) {
     }
   });
 
+  const existingBusiness = await prisma.business.findUnique({
+    where: { id: request.businessId },
+    select: { verificationStatus: true }
+  });
   const business = await prisma.business.update({
     where: { id: request.businessId },
-    data: { verificationStatus: "REJECTED" },
+    data: existingBusiness?.verificationStatus === "VERIFIED" ? {} : { verificationStatus: "REJECTED" },
     include: { owner: true }
   });
 

@@ -4,7 +4,11 @@ import { createAdminActionToken, getAdminFromActionToken, getCurrentUser } from 
 import { prisma } from "@/lib/db";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
-import { updateAdminBusinessAction } from "./actions";
+import {
+  grantLifetimeVerificationAction,
+  revokeLifetimeVerificationAction,
+  updateAdminBusinessAction
+} from "./actions";
 
 type AdminBusinessPageProps = {
   params: Promise<{ id: string }>;
@@ -49,6 +53,8 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
   if (!business) redirect("/admin?error=business-not-found");
 
   const action = updateAdminBusinessAction.bind(null, business.id);
+  const grantVerificationAction = grantLifetimeVerificationAction.bind(null, business.id);
+  const revokeVerificationAction = revokeLifetimeVerificationAction.bind(null, business.id);
   const adminActionToken = createAdminActionToken(admin);
 
   return (
@@ -59,7 +65,7 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
 
       {query.saved ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
-          Business updated.
+          {successMessage(query.saved)}
         </p>
       ) : null}
       {query.error ? (
@@ -190,6 +196,44 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white md:col-span-2">Save Business</button>
       </form>
 
+      <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-sm font-extrabold uppercase text-ember">Lifetime verification</p>
+            <h2 className="mt-1 text-2xl font-black">Admin-assigned verification</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              A verified business stays verified indefinitely until an admin revokes it. This is separate from temporary verification request review history.
+            </p>
+            <div className="mt-4 grid gap-2 text-sm font-bold text-slate-600 md:grid-cols-2">
+              <span className="rounded-tradia bg-slate-50 px-3 py-2">Current status: {business.verificationStatus}</span>
+              <span className="rounded-tradia bg-slate-50 px-3 py-2">
+                Granted: {business.verificationGrantedAt ? business.verificationGrantedAt.toLocaleDateString("en-NG", { dateStyle: "medium" }) : "Not granted"}
+              </span>
+              <span className="rounded-tradia bg-slate-50 px-3 py-2">
+                Revoked: {business.verificationRevokedAt ? business.verificationRevokedAt.toLocaleDateString("en-NG", { dateStyle: "medium" }) : "Not revoked"}
+              </span>
+              <span className="rounded-tradia bg-slate-50 px-3 py-2">
+                Source: {business.verificationGrantedBy ? "Admin assigned" : "Status only"}
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            <form action={grantVerificationAction}>
+              <input type="hidden" name="adminActionToken" value={adminActionToken} />
+              <button className="w-full rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
+                Grant Lifetime Verification
+              </button>
+            </form>
+            <form action={revokeVerificationAction}>
+              <input type="hidden" name="adminActionToken" value={adminActionToken} />
+              <button className="w-full rounded-tradia bg-red-50 px-5 py-3 text-sm font-bold text-red-700">
+                Revoke Verification
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-2xl font-black">Recent uploads</h2>
@@ -219,4 +263,10 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
       </section>
     </main>
   );
+}
+
+function successMessage(value: string) {
+  if (value === "verification-granted") return "Lifetime verification granted.";
+  if (value === "verification-revoked") return "Verification revoked.";
+  return "Business updated.";
 }

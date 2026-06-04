@@ -43,6 +43,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "This business plan cannot request verification." }, { status: 403 });
   }
 
+  if (business.verificationStatus === "VERIFIED") {
+    return NextResponse.json({ error: "This business already has lifetime verification." }, { status: 409 });
+  }
+
   const verificationRequest = await prisma.verificationRequest.create({
     data: {
       ...parsed.data,

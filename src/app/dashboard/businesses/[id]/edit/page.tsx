@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { CoverCropPicker } from "@/components/cover-crop-picker";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
@@ -9,6 +10,7 @@ import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 import {
   respondToReviewAction,
   submitVerificationRequestAction,
+  updateCoverCropAction,
   updateBusinessProfileAction,
   uploadBusinessMediaAction
 } from "./actions";
@@ -63,6 +65,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
 
   const action = updateBusinessProfileAction.bind(null, business.id);
   const mediaAction = uploadBusinessMediaAction.bind(null, business.id);
+  const coverCropAction = updateCoverCropAction.bind(null, business.id);
   const verificationAction = submitVerificationRequestAction.bind(null, business.id);
   const responseAction = respondToReviewAction.bind(null, business.id);
   const completeness = getBusinessProfileCompleteness(business);
@@ -105,12 +108,14 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       ) : null}
       {query.media ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
-          Media uploaded successfully.
+          {query.media === "crop-saved" ? "Cover crop saved." : "Media uploaded successfully."}
         </p>
       ) : null}
       {query.verification ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
-          Verification request submitted for admin review.
+          {query.verification === "already-verified"
+            ? "This business already has lifetime verification."
+            : "Verification request submitted for admin review."}
         </p>
       ) : null}
       {query.response ? (
@@ -232,6 +237,19 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-black">Media</h2>
         <p className="mt-1 text-sm text-slate-600">Upload a logo, cover image, gallery photo, menu, brochure, or document.</p>
+        {business.coverUrl ? (
+          <form action={coverCropAction} className="mt-5 rounded-tradia border border-slate-200 bg-slate-50 p-4">
+            <h3 className="mb-3 text-lg font-black">Cover crop</h3>
+            <CoverCropPicker
+              imageUrl={business.coverUrl}
+              initialX={business.coverCropX}
+              initialY={business.coverCropY}
+            />
+            <button className="mt-4 rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
+              Save Cover Crop
+            </button>
+          </form>
+        ) : null}
         <form action={mediaAction} className="mt-5 grid gap-4 md:grid-cols-[180px_1fr_auto]" encType="multipart/form-data">
           <select className="rounded-tradia border border-slate-200 px-4 py-3" name="mediaType" defaultValue="GALLERY">
             <option value="LOGO">Logo</option>
@@ -264,11 +282,20 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-black">Verification</h2>
         <p className="mt-1 text-sm text-slate-600">
-          {benefits.canRequestVerification
+          {business.verificationStatus === "VERIFIED"
+            ? "This business has lifetime verification. It remains verified unless an admin revokes it."
+            : benefits.canRequestVerification
             ? "Submit proof documents so admins can mark this business as verified."
             : "Verification requests are available on Silver, Gold, and Platinum plans."}
         </p>
-        {benefits.canRequestVerification ? (
+        {business.verificationStatus === "VERIFIED" ? (
+          <div className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
+            <span className="block">Verified by Tradia</span>
+            <span className="mt-1 block text-forest/80">
+              Granted {business.verificationGrantedAt ? business.verificationGrantedAt.toLocaleDateString("en-NG", { dateStyle: "medium" }) : "by admin review"}.
+            </span>
+          </div>
+        ) : benefits.canRequestVerification ? (
           <form action={verificationAction} className="mt-5 grid gap-4 md:grid-cols-2" encType="multipart/form-data">
           <label className="grid gap-2 text-sm font-bold text-slate-600">
             Document type

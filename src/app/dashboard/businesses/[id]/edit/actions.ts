@@ -109,12 +109,38 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
   }
 
   if (mediaType === "COVER") {
-    await prisma.business.update({ where: { id: business.id }, data: { coverUrl: url } });
+    await prisma.business.update({
+      where: { id: business.id },
+      data: {
+        coverUrl: url,
+        coverCropX: 50,
+        coverCropY: 50
+      }
+    });
   }
 
   revalidatePath(`/dashboard/businesses/${businessId}/edit`);
   revalidatePath(`/businesses/${business.slug}`);
   redirect(`/dashboard/businesses/${businessId}/edit?media=uploaded`);
+}
+
+export async function updateCoverCropAction(businessId: string, formData: FormData) {
+  const user = await requireUser();
+  const business = await getOwnedBusinessOrThrow(businessId, user.id);
+  const coverCropX = normalizeCropCoordinate(formData.get("coverCropX"));
+  const coverCropY = normalizeCropCoordinate(formData.get("coverCropY"));
+
+  await prisma.business.update({
+    where: { id: business.id },
+    data: {
+      coverCropX,
+      coverCropY
+    }
+  });
+
+  revalidatePath(`/dashboard/businesses/${businessId}/edit`);
+  revalidatePath(`/businesses/${business.slug}`);
+  redirect(`/dashboard/businesses/${businessId}/edit?media=crop-saved`);
 }
 
 export async function submitVerificationRequestAction(businessId: string, formData: FormData) {
@@ -127,6 +153,10 @@ export async function submitVerificationRequestAction(businessId: string, formDa
 
   if (!benefits.canRequestVerification) {
     redirect(`/dashboard/businesses/${businessId}/edit?error=verification-plan`);
+  }
+
+  if (business.verificationStatus === "VERIFIED") {
+    redirect(`/dashboard/businesses/${businessId}/edit?verification=already-verified`);
   }
 
   if (!documentType || !(file instanceof File) || file.size === 0) {
@@ -232,4 +262,10 @@ function normalizeMediaType(value: string) {
   }
 
   return "GALLERY";
+}
+
+function normalizeCropCoordinate(value: FormDataEntryValue | null) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 50;
+  return Math.min(Math.max(Math.round(number), 0), 100);
 }

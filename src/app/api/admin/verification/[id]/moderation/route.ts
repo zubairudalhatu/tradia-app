@@ -30,9 +30,23 @@ export async function POST(request: Request, { params }: RouteContext) {
     }
   });
 
+  const existingBusiness = await prisma.business.findUnique({
+    where: { id: requestRecord.businessId },
+    select: { verificationStatus: true }
+  });
   const business = await prisma.business.update({
     where: { id: requestRecord.businessId },
-    data: { verificationStatus: action === "approve" ? "VERIFIED" : "REJECTED" },
+    data: action === "approve"
+      ? {
+          verificationStatus: "VERIFIED",
+          verificationGrantedAt: new Date(),
+          verificationGrantedBy: admin.id,
+          verificationRevokedAt: null,
+          verificationRevokedBy: null
+        }
+      : existingBusiness?.verificationStatus === "VERIFIED"
+        ? {}
+        : { verificationStatus: "REJECTED" },
     include: { owner: true }
   });
 

@@ -19,6 +19,8 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   const address = String(formData.get("address") ?? "").trim();
   const ownerId = optionalString(formData.get("ownerId"));
   const planId = optionalString(formData.get("planId"));
+  const verificationStatus = normalizeVerificationStatus(String(formData.get("verificationStatus") ?? "UNVERIFIED"));
+  const verificationData = buildVerificationData(verificationStatus, admin.id);
 
   if (name.length < 2 || slug.length < 3 || description.length < 20 || address.length < 5 || !categoryId || !locationId) {
     redirect(`/admin/businesses/${businessId}?error=invalid`);
@@ -28,9 +30,20 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   if (existingSlugOwner && existingSlugOwner.id !== businessId) {
     redirect(`/admin/businesses/${businessId}?error=slug-taken`);
   }
+  const currentBusiness = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: {
+      verificationStatus: true,
+      verificationGrantedAt: true
+    }
+  });
+  if (!currentBusiness) {
+    redirect(`/admin/businesses/${businessId}?error=save`);
+  }
 
   try {
     const business = await prisma.$transaction(async (tx) => {
+      const verificationData = buildVerificationData(verificationStatus, admin.id, currentBusiness);
       const updatedBusiness = await tx.business.update({
         where: { id: businessId },
         data: {
@@ -47,7 +60,8 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
           email: optionalString(formData.get("email")),
           website: optionalString(formData.get("website")),
           listingStatus: normalizeListingStatus(String(formData.get("listingStatus") ?? "DRAFT")),
-          verificationStatus: normalizeVerificationStatus(String(formData.get("verificationStatus") ?? "UNVERIFIED"))
+          verificationStatus,
+          ...verificationData
         }
       });
 
@@ -70,6 +84,56 @@ export async function updateAdminBusinessAction(businessId: string, formData: Fo
   revalidatePath("/businesses");
   revalidatePath(`/businesses/${slug}`);
   redirect(`/admin/businesses/${businessId}?saved=1`);
+}
+
+export async function grantLifetimeVerificationAction(businessId: string, formData: FormData) {
+  const admin = await requireAdminAction(formData);
+
+  const business = await prisma.business.update({
+    where: { id: businessId },
+    data: buildVerificationData("VERIFIED", admin.id, undefined, true),
+    select: { id: true, name: true, slug: true }
+  });
+
+  await createAuditLog({
+    actorId: admin.id,
+    action: "GRANTED_LIFETIME_VERIFICATION",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: { businessName: business.name }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/businesses");
+  revalidatePath(`/businesses/${business.slug}`);
+  redirect(`/admin/businesses/${businessId}?saved=verification-granted`);
+}
+
+export async function revokeLifetimeVerificationAction(businessId: string, formData: FormData) {
+  const admin = await requireAdminAction(formData);
+
+  const business = await prisma.business.update({
+    where: { id: businessId },
+    data: {
+      verificationStatus: "UNVERIFIED",
+      verificationRevokedAt: new Date(),
+      verificationRevokedBy: admin.id
+    },
+    select: { id: true, name: true, slug: true }
+  });
+
+  await createAuditLog({
+    actorId: admin.id,
+    action: "REVOKED_LIFETIME_VERIFICATION",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: { businessName: business.name }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/businesses");
+  revalidatePath(`/businesses/${business.slug}`);
+  redirect(`/admin/businesses/${businessId}?saved=verification-revoked`);
 }
 
 async function syncAdminAssignedSubscription(
@@ -178,4 +242,37 @@ function normalizeVerificationStatus(value: string) {
   }
 
   return "UNVERIFIED";
+}
+
+function buildVerificationData(
+  status: ReturnType<typeof normalizeVerificationStatus>,
+  adminId: string,
+  currentBusiness?: { verificationStatus: string; verificationGrantedAt: Date | null },
+  forceGrant = false
+) {
+  if (status === "VERIFIED" || forceGrant) {
+    if (!forceGrant && currentBusiness?.verificationStatus === "VERIFIED" && currentBusiness.verificationGrantedAt) {
+      return {
+        verificationRevokedAt: null,
+        verificationRevokedBy: null
+      };
+    }
+
+    return {
+      verificationStatus: "VERIFIED" as const,
+      verificationGrantedAt: new Date(),
+      verificationGrantedBy: adminId,
+      verificationRevokedAt: null,
+      verificationRevokedBy: null
+    };
+  }
+
+  if (status === "UNVERIFIED" || status === "REJECTED") {
+    return {
+      verificationGrantedAt: null,
+      verificationGrantedBy: null
+    };
+  }
+
+  return {};
 }

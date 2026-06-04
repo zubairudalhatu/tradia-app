@@ -121,6 +121,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
     : `/admin/businesses/${business.id}`;
   const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
+  const verifiedSince = business.verificationGrantedAt?.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const stateName = getStateName(business.location);
   const areaName = getAreaName(business.location);
   const trustSignals = [
@@ -225,7 +226,12 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="relative">
           {business.coverUrl ? (
-            <img className="h-64 w-full bg-slate-100 object-cover" src={cropImageUrl(business.coverUrl, "cover")} alt={`${business.name} cover image`} />
+            <img
+              className="h-64 w-full bg-slate-100 object-cover"
+              src={business.coverUrl}
+              alt={`${business.name} cover image`}
+              style={{ objectPosition: `${business.coverCropX}% ${business.coverCropY}%` }}
+            />
           ) : (
             <div className="h-64 bg-gradient-to-br from-forest to-ink" />
           )}
@@ -343,6 +349,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               {business.website ? <DetailRow label="Website" value={displayWebsite(business.website)} /> : null}
               <DetailRow label="Rating" value={Number(business.averageRating).toFixed(1)} />
               <DetailRow label="Verification" value={verificationLabel(business.verificationStatus)} />
+              {verifiedSince ? <DetailRow label="Verified since" value={verifiedSince} /> : null}
               <DetailRow label="Plan level" value={activePlanName} />
               <DetailRow label="Listed since" value={listedSince} />
               <DetailRow label="Last updated" value={lastUpdated} />
@@ -350,7 +357,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             <div className="mt-5 rounded-tradia bg-emerald-50 p-4">
               <h3 className="font-black text-forest">Trust summary</h3>
               <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                <span>{isVerified ? "Business documents have been reviewed by Tradia." : "This business has not completed verification yet."}</span>
+                <span>{isVerified ? `Business documents have been reviewed by Tradia${verifiedSince ? ` since ${verifiedSince}` : ""}.` : "This business has not completed verification yet."}</span>
                 <span>{activePlanName} listing level{planState.activeSubscription ? ` active until ${planState.activeSubscription.endsAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}` : ""}</span>
                 <span>{hasDirectContact ? `Available through ${contactMethods.join(", ")}` : "Direct contact details are limited"}</span>
                 <span>{completeness.percentage}% profile completeness</span>

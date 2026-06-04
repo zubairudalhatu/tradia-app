@@ -10,6 +10,12 @@ export function addHours(date: Date, hours: number) {
   return result;
 }
 
+export function addMinutes(date: Date, minutes: number) {
+  const result = new Date(date);
+  result.setMinutes(result.getMinutes() + minutes);
+  return result;
+}
+
 export function addDays(date: Date, days: number) {
   const result = new Date(date);
   result.setDate(result.getDate() + days);

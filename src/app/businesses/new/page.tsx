@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isUserAccountVerified } from "@/lib/account-verification";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
@@ -41,6 +43,10 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
         </div>
       </main>
     );
+  }
+
+  if (!isUserAccountVerified(user)) {
+    redirect("/verify-account");
   }
 
   return (

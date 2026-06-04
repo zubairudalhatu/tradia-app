@@ -94,6 +94,8 @@ export async function getCurrentUser() {
       name: true,
       email: true,
       phone: true,
+      emailVerifiedAt: true,
+      phoneVerifiedAt: true,
       role: true,
       status: true
     }
@@ -145,6 +147,8 @@ export async function getAdminFromActionToken(token?: string) {
       name: true,
       email: true,
       phone: true,
+      emailVerifiedAt: true,
+      phoneVerifiedAt: true,
       role: true,
       status: true
     }

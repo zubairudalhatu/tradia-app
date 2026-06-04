@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isUserAccountVerified } from "@/lib/account-verification";
 import { createBusiness } from "@/lib/queries/businesses";
 import { businessCreateSchema } from "@/lib/validations/business";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -11,6 +12,10 @@ export async function submitBusinessAction(formData: FormData) {
 
   if (!user || user.status !== "ACTIVE") {
     redirect("/login?next=/businesses/new");
+  }
+
+  if (!isUserAccountVerified(user)) {
+    redirect("/verify-account");
   }
 
   const parsed = businessCreateSchema.safeParse({

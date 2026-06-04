@@ -18,6 +18,9 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         </p>
       ) : null}
       <form action={registerAction} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="rounded-tradia bg-emerald-50 p-3 text-sm font-bold text-forest">
+          After signup, verify your account by email, SMS, or WhatsApp before creating a listing.
+        </p>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Full name
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" required />

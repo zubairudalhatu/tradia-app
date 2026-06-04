@@ -95,6 +95,12 @@ enum LeadStatus {
   SPAM
 }
 
+enum AccountVerificationMethod {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
 model User {
   id              String           @id @default(cuid())
   name            String
@@ -118,6 +124,7 @@ model User {
   payments        Payment[]
   auditLogs       AuditLog[]       @relation("AuditActor")
   passwordResetTokens PasswordResetToken[]
+  accountVerificationTokens AccountVerificationToken[]
 }
 
 model PasswordResetToken {
@@ -130,6 +137,21 @@ model PasswordResetToken {
   createdAt DateTime  @default(now())
 
   @@index([userId])
+  @@index([expiresAt])
+}
+
+model AccountVerificationToken {
+  id          String                    @id @default(cuid())
+  userId      String
+  user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  method      AccountVerificationMethod
+  destination String
+  codeHash    String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime                  @default(now())
+
+  @@index([userId, method, createdAt])
   @@index([expiresAt])
 }
 

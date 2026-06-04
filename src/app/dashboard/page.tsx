@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { isUserAccountVerified } from "@/lib/account-verification";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
@@ -15,6 +16,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
 
   if (!user) redirect("/login");
+  if (!isUserAccountVerified(user)) redirect("/verify-account");
 
   const businesses = await prisma.business.findMany({
     where: { ownerId: user.id },

@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { createSession } from "@/lib/auth/session";
+import { createAndSendAccountVerificationCode } from "@/lib/account-verification";
 import { prisma } from "@/lib/db";
 
 export async function registerAction(formData: FormData) {
@@ -36,5 +37,6 @@ export async function registerAction(formData: FormData) {
   });
 
   await createSession(user.id);
-  redirect("/businesses/new");
+  const verification = await createAndSendAccountVerificationCode(user, "EMAIL");
+  redirect(`/verify-account?sent=email${verification.ok && verification.skipped ? "&delivery=skipped" : ""}`);
 }

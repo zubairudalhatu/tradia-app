@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { createSession } from "@/lib/auth/session";
+import { isUserAccountVerified } from "@/lib/account-verification";
 import { prisma } from "@/lib/db";
 
 export async function loginAction(formData: FormData) {
@@ -21,6 +22,10 @@ export async function loginAction(formData: FormData) {
   }
 
   await createSession(user.id);
+  if (!isUserAccountVerified(user)) {
+    redirect("/verify-account");
+  }
+
   redirect(nextPath ?? (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard"));
 }
 

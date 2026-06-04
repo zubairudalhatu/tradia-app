@@ -218,12 +218,18 @@ export default async function AdminBusinessPage({ params, searchParams }: AdminB
             </div>
           </div>
           <div className="grid gap-3">
-            <form action={grantVerificationAction}>
-              <input type="hidden" name="adminActionToken" value={adminActionToken} />
-              <button className="w-full rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
-                Grant Lifetime Verification
-              </button>
-            </form>
+            {business.verificationStatus === "VERIFIED" ? (
+              <div className="w-full rounded-tradia bg-emerald-50 px-5 py-3 text-center text-sm font-black text-forest">
+                Lifetime Verification Granted
+              </div>
+            ) : (
+              <form action={grantVerificationAction}>
+                <input type="hidden" name="adminActionToken" value={adminActionToken} />
+                <button className="w-full rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
+                  Grant Lifetime Verification
+                </button>
+              </form>
+            )}
             <form action={revokeVerificationAction}>
               <input type="hidden" name="adminActionToken" value={adminActionToken} />
               <button className="w-full rounded-tradia bg-red-50 px-5 py-3 text-sm font-bold text-red-700">

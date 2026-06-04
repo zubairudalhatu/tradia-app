@@ -4,18 +4,27 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
+import { BusinessOwnerMediaPanel } from "@/components/business-owner-media-panel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { getBusinessBySlug } from "@/lib/queries/businesses";
-import { reportBusinessAction, reportReviewAction, submitBusinessLeadAction, submitReviewAction } from "./actions";
+import {
+  deleteProfileMediaAction,
+  reportBusinessAction,
+  reportReviewAction,
+  submitBusinessLeadAction,
+  submitReviewAction,
+  updateProfileCoverCropAction,
+  uploadProfileMediaAction
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
 type BusinessPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ review?: string; report?: string; enquiry?: string }>;
+  searchParams: Promise<{ review?: string; report?: string; enquiry?: string; media?: string }>;
 };
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
@@ -94,6 +103,9 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const reviewAction = submitReviewAction.bind(null, business.id, business.slug);
   const businessReportAction = reportBusinessAction.bind(null, business.id, business.slug);
   const leadAction = submitBusinessLeadAction.bind(null, business.id, business.slug);
+  const ownerUploadAction = uploadProfileMediaAction.bind(null, business.id, business.slug);
+  const ownerCoverCropAction = updateProfileCoverCropAction.bind(null, business.id, business.slug);
+  const ownerDeleteMediaAction = deleteProfileMediaAction.bind(null, business.id, business.slug);
   const completeness = getBusinessProfileCompleteness(business);
   const planState = getBusinessPlanState(business);
   const benefits = planState.benefits;
@@ -115,6 +127,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const profileUrl = `${baseUrl}/businesses/${business.slug}`;
   const shareText = `View ${business.name} on Tradia`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${profileUrl}`)}`;
+  const isOwner = user?.id === business.ownerId;
   const canEditBusiness = user?.id === business.ownerId || Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
   const editBusinessHref = user?.id === business.ownerId
     ? `/dashboard/businesses/${business.id}/edit`
@@ -223,6 +236,15 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
       />
       <Breadcrumbs items={breadcrumbs} />
+      {query.media ? (
+        <p className={`mt-5 rounded-tradia border p-4 text-sm font-bold ${
+          ["uploaded", "crop-saved", "deleted"].includes(query.media)
+            ? "border-emerald-200 bg-emerald-50 text-forest"
+            : "border-red-200 bg-red-50 text-red-700"
+        }`}>
+          {mediaMessage(query.media)}
+        </p>
+      ) : null}
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="relative">
           {business.coverUrl ? (
@@ -261,6 +283,23 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             )}
           </div>
         </div>
+        {isOwner ? (
+          <BusinessOwnerMediaPanel
+            businessName={business.name}
+            logoUrl={business.logoUrl}
+            coverUrl={business.coverUrl}
+            coverCropX={business.coverCropX}
+            coverCropY={business.coverCropY}
+            media={business.media.map((item) => ({
+              id: item.id,
+              type: item.type,
+              url: item.url
+            }))}
+            uploadAction={ownerUploadAction}
+            cropAction={ownerCoverCropAction}
+            deleteAction={ownerDeleteMediaAction}
+          />
+        ) : null}
         <div className="grid gap-8 p-6 lg:grid-cols-[1fr_340px]">
           <div>
             <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -692,6 +731,17 @@ function mediaTypeLabel(type: string) {
   if (type === "BROCHURE") return "Brochure";
   if (type === "DOCUMENT") return "Document";
   return "File";
+}
+
+function mediaMessage(value: string) {
+  if (value === "uploaded") return "Profile media uploaded successfully.";
+  if (value === "crop-saved") return "Cover photo position saved.";
+  if (value === "deleted") return "Uploaded media deleted.";
+  if (value === "photo-limit") return "This business has reached the photo limit for its current plan.";
+  if (value === "upload-storage") return "Uploads are not configured yet. Please add Cloudinary credentials in Vercel.";
+  if (value === "forbidden") return "Only the business owner can update profile photos from this page.";
+  if (value === "missing") return "That uploaded media item could not be found.";
+  return "Please choose a valid image or file to upload.";
 }
 
 function cropImageUrl(url: string, mode: "cover" | "gallery") {

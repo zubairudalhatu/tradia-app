@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CoverCropPicker } from "@/components/cover-crop-picker";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
@@ -10,9 +9,7 @@ import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 import {
   respondToReviewAction,
   submitVerificationRequestAction,
-  updateCoverCropAction,
-  updateBusinessProfileAction,
-  uploadBusinessMediaAction
+  updateBusinessProfileAction
 } from "./actions";
 
 type EditBusinessPageProps = {
@@ -64,15 +61,12 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   if (!business) redirect("/dashboard?error=business-not-found");
 
   const action = updateBusinessProfileAction.bind(null, business.id);
-  const mediaAction = uploadBusinessMediaAction.bind(null, business.id);
-  const coverCropAction = updateCoverCropAction.bind(null, business.id);
   const verificationAction = submitVerificationRequestAction.bind(null, business.id);
   const responseAction = respondToReviewAction.bind(null, business.id);
   const completeness = getBusinessProfileCompleteness(business);
   const planState = getBusinessPlanState(business);
   const benefits = planState.benefits;
   const photoCount = business.media.filter((item) => isPhotoMediaType(item.type)).length;
-  const canUploadPhotos = photoCount < benefits.maxPhotos;
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-12">
@@ -104,11 +98,6 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       {query.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
           {errorMessage(query.error)}
-        </p>
-      ) : null}
-      {query.media ? (
-        <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
-          {query.media === "crop-saved" ? "Cover crop saved." : "Media uploaded successfully."}
         </p>
       ) : null}
       {query.verification ? (
@@ -235,47 +224,17 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
       </form>
 
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-black">Media</h2>
-        <p className="mt-1 text-sm text-slate-600">Upload a logo, cover image, gallery photo, menu, brochure, or document.</p>
-        {business.coverUrl ? (
-          <form action={coverCropAction} className="mt-5 rounded-tradia border border-slate-200 bg-slate-50 p-4">
-            <h3 className="mb-3 text-lg font-black">Cover crop</h3>
-            <CoverCropPicker
-              imageUrl={business.coverUrl}
-              initialX={business.coverCropX}
-              initialY={business.coverCropY}
-            />
-            <button className="mt-4 rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
-              Save Cover Crop
-            </button>
-          </form>
-        ) : null}
-        <form action={mediaAction} className="mt-5 grid gap-4 md:grid-cols-[180px_1fr_auto]" encType="multipart/form-data">
-          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="mediaType" defaultValue="GALLERY">
-            <option value="LOGO">Logo</option>
-            <option value="COVER">Cover</option>
-            <option value="GALLERY">Gallery</option>
-            <option value="MENU">Menu</option>
-            <option value="BROCHURE">Brochure</option>
-            <option value="DOCUMENT">Document</option>
-          </select>
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required />
-          <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Upload</button>
-        </form>
-        {!canUploadPhotos ? (
-          <p className="mt-4 rounded-tradia bg-amber-50 p-3 text-sm font-bold text-amber-800">
-            Photo limit reached for your {benefits.name} plan. Upgrade to add more photos.
-          </p>
-        ) : null}
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {business.media.length ? business.media.map((item) => (
-            <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 p-4 text-sm">
-              <strong className="block text-ink">{item.type}</strong>
-              <span className="text-slate-600">Uploaded {item.type.toLowerCase()} file</span>
-            </a>
-          )) : (
-            <p className="text-sm text-slate-600">No media uploaded yet.</p>
-          )}
+        <h2 className="text-2xl font-black">Profile photos</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Logo, cover photo positioning, gallery uploads, and media deletion now happen directly on the public business page so you can edit while seeing the page customers see.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href={`/businesses/${business.slug}`} className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">
+            Manage Photos on Public Page
+          </Link>
+          <span className="rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-slate-600">
+            {photoCount}/{benefits.maxPhotos} photos used
+          </span>
         </div>
       </section>
 

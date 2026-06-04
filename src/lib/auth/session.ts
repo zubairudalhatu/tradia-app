@@ -62,6 +62,13 @@ export async function clearSession() {
     });
   }
 
+  cookieStore.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: "/"
+  });
   cookieStore.set(HOST_SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
@@ -73,8 +80,10 @@ export async function clearSession() {
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(HOST_SESSION_COOKIE)?.value ?? cookieStore.get(SESSION_COOKIE)?.value;
-  const payload = verify(token);
+  const payload = [
+    cookieStore.get(HOST_SESSION_COOKIE)?.value,
+    cookieStore.get(SESSION_COOKIE)?.value
+  ].map((token) => verify(token)).find(Boolean);
 
   if (!payload) return null;
 

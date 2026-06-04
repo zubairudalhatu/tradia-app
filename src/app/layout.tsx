@@ -43,13 +43,49 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const user = await getCurrentUser();
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
   const canAccessAdmin = Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
   const navLinkClass =
     "rounded-tradia px-3 py-2 transition hover:bg-white hover:text-forest hover:shadow-md focus-visible:bg-white focus-visible:text-forest focus-visible:shadow-md focus-visible:outline-none";
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${baseUrl}/#organization`,
+    name: "Tradia",
+    url: baseUrl,
+    logo: `${baseUrl}/brand/tradia-logo.png`,
+    legalName: "Zamkah Technologies Limited",
+    sameAs: [
+      "https://www.tradia.business"
+    ]
+  };
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${baseUrl}/#website`,
+    name: "Tradia",
+    url: baseUrl,
+    publisher: {
+      "@id": `${baseUrl}/#organization`
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${baseUrl}/businesses?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
 
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5482232753323076"

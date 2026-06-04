@@ -50,13 +50,29 @@ export default async function HomePage() {
           <div>
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>
             <h1 className="max-w-4xl text-6xl font-black leading-[0.9] tracking-normal text-ink md:text-8xl">
-              Grow your visibility on Tradia.
+              Find and grow trusted Nigerian businesses.
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
               Tradia is a Nigeria business directory that helps customers discover verified local
               businesses and gives SMEs a credible digital presence with reviews, claims,
               verification, and visibility plans.
             </p>
+            <div className="mt-6 grid max-w-3xl gap-3 md:grid-cols-2">
+              <Link href="/businesses" className="rounded-tradia border border-forest bg-forest p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                <span className="text-sm font-black uppercase text-white/70">For customers</span>
+                <strong className="mt-2 block text-2xl font-black">Find a trusted business</strong>
+                <span className="mt-2 block text-sm leading-6 text-white/80">
+                  Search by category, location, reviews, and verification status.
+                </span>
+              </Link>
+              <Link href="/businesses/new" className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
+                <span className="text-sm font-black uppercase text-ember">For business owners</span>
+                <strong className="mt-2 block text-2xl font-black text-ink">List your business</strong>
+                <span className="mt-2 block text-sm leading-6 text-slate-600">
+                  Build a profile with contact buttons, reviews, media, and verification.
+                </span>
+              </Link>
+            </div>
             <form action="/businesses" className="mt-8 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:grid-cols-[1fr_180px_auto]">
               <input
                 className="rounded-tradia border border-slate-200 px-4 py-3"
@@ -80,8 +96,21 @@ export default async function HomePage() {
                 Search
               </button>
             </form>
+            <div className="mt-5 flex flex-wrap gap-2 text-sm font-bold text-slate-500">
+              <span className="rounded-full bg-white px-3 py-1">Verified profiles</span>
+              <span className="rounded-full bg-white px-3 py-1">Direct WhatsApp contact</span>
+              <span className="rounded-full bg-white px-3 py-1">Location pages</span>
+              <span className="rounded-full bg-white px-3 py-1">Reviews and media</span>
+            </div>
           </div>
           <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase text-ember">Featured</p>
+                <h2 className="text-2xl font-black">Businesses to explore</h2>
+              </div>
+              <Link href="/pricing" className="text-sm font-black text-forest">Get featured</Link>
+            </div>
             <div className="grid gap-4">
               {featuredBusinesses.slice(0, 3).map((business) => (
                 <Link
@@ -133,6 +162,35 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      <section className="bg-slate-50">
+        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="mb-2 text-sm font-extrabold uppercase text-ember">Why Tradia</p>
+            <h2 className="text-4xl font-black tracking-normal text-ink">Built for Nigerian discovery and SME trust.</h2>
+            <p className="mt-4 leading-7 text-slate-600">
+              Customers need confidence before they call. Business owners need visibility that looks credible. Tradia brings both sides into one searchable directory.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/businesses/new" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Add your business</Link>
+              <Link href="/verification-policy" className="rounded-tradia bg-white px-5 py-3 font-bold text-ink">How verification works</Link>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <ProofPoint title="Search by place" body="Location and category pages help customers find businesses close to them." />
+            <ProofPoint title="Show proof" body="Profiles support photos, documents, reviews, opening hours, and contact details." />
+            <ProofPoint title="Grow visibility" body="Paid plans improve listing priority, media capacity, analytics, and featured eligibility." />
+          </div>
+        </div>
+      </section>
     </main>
+  );
+}
+
+function ProofPoint({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="text-xl font-black">{title}</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+    </div>
   );
 }

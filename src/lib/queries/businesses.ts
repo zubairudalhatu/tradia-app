@@ -25,39 +25,9 @@ export type BusinessSearchFilters = {
 };
 
 export async function listPublishedBusinesses(filters: BusinessSearchFilters = {}) {
-  const search = filters.q?.trim();
-  const openNow = filters.open ? getNigeriaBusinessTime() : null;
   const limit = clampResultLimit(filters.limit);
   const page = Math.max(filters.page ?? 1, 1);
-  const where: Prisma.BusinessWhereInput = {
-    listingStatus: "PUBLISHED",
-    ...(filters.verified ? { verificationStatus: "VERIFIED" } : {}),
-    ...(filters.category ? { category: { slug: filters.category } } : {}),
-    ...(filters.location ? { location: { slug: filters.location } } : {}),
-    ...(openNow
-      ? {
-          hours: {
-            some: {
-              dayOfWeek: openNow.dayOfWeek,
-              isClosed: false,
-              opensAt: { lte: openNow.time },
-              closesAt: { gte: openNow.time }
-            }
-          }
-        }
-      : {}),
-    ...(search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { description: { contains: search, mode: "insensitive" } },
-            { address: { contains: search, mode: "insensitive" } },
-            { category: { name: { contains: search, mode: "insensitive" } } },
-            { location: { name: { contains: search, mode: "insensitive" } } }
-          ]
-        }
-      : {})
-  };
+  const where = buildPublishedBusinessWhere(filters);
 
   const businesses = await prisma.business.findMany({
     where,
@@ -73,6 +43,12 @@ export async function listPublishedBusinesses(filters: BusinessSearchFilters = {
   });
 
   return filters.rotate ? rotateBusinessResults(businesses) : businesses;
+}
+
+export function countPublishedBusinesses(filters: BusinessSearchFilters = {}) {
+  return prisma.business.count({
+    where: buildPublishedBusinessWhere(filters)
+  });
 }
 
 export function listFeaturedBusinesses(limit = 3) {
@@ -221,6 +197,41 @@ function slugify(value: string) {
 function clampResultLimit(limit?: number) {
   if (!limit) return undefined;
   return Math.min(Math.max(limit, 1), 100);
+}
+
+function buildPublishedBusinessWhere(filters: BusinessSearchFilters = {}) {
+  const search = filters.q?.trim();
+  const openNow = filters.open ? getNigeriaBusinessTime() : null;
+
+  return {
+    listingStatus: "PUBLISHED",
+    ...(filters.verified ? { verificationStatus: "VERIFIED" } : {}),
+    ...(filters.category ? { category: { slug: filters.category } } : {}),
+    ...(filters.location ? { location: { slug: filters.location } } : {}),
+    ...(openNow
+      ? {
+          hours: {
+            some: {
+              dayOfWeek: openNow.dayOfWeek,
+              isClosed: false,
+              opensAt: { lte: openNow.time },
+              closesAt: { gte: openNow.time }
+            }
+          }
+        }
+      : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { address: { contains: search, mode: "insensitive" } },
+            { category: { name: { contains: search, mode: "insensitive" } } },
+            { location: { name: { contains: search, mode: "insensitive" } } }
+          ]
+        }
+      : {})
+  } satisfies Prisma.BusinessWhereInput;
 }
 
 function rotateBusinessResults<T>(businesses: T[]) {

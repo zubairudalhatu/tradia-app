@@ -26,6 +26,11 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
         <p className="mt-4 text-lg text-slate-600">
           Business submissions are tied to owner accounts so Tradia can support approvals, edits, and verification.
         </p>
+        <div className="mt-6 grid gap-3 rounded-tradia border border-slate-200 bg-white p-5">
+          <OnboardingBenefit title="Own your public profile" body="Keep your contact details, description, photos, and service information in one trusted place." />
+          <OnboardingBenefit title="Build customer confidence" body="Collect reviews, request verification, and show proof that your business is active." />
+          <OnboardingBenefit title="Appear in local discovery" body="Get listed on category and location pages where customers are already searching." />
+        </div>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link className="rounded-tradia bg-forest px-5 py-3 font-bold text-white" href="/login">
             Sign In
@@ -42,12 +47,16 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
     <main className="mx-auto max-w-4xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Onboarding</p>
       <h1 className="text-5xl font-black tracking-normal">Add your business</h1>
+      <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
+        Create a profile customers can trust. Start with the required details, then add media, opening hours, verification documents, and a visibility plan from your dashboard.
+      </p>
       {params.error ? (
         <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           Please complete the required business details. Description must be at least 20 characters.
         </p>
       ) : null}
-      <form action={submitBusinessAction} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
+      <form action={submitBusinessAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Business name
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" placeholder="Aisha Fashion House" required />
@@ -109,6 +118,42 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
           Submit for Approval
         </button>
       </form>
+      <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-2xl font-black">What happens next?</h2>
+        <div className="mt-4 grid gap-4">
+          <Step number="1" title="Admin review" body="Tradia checks the listing before publishing it to the public directory." />
+          <Step number="2" title="Complete your profile" body="Add photos, opening hours, documents, and richer contact details from your dashboard." />
+          <Step number="3" title="Request verification" body="Submit proof documents when you are ready to earn a stronger trust signal." />
+          <Step number="4" title="Increase visibility" body="Upgrade when you want more photos, analytics, featured eligibility, and better listing priority." />
+        </div>
+        <Link href="/pricing" className="mt-5 inline-flex rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">
+          Compare visibility plans
+        </Link>
+      </aside>
+      </div>
     </main>
+  );
+}
+
+function OnboardingBenefit({ title, body }: { title: string; body: string }) {
+  return (
+    <div>
+      <strong className="text-ink">{title}</strong>
+      <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
+    </div>
+  );
+}
+
+function Step({ number, title, body }: { number: string; title: string; body: string }) {
+  return (
+    <div className="flex gap-3">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-50 text-sm font-black text-forest">
+        {number}
+      </span>
+      <div>
+        <strong>{title}</strong>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
+      </div>
+    </div>
   );
 }

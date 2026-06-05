@@ -98,6 +98,80 @@ export async function notifyPaymentSuccess(
   });
 }
 
+export async function notifyWalletTopUpSuccess(
+  recipient: { name: string; email: string },
+  amount: number
+) {
+  await sendEmail({
+    to: recipient.email,
+    subject: "Your Tradia wallet has been funded",
+    html: paragraphEmail("Wallet funded", [
+      `Hi ${recipient.name},`,
+      `Your Tradia wallet top-up of ${formatNaira(amount)} was successful.`,
+      "You can now use your wallet balance for homepage featuring, Business Starter Kit, Verified Business Kit, and other Tradia add-ons."
+    ], { label: "Open Account", url: appUrl("/account") })
+  });
+}
+
+export async function notifyWalletAddOnPurchased(
+  business: NotificationBusiness,
+  recipient: { name: string; email: string },
+  productName: string,
+  amount: number,
+  fulfillmentStatus: "OPEN" | "FULFILLED"
+) {
+  await sendEmail({
+    to: recipient.email,
+    subject: `Tradia add-on purchased: ${productName}`,
+    html: paragraphEmail("Add-on purchased", [
+      `Hi ${recipient.name},`,
+      `Your ${productName} purchase for ${business.name} was successful.`,
+      `Amount paid from wallet: ${formatNaira(amount)}.`,
+      fulfillmentStatus === "FULFILLED"
+        ? "This add-on has been fulfilled automatically."
+        : "Your order is open. The Tradia team will update the status after fulfillment."
+    ], { label: "View Add-on Orders", url: appUrl("/account") })
+  });
+}
+
+export async function notifyAdminWalletAddOnPurchased(
+  business: NotificationBusiness,
+  buyer: { name: string; email: string },
+  productName: string,
+  amount: number,
+  reference: string
+) {
+  await sendEmail({
+    to: adminEmail(),
+    subject: `Wallet add-on needs fulfillment: ${productName}`,
+    html: paragraphEmail("Wallet add-on needs fulfillment", [
+      `${buyer.name} purchased ${productName} for ${business.name}.`,
+      `Amount paid: ${formatNaira(amount)}.`,
+      `Reference: ${reference}.`,
+      "Open Admin to fulfill the order or contact the customer if needed."
+    ], { label: "Open Admin", url: appUrl("/admin") })
+  });
+}
+
+export async function notifyWalletAddOnFulfillmentUpdated(
+  business: NotificationBusiness | null,
+  recipient: { name: string; email: string },
+  productName: string,
+  fulfillmentStatus: "OPEN" | "FULFILLED"
+) {
+  await sendEmail({
+    to: recipient.email,
+    subject: `Tradia add-on ${fulfillmentStatus === "FULFILLED" ? "fulfilled" : "reopened"}`,
+    html: paragraphEmail(`Add-on ${fulfillmentStatus === "FULFILLED" ? "fulfilled" : "reopened"}`, [
+      `Hi ${recipient.name},`,
+      `${productName}${business ? ` for ${business.name}` : ""} is now marked ${fulfillmentStatus.toLowerCase()}.`,
+      fulfillmentStatus === "FULFILLED"
+        ? "Thank you for using Tradia add-ons to grow your business visibility."
+        : "The Tradia team has reopened this order and will follow up."
+    ], { label: "View Add-on Orders", url: appUrl("/account") })
+  });
+}
+
 export async function notifySubscriptionRenewalDue(
   business: NotificationBusiness,
   recipient: { name: string; email: string },
@@ -150,4 +224,8 @@ export async function notifyBusinessLead(
       `Message: ${lead.message}`
     ].filter(Boolean), { label: "Open Dashboard", url: appUrl("/dashboard") })
   });
+}
+
+function formatNaira(amount: number) {
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }

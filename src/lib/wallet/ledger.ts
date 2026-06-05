@@ -1,5 +1,10 @@
 import { addDays } from "@/lib/time";
 import { prisma } from "@/lib/db";
+import {
+  notifyAdminWalletAddOnPurchased,
+  notifyWalletAddOnPurchased,
+  notifyWalletTopUpSuccess
+} from "@/lib/notifications";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { getWalletProduct } from "@/lib/wallet/products";
 
@@ -68,7 +73,7 @@ export async function creditWalletTopUpFromPayment(input: ConfirmWalletTopUpInpu
   const currency = input.currency ?? payment.currency ?? "NGN";
   const rawPayload = input.rawPayload ? { providerPayload: input.rawPayload as object } : {};
 
-  return prisma.$transaction(async (tx) => {
+  const transaction = await prisma.$transaction(async (tx) => {
     const updatedPayment = await tx.payment.update({
       where: { id: payment.id },
       data: {
@@ -99,6 +104,17 @@ export async function creditWalletTopUpFromPayment(input: ConfirmWalletTopUpInpu
       }
     });
   });
+
+  const recipient = await prisma.user.findUnique({
+    where: { id: payment.userId },
+    select: { name: true, email: true }
+  });
+
+  if (recipient) {
+    await safeWalletNotification(() => notifyWalletTopUpSuccess(recipient, amount));
+  }
+
+  return transaction;
 }
 
 export async function spendWalletProduct(input: {
@@ -148,7 +164,15 @@ export async function spendWalletProduct(input: {
     throw new Error("This business needs Gold or Platinum feature eligibility.");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const recipient = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: { name: true, email: true }
+  });
+  const now = new Date();
+  const isInstantFulfillment = product.code === "homepage_feature_30";
+  const fulfillmentStatus = isInstantFulfillment ? "FULFILLED" : "OPEN";
+
+  const transaction = await prisma.$transaction(async (tx) => {
     const [credits, debits] = await Promise.all([
       tx.walletTransaction.aggregate({
         where: { userId: input.userId, type: "CREDIT" },
@@ -165,8 +189,6 @@ export async function spendWalletProduct(input: {
       throw new Error("Wallet balance is too low.");
     }
 
-    const now = new Date();
-    const isInstantFulfillment = product.code === "homepage_feature_30";
     const reference = `wallet-spend-${Date.now()}-${input.userId.slice(0, 8)}-${input.businessId.slice(0, 8)}`;
     const transaction = await tx.walletTransaction.create({
       data: {
@@ -179,7 +201,7 @@ export async function spendWalletProduct(input: {
         metadata: {
           productCode: product.code,
           productName: product.name,
-          fulfillmentStatus: isInstantFulfillment ? "FULFILLED" : "OPEN",
+          fulfillmentStatus,
           fulfilledAt: isInstantFulfillment ? now.toISOString() : null,
           fulfilledBy: isInstantFulfillment ? "SYSTEM" : null
         }
@@ -215,4 +237,26 @@ export async function spendWalletProduct(input: {
 
     return transaction;
   });
+
+  if (recipient) {
+    await safeWalletNotification(() =>
+      notifyWalletAddOnPurchased(business, recipient, product.name, product.price, fulfillmentStatus)
+    );
+
+    if (!isInstantFulfillment) {
+      await safeWalletNotification(() =>
+        notifyAdminWalletAddOnPurchased(business, recipient, product.name, product.price, transaction.reference)
+      );
+    }
+  }
+
+  return transaction;
+}
+
+async function safeWalletNotification(send: () => Promise<unknown>) {
+  try {
+    await send();
+  } catch (error) {
+    console.error("Wallet notification failed", error);
+  }
 }

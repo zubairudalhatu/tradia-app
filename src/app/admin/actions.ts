@@ -9,7 +9,8 @@ import { getBusinessPlanState } from "@/lib/plans/benefits";
 import type { Prisma } from "@prisma/client";
 import {
   notifyBusinessDecision,
-  notifyVerificationDecision
+  notifyVerificationDecision,
+  notifyWalletAddOnFulfillmentUpdated
 } from "@/lib/notifications";
 import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/queries/featured";
 import { refreshBusinessRating } from "@/lib/ratings";
@@ -338,7 +339,20 @@ export async function updateWalletFulfillmentAction(formData: FormData) {
       type: true,
       description: true,
       businessId: true,
-      metadata: true
+      metadata: true,
+      user: {
+        select: {
+          name: true,
+          email: true
+        }
+      },
+      business: {
+        select: {
+          id: true,
+          name: true,
+          slug: true
+        }
+      }
     }
   });
 
@@ -370,6 +384,11 @@ export async function updateWalletFulfillmentAction(formData: FormData) {
       description: transaction.description
     }
   });
+
+  const productName = typeof metadata.productName === "string" ? metadata.productName : transaction.description;
+  await safeAdminNotification(() =>
+    notifyWalletAddOnFulfillmentUpdated(transaction.business, transaction.user, productName, fulfillmentStatus)
+  );
 
   revalidatePath("/admin");
 }
@@ -406,4 +425,12 @@ function jsonObject(value: Prisma.JsonValue | null) {
   }
 
   return {};
+}
+
+async function safeAdminNotification(send: () => Promise<unknown>) {
+  try {
+    await send();
+  } catch (error) {
+    console.error("Admin notification failed", error);
+  }
 }

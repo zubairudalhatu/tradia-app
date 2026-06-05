@@ -18,7 +18,8 @@ import {
   removeReviewAction,
   resolveReportAction,
   unfeatureBusinessAction,
-  updateAdminLeadStatusAction
+  updateAdminLeadStatusAction,
+  updateWalletFulfillmentAction
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ type AdminPageProps = {
     verificationStatus?: string;
     paymentSearch?: string;
     paymentStatus?: string;
+    walletSearch?: string;
+    walletType?: string;
   }>;
 };
 
@@ -62,6 +65,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const userSearch = params.userSearch?.trim();
   const businessSearch = params.businessSearch?.trim();
   const paymentSearch = params.paymentSearch?.trim();
+  const walletSearch = params.walletSearch?.trim();
   const userWhere: Prisma.UserWhereInput = userSearch
     ? {
         OR: [
@@ -100,6 +104,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       : {}),
     ...(isPaymentStatus(params.paymentStatus) ? { status: params.paymentStatus } : {})
   };
+  const walletWhere: Prisma.WalletTransactionWhereInput = {
+    ...(walletSearch
+      ? {
+          OR: [
+            { reference: { contains: walletSearch, mode: "insensitive" } },
+            { description: { contains: walletSearch, mode: "insensitive" } },
+            { user: { name: { contains: walletSearch, mode: "insensitive" } } },
+            { user: { email: { contains: walletSearch, mode: "insensitive" } } },
+            { business: { name: { contains: walletSearch, mode: "insensitive" } } }
+          ]
+        }
+      : {}),
+    ...(isWalletTransactionType(params.walletType) ? { type: params.walletType } : {})
+  };
 
   const [
     pendingListings,
@@ -121,7 +139,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     expiredSubscriptionCount,
     expiringSubscriptions,
     expiredSubscriptions,
-    recentPayments
+    recentPayments,
+    recentWalletTransactions
   ] = await Promise.all([
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
@@ -303,6 +322,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       },
       orderBy: { createdAt: "desc" },
       take: paymentSearch || params.paymentStatus ? 25 : 10
+    }),
+    prisma.walletTransaction.findMany({
+      where: walletWhere,
+      include: {
+        user: true,
+        business: true,
+        payment: true
+      },
+      orderBy: { createdAt: "desc" },
+      take: walletSearch || params.walletType ? 25 : 15
     })
   ]);
   const listingQuality = buildListingQualityDashboard(qualityBusinesses);
@@ -533,6 +562,103 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </article>
           )) : (
             <p className="p-5 text-sm text-slate-600">No payments have been recorded yet.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <p className="text-sm font-extrabold uppercase text-ember">Wallet operations</p>
+          <h2 className="mt-1 text-2xl font-black">Wallet add-ons and top-ups</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Track wallet funding, homepage feature purchases, and physical kit requests that need team follow-up.
+          </p>
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_auto]" action="/admin">
+            <input
+              className="rounded-tradia border border-slate-200 px-4 py-3 text-sm"
+              name="walletSearch"
+              defaultValue={params.walletSearch ?? ""}
+              placeholder="Search customer, business, add-on, reference"
+            />
+            <select className="rounded-tradia border border-slate-200 px-4 py-3 text-sm" name="walletType" defaultValue={params.walletType ?? ""}>
+              <option value="">All wallet activity</option>
+              <option value="CREDIT">Top-ups</option>
+              <option value="DEBIT">Add-on spends</option>
+            </select>
+            <button className="rounded-tradia bg-forest px-4 py-3 text-sm font-bold text-white">
+              Filter
+            </button>
+          </form>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {recentWalletTransactions.length ? recentWalletTransactions.map((transaction) => {
+            const metadata = walletMetadata(transaction.metadata);
+            const isSpend = transaction.type === "DEBIT";
+            const isFulfilled = walletFulfillmentStatus(transaction.metadata) === "FULFILLED";
+            const productCode = metadataString(metadata, "productCode");
+            const paymentReference = transaction.payment?.providerReference ?? metadataString(metadata, "paymentReference");
+
+            return (
+              <article key={transaction.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-black">{walletProductName(transaction.description, metadata)}</h3>
+                    <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                      transaction.type === "CREDIT" ? "bg-emerald-50 text-forest" : "bg-amber-50 text-ember"
+                    }`}>
+                      {transaction.type === "CREDIT" ? "Top-up" : "Spend"}
+                    </span>
+                    {isSpend ? (
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                        isFulfilled ? "bg-emerald-50 text-forest" : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {isFulfilled ? "Fulfilled" : "Open"}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Customer: {transaction.user.name} - {transaction.user.email}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Business: {transaction.business ? transaction.business.name : "Account wallet"}
+                    {productCode ? ` - ${productCode.replaceAll("_", " ")}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Reference: {transaction.reference}{paymentReference ? ` - Payment: ${paymentReference}` : ""}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  <span className={`text-sm font-black ${transaction.type === "CREDIT" ? "text-forest" : "text-ember"}`}>
+                    {transaction.type === "CREDIT" ? "+" : "-"}{formatAmount(transaction.amount, transaction.currency)}
+                  </span>
+                  <time className="text-sm font-bold text-slate-500" dateTime={transaction.createdAt.toISOString()}>
+                    {transaction.createdAt.toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+                  </time>
+                  {transaction.business ? (
+                    <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={adminBusinessHref(transaction.business.id, adminActionToken)}>
+                      Business
+                    </a>
+                  ) : null}
+                  <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={adminUserHref(transaction.user.id, adminActionToken)}>
+                    User
+                  </a>
+                  {isSpend ? (
+                    <form action={updateWalletFulfillmentAction}>
+                      <AdminActionTokenInput token={adminActionToken} />
+                      <input type="hidden" name="walletTransactionId" value={transaction.id} />
+                      <input type="hidden" name="fulfillmentStatus" value={isFulfilled ? "OPEN" : "FULFILLED"} />
+                      <button className={`rounded-tradia px-3 py-2 text-xs font-black ${
+                        isFulfilled ? "bg-slate-100 text-ink" : "bg-forest text-white"
+                      }`}>
+                        {isFulfilled ? "Reopen" : "Mark fulfilled"}
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              </article>
+            );
+          }) : (
+            <p className="p-5 text-sm text-slate-600">No wallet activity has been recorded yet.</p>
           )}
         </div>
       </section>
@@ -1031,6 +1157,28 @@ function formatAmount(amount: number, currency: string) {
   }).format(amount);
 }
 
+function walletMetadata(value: Prisma.JsonValue | null) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  return {};
+}
+
+function metadataString(metadata: Record<string, unknown>, key: string) {
+  const value = metadata[key];
+  return typeof value === "string" ? value : "";
+}
+
+function walletProductName(description: string, metadata: Record<string, unknown>) {
+  return metadataString(metadata, "productName") || description;
+}
+
+function walletFulfillmentStatus(value: Prisma.JsonValue | null) {
+  const status = metadataString(walletMetadata(value), "fulfillmentStatus");
+  return status === "FULFILLED" ? "FULFILLED" : "OPEN";
+}
+
 function isListingStatus(value?: string): value is "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "SUSPENDED" {
   return Boolean(value && ["DRAFT", "PENDING_REVIEW", "PUBLISHED", "REJECTED", "SUSPENDED"].includes(value));
 }
@@ -1041,6 +1189,10 @@ function isVerificationStatus(value?: string): value is "UNVERIFIED" | "PENDING"
 
 function isPaymentStatus(value?: string): value is "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED" {
   return Boolean(value && ["PENDING", "SUCCESS", "FAILED", "REFUNDED"].includes(value));
+}
+
+function isWalletTransactionType(value?: string): value is "CREDIT" | "DEBIT" {
+  return Boolean(value && ["CREDIT", "DEBIT"].includes(value));
 }
 
 function formatAuditAction(action: string) {

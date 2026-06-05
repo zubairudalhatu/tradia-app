@@ -6,6 +6,7 @@ import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
+import type { Prisma } from "@prisma/client";
 import {
   notifyBusinessDecision,
   notifyVerificationDecision
@@ -325,6 +326,54 @@ export async function updateAdminLeadStatusAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+export async function updateWalletFulfillmentAction(formData: FormData) {
+  const admin = await requireAdminAction(formData);
+  const walletTransactionId = String(formData.get("walletTransactionId") ?? "");
+  const fulfillmentStatus = String(formData.get("fulfillmentStatus") ?? "") === "FULFILLED" ? "FULFILLED" : "OPEN";
+
+  const transaction = await prisma.walletTransaction.findUnique({
+    where: { id: walletTransactionId },
+    select: {
+      id: true,
+      type: true,
+      description: true,
+      businessId: true,
+      metadata: true
+    }
+  });
+
+  if (!transaction || transaction.type !== "DEBIT") {
+    revalidatePath("/admin");
+    return;
+  }
+
+  const metadata = jsonObject(transaction.metadata);
+  const nextMetadata = {
+    ...metadata,
+    fulfillmentStatus,
+    fulfilledAt: fulfillmentStatus === "FULFILLED" ? new Date().toISOString() : null,
+    fulfilledBy: fulfillmentStatus === "FULFILLED" ? admin.id : null
+  };
+
+  await prisma.walletTransaction.update({
+    where: { id: transaction.id },
+    data: { metadata: nextMetadata as Prisma.InputJsonValue }
+  });
+
+  await createAuditLog({
+    actorId: admin.id,
+    action: fulfillmentStatus === "FULFILLED" ? "FULFILLED_WALLET_ADD_ON" : "REOPENED_WALLET_ADD_ON",
+    entityType: "WalletTransaction",
+    entityId: transaction.id,
+    metadata: {
+      businessId: transaction.businessId,
+      description: transaction.description
+    }
+  });
+
+  revalidatePath("/admin");
+}
+
 async function requireAdminAction(formData: FormData) {
   const user = await getCurrentUser();
 
@@ -349,4 +398,12 @@ function normalizeLeadStatus(value: string) {
   }
 
   return "NEW";
+}
+
+function jsonObject(value: Prisma.JsonValue | null) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  return {};
 }

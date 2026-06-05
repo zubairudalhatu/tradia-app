@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { activateSubscriptionFromPayment } from "@/lib/payments/subscriptions";
+import { completePaymentFromProvider } from "@/lib/payments/complete";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
 import { verifySquadTransaction } from "@/lib/payments/squad";
 
@@ -25,7 +25,7 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
         const data = verification.data;
 
         if (verification.success && data?.transaction_status === "Success" && data.transaction_ref) {
-          await activateSubscriptionFromPayment({
+          await completePaymentFromProvider({
             reference: data.transaction_ref,
             amount: Math.round((data.transaction_amount ?? payment.amount * 100) / 100),
             currency: data.transaction_currency_id,
@@ -33,7 +33,9 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
             rawPayload: data
           });
           status = "success";
-          message = "Payment confirmed. Your Tradia plan is active.";
+          message = payment.rawPayload && (payment.rawPayload as { kind?: string }).kind === "wallet_top_up"
+            ? "Payment confirmed. Your Tradia wallet has been funded."
+            : "Payment confirmed. Your Tradia plan is active.";
         } else {
           status = "failed";
           message = verification.message || "Squad did not confirm this payment.";
@@ -43,7 +45,7 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
         const data = verification.data;
 
         if (verification.status && data?.status === "success") {
-          await activateSubscriptionFromPayment({
+          await completePaymentFromProvider({
             reference: data.reference,
             amount: Math.round(data.amount / 100),
             currency: data.currency,
@@ -51,7 +53,9 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
             rawPayload: data
           });
           status = "success";
-          message = "Payment confirmed. Your Tradia plan is active.";
+          message = payment?.rawPayload && (payment.rawPayload as { kind?: string }).kind === "wallet_top_up"
+            ? "Payment confirmed. Your Tradia wallet has been funded."
+            : "Payment confirmed. Your Tradia plan is active.";
         } else {
           status = "failed";
           message = verification.message || "Paystack did not confirm this payment.";
@@ -71,8 +75,8 @@ export default async function BillingCallbackPage({ searchParams }: BillingCallb
       </h1>
       <p className="mt-4 text-lg text-slate-600">{message}</p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/dashboard" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">
-          Go to Dashboard
+        <Link href="/account" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">
+          Go to Account
         </Link>
         <Link href="/pricing" className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">
           View Plans

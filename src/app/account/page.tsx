@@ -4,10 +4,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { addDays } from "@/lib/time";
-import { updateAccountAction } from "./actions";
+import { getWalletBalance, listWalletTransactions } from "@/lib/wallet/ledger";
+import { formatNaira, walletProducts } from "@/lib/wallet/products";
+import { spendWalletProductAction, startWalletTopUpAction, updateAccountAction } from "./actions";
 
 type AccountPageProps = {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; wallet?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -17,29 +19,35 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   if (!user) redirect("/login?next=/account");
 
-  const businesses = await prisma.business.findMany({
-    where: { ownerId: user.id },
-    include: {
-      plan: true,
-      subscriptions: {
-        include: { plan: true },
-        orderBy: { endsAt: "desc" }
-      }
-    },
-    orderBy: { updatedAt: "desc" }
-  });
-  const payments = await prisma.payment.findMany({
-    where: { userId: user.id },
-    include: {
-      business: true,
-      subscription: {
-        include: { plan: true }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    take: 10
-  });
+  const [businesses, payments, walletState] = await Promise.all([
+    prisma.business.findMany({
+      where: { ownerId: user.id },
+      include: {
+        plan: true,
+        subscriptions: {
+          include: { plan: true },
+          orderBy: { endsAt: "desc" }
+        }
+      },
+      orderBy: { updatedAt: "desc" }
+    }),
+    prisma.payment.findMany({
+      where: { userId: user.id },
+      include: {
+        business: true,
+        subscription: {
+          include: { plan: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10
+    }),
+    getAccountWalletState(user.id)
+  ]);
   const renewalWindowEndsAt = addDays(new Date(), 30);
+  const publishedBusinesses = businesses.filter((business) => business.listingStatus === "PUBLISHED");
+  const walletBalance = walletState.balance;
+  const walletTransactions = walletState.transactions;
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">
@@ -57,6 +65,15 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       {params.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
           {params.error === "phone" ? "That phone number is already used by another account." : "Please enter a valid name."}
+        </p>
+      ) : null}
+      {params.wallet ? (
+        <p className={`mt-5 rounded-tradia border p-4 text-sm font-bold ${
+          params.wallet === "spent"
+            ? "border-emerald-200 bg-emerald-50 text-forest"
+            : "border-red-200 bg-red-50 text-red-700"
+        }`}>
+          {walletMessage(params.wallet)}
         </p>
       ) : null}
 
@@ -81,6 +98,110 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </div>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Save Profile</button>
       </form>
+
+      <section className="mt-8 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <p className="text-sm font-extrabold uppercase text-ember">Wallet</p>
+          <h2 className="mt-1 text-2xl font-black">Tradia wallet</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Fund your wallet once, then use the balance for launch add-ons such as homepage featuring, Business Starter Kit, and Verified Business Kit.
+          </p>
+          {walletState.unavailable ? (
+            <p className="mt-3 rounded-tradia border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
+              Wallet setup is pending. Existing account tools remain available while the wallet database is prepared.
+            </p>
+          ) : null}
+        </div>
+        <div className="grid gap-6 p-5 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="rounded-tradia border border-slate-200 bg-slate-50 p-5">
+            <p className="text-sm font-black uppercase text-slate-500">Available balance</p>
+            <strong className="mt-2 block text-4xl font-black text-forest">{formatNaira(walletBalance)}</strong>
+            <form action={startWalletTopUpAction} className="mt-5 grid gap-3">
+              <label className="grid gap-2 text-sm font-bold text-slate-600">
+                Add money
+                <input
+                  className="rounded-tradia border border-slate-200 px-4 py-3"
+                  name="amount"
+                  type="number"
+                  min={1000}
+                  max={500000}
+                  step={500}
+                  defaultValue={10000}
+                  required
+                />
+              </label>
+              <button
+                name="paymentProvider"
+                value="squad"
+                disabled={walletState.unavailable}
+                className="rounded-tradia bg-forest px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {walletState.unavailable ? "Wallet setup pending" : "Fund with Squad"}
+              </button>
+            </form>
+          </div>
+          <div className="grid gap-4">
+            {walletProducts.map((product) => (
+              <article key={product.code} className="rounded-tradia border border-slate-200 p-4">
+                <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+                  <div>
+                    <h3 className="text-lg font-black">{product.name}</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{product.description}</p>
+                    <p className="mt-2 text-xl font-black text-forest">{formatNaira(product.price)}</p>
+                    <ul className="mt-3 grid gap-1 text-sm text-slate-600">
+                      {product.benefits.map((benefit) => (
+                        <li key={benefit}>{benefit}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  {publishedBusinesses.length ? (
+                    <form action={spendWalletProductAction} className="grid gap-2 md:min-w-56">
+                      <input type="hidden" name="productCode" value={product.code} />
+                      <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
+                        {publishedBusinesses.map((business) => (
+                          <option key={business.id} value={business.id}>
+                            {business.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        disabled={walletState.unavailable}
+                        className="rounded-tradia bg-slate-100 px-3 py-2 text-sm font-black text-ink disabled:cursor-not-allowed disabled:text-slate-400"
+                      >
+                        {walletState.unavailable ? "Wallet setup pending" : "Pay from wallet"}
+                      </button>
+                    </form>
+                  ) : (
+                    <Link className="rounded-tradia bg-slate-100 px-3 py-2 text-sm font-black text-ink" href="/businesses/new">
+                      Add published business
+                    </Link>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-slate-200 p-5">
+          <h3 className="text-lg font-black">Wallet history</h3>
+          <div className="mt-3 divide-y divide-slate-200 rounded-tradia border border-slate-200">
+            {walletTransactions.length ? walletTransactions.map((transaction) => (
+              <article key={transaction.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <h4 className="font-black">{transaction.description}</h4>
+                  <p className="text-sm text-slate-600">
+                    {transaction.business?.name ?? "Account wallet"} - {transaction.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                  </p>
+                </div>
+                <span className={`text-sm font-black ${transaction.type === "CREDIT" ? "text-forest" : "text-ember"}`}>
+                  {transaction.type === "CREDIT" ? "+" : "-"}{formatNaira(transaction.amount)}
+                </span>
+              </article>
+            )) : (
+              <p className="p-4 text-sm text-slate-600">No wallet activity yet.</p>
+            )}
+          </div>
+        </div>
+      </section>
 
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-5">
@@ -164,4 +285,43 @@ function formatAmount(amount: number, currency: string) {
     currency,
     maximumFractionDigits: 0
   }).format(amount);
+}
+
+async function getAccountWalletState(userId: string) {
+  try {
+    const [balance, transactions] = await Promise.all([
+      getWalletBalance(userId),
+      listWalletTransactions(userId)
+    ]);
+
+    return {
+      balance,
+      transactions,
+      unavailable: false
+    };
+  } catch (error) {
+    console.error("Wallet state could not be loaded", error);
+
+    return {
+      balance: 0,
+      transactions: [],
+      unavailable: true
+    };
+  }
+}
+
+function walletMessage(status: string) {
+  if (status === "spent") return "Wallet payment successful. The selected add-on has been recorded.";
+  if (status === "setup-required") return "Wallet setup is still pending. Please try again after the wallet database is prepared.";
+  if (status === "topup-invalid") return "Enter a wallet top-up between NGN 1,000 and NGN 500,000.";
+  if (status === "topup-failed") return "Wallet top-up could not be started. Please try again.";
+  if (status === "low-balance") return "Your wallet balance is too low for that add-on.";
+  if (status === "requires-verified") return "The Verified Business Kit is available only for verified businesses.";
+  if (status === "already-featured") return "That business is already featured on the homepage.";
+  if (status === "requires-feature-plan") return "Homepage featuring requires a Gold or Platinum business plan first.";
+  if (status === "spend-invalid") return "Wallet payment could not be completed for that add-on.";
+  if (status.endsWith("not-configured")) return "Wallet checkout is not configured for this payment provider yet.";
+  if (status.endsWith("provider-error")) return "The payment provider rejected the wallet top-up request.";
+
+  return "Wallet action could not be completed.";
 }

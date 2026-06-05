@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { activateSubscriptionFromPayment } from "@/lib/payments/subscriptions";
+import { completePaymentFromProvider } from "@/lib/payments/complete";
 
 type SquadWebhookPayload = {
   Event?: string;
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const reference = body?.transaction_ref ?? event.TransactionRef;
 
   if (event.Event === "charge_successful" && body?.transaction_status === "Success" && reference) {
-    await activateSubscriptionFromPayment({
+    await completePaymentFromProvider({
       reference,
       amount: Math.round((body.amount ?? 0) / 100),
       currency: body.currency ?? body.transaction_currency_id,

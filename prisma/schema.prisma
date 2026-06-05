@@ -101,6 +101,11 @@ enum AccountVerificationMethod {
   WHATSAPP
 }
 
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
 model User {
   id              String           @id @default(cuid())
   name            String
@@ -122,6 +127,7 @@ model User {
   reviewedVerifications    VerificationRequest[] @relation("VerificationReviewer")
   reviewedClaims           BusinessClaim[]       @relation("ClaimReviewer")
   payments        Payment[]
+  walletTransactions WalletTransaction[]
   auditLogs       AuditLog[]       @relation("AuditActor")
   passwordResetTokens PasswordResetToken[]
   accountVerificationTokens AccountVerificationToken[]
@@ -198,6 +204,7 @@ model Business {
   claims            BusinessClaim[]
   subscriptions     Subscription[]
   payments          Payment[]
+  walletTransactions WalletTransaction[]
   reports           Report[]
   featuredPlacements FeaturedPlacement[]
   contactLeads      ContactLead[]
@@ -397,11 +404,33 @@ model Payment {
   paidAt            DateTime?
   rawPayload        Json?
   createdAt         DateTime      @default(now())
+  walletTransaction WalletTransaction?
 
   @@index([status, createdAt], map: "Payment_status_createdAt_idx")
   @@index([userId, createdAt], map: "Payment_userId_createdAt_idx")
   @@index([businessId, createdAt], map: "Payment_businessId_createdAt_idx")
   @@index([provider, status, createdAt], map: "Payment_provider_status_createdAt_idx")
+}
+
+model WalletTransaction {
+  id          String                @id @default(cuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId  String?
+  business    Business?             @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  paymentId   String?               @unique
+  payment     Payment?              @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  type        WalletTransactionType
+  amount      Int
+  currency    String                @default("NGN")
+  description String
+  reference   String                @unique
+  metadata    Json?
+  createdAt   DateTime              @default(now())
+
+  @@index([userId, createdAt], map: "WalletTransaction_userId_createdAt_idx")
+  @@index([businessId, createdAt], map: "WalletTransaction_businessId_createdAt_idx")
+  @@index([type, createdAt], map: "WalletTransaction_type_createdAt_idx")
 }
 
 model Report {

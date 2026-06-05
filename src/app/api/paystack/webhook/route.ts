@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { activateSubscriptionFromPayment } from "@/lib/payments/subscriptions";
+import { completePaymentFromProvider } from "@/lib/payments/complete";
 import { verifyPaystackSignature } from "@/lib/payments/paystack";
 
 export async function POST(request: Request) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   };
 
   if (event.event === "charge.success" && event.data?.status === "success" && event.data.reference) {
-    await activateSubscriptionFromPayment({
+    await completePaymentFromProvider({
       reference: event.data.reference,
       amount: Math.round((event.data.amount ?? 0) / 100),
       currency: event.data.currency,

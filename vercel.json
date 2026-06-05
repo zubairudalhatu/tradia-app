@@ -3,6 +3,35 @@
   "buildCommand": "PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 npm run db:deploy && npm run db:seed && npm run build",
   "installCommand": "npm install",
   "regions": ["iad1"],
+  "headers": [
+    {
+      "source": "/businesses",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/categories/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=900, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/locations/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=900, stale-while-revalidate=86400"
+        }
+      ]
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/subscriptions",

@@ -51,12 +51,14 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const walletOrders = walletState.orders;
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-12">
-      <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
-      <h1 className="text-5xl font-black tracking-normal">Your profile</h1>
-      <p className="mt-4 text-lg text-slate-600">
-        Keep your display name, phone number, and contact details current so Tradia can connect listings, reviews, and verification activity to the right person.
-      </p>
+    <main className="mx-auto max-w-6xl px-5 py-12">
+      <div className="max-w-3xl">
+        <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
+        <h1 className="text-5xl font-black tracking-normal">Your profile</h1>
+        <p className="mt-4 text-lg text-slate-600">
+          Keep your display name, phone number, and contact details current so Tradia can connect listings, reviews, and verification activity to the right person.
+        </p>
+      </div>
 
       {params.saved ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
@@ -78,7 +80,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </p>
       ) : null}
 
-      <form action={updateAccountAction} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+      <form action={updateAccountAction} className="mt-8 grid max-w-3xl gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Display name / username
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={user.name} required minLength={2} />
@@ -113,7 +115,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </p>
           ) : null}
         </div>
-        <div className="grid gap-6 p-5 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="grid gap-6 p-5 xl:grid-cols-[320px_1fr]">
           <div className="rounded-tradia border border-slate-200 bg-slate-50 p-5">
             <p className="text-sm font-black uppercase text-slate-500">Available balance</p>
             <strong className="mt-2 block text-4xl font-black text-forest">{formatNaira(walletBalance)}</strong>
@@ -121,7 +123,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <label className="grid gap-2 text-sm font-bold text-slate-600">
                 Add money
                 <input
-                  className="rounded-tradia border border-slate-200 px-4 py-3"
+                  className="w-full rounded-tradia border border-slate-200 px-4 py-3"
                   name="amount"
                   type="number"
                   min={1000}
@@ -143,9 +145,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
           <div className="grid gap-4">
             {walletProducts.map((product) => (
-              <article key={product.code} className="rounded-tradia border border-slate-200 p-4">
-                <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
-                  <div>
+              <article key={product.code} className="overflow-hidden rounded-tradia border border-slate-200 p-5">
+                <div className="grid min-w-0 gap-4 lg:grid-cols-[1fr_280px] lg:items-start">
+                  <div className="min-w-0">
                     <h3 className="text-lg font-black">{product.name}</h3>
                     <p className="mt-1 text-sm leading-6 text-slate-600">{product.description}</p>
                     <p className="mt-2 text-xl font-black text-forest">{formatNaira(product.price)}</p>
@@ -156,9 +158,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                     </ul>
                   </div>
                   {publishedBusinesses.length ? (
-                    <form action={spendWalletProductAction} className="grid gap-2 md:min-w-56">
+                    <form action={spendWalletProductAction} className="grid min-w-0 gap-3">
                       <input type="hidden" name="productCode" value={product.code} />
-                      <select className="rounded-tradia border border-slate-200 px-3 py-2 text-sm" name="businessId" required>
+                      <select className="w-full min-w-0 rounded-tradia border border-slate-200 px-3 py-3 text-sm" name="businessId" required>
                         {publishedBusinesses.map((business) => (
                           <option key={business.id} value={business.id}>
                             {business.name}
@@ -167,7 +169,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                       </select>
                       <button
                         disabled={walletState.unavailable}
-                        className="rounded-tradia bg-slate-100 px-3 py-2 text-sm font-black text-ink disabled:cursor-not-allowed disabled:text-slate-400"
+                        className="w-full rounded-tradia bg-slate-100 px-3 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:text-slate-400"
                       >
                         {walletState.unavailable ? "Wallet setup pending" : "Pay from wallet"}
                       </button>

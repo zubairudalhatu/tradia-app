@@ -182,7 +182,7 @@ export default async function HomePage() {
         </div>
       </section>
       <section className="bg-slate-50">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="mx-auto grid max-w-7xl items-start gap-6 px-5 py-12 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <p className="mb-2 text-sm font-extrabold uppercase text-ember">Why Tradia</p>
             <h2 className="text-4xl font-black tracking-normal text-ink">Built for Nigerian discovery and SME trust.</h2>
@@ -195,9 +195,24 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <ProofPoint title="Search by place" body="Location and category pages help customers find businesses close to them." />
-            <ProofPoint title="Show proof" body="Profiles support photos, documents, reviews, opening hours, and contact details." />
-            <ProofPoint title="Grow visibility" body="Paid plans improve listing priority, media capacity, analytics, and featured eligibility." />
+            <ProofPoint
+              title="Search by place"
+              body="Location and category pages help customers find businesses close to them."
+              href="/businesses"
+              cta="Browse Businesses"
+            />
+            <ProofPoint
+              title="Show proof"
+              body="Profiles support photos, documents, reviews, opening hours, and contact details."
+              href="/verification-policy"
+              cta="View Verification"
+            />
+            <ProofPoint
+              title="Grow visibility"
+              body="Paid plans improve listing priority, media capacity, analytics, and featured eligibility."
+              href="/pricing"
+              cta="See Plans"
+            />
           </div>
         </div>
       </section>
@@ -209,11 +224,29 @@ function hasDatabaseUrl() {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
 
-function ProofPoint({ title, body }: { title: string; body: string }) {
+function ProofPoint({
+  title,
+  body,
+  href,
+  cta
+}: {
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
   return (
-    <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-xl font-black">{title}</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-    </div>
+    <article className="flex min-h-56 flex-col rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
+      <div>
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg font-black text-forest">
+          {title.slice(0, 1)}
+        </span>
+        <h3 className="mt-4 text-xl font-black">{title}</h3>
+        <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+      </div>
+      <Link href={href} className="mt-auto inline-flex rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-ink hover:bg-emerald-50 hover:text-forest">
+        {cta}
+      </Link>
+    </article>
   );
 }

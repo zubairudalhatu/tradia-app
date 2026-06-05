@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
+import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { addDays } from "@/lib/time";
 import type { Prisma } from "@prisma/client";
 import {
@@ -20,6 +22,23 @@ import {
 } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+type QualityBusiness = Prisma.BusinessGetPayload<{
+  include: {
+    category: true;
+    location: true;
+    owner: true;
+    plan: true;
+    media: true;
+    featuredPlacements: true;
+  };
+}>;
+
+type QualityItem = {
+  business: QualityBusiness;
+  completeness: ReturnType<typeof getBusinessProfileCompleteness>;
+  notes: string[];
+};
 
 type AdminPageProps = {
   searchParams: Promise<{
@@ -97,6 +116,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     recentAuditLogs,
     recentLeads,
     newLeads,
+    qualityBusinesses,
     expiringSubscriptionCount,
     expiredSubscriptionCount,
     expiringSubscriptions,
@@ -197,6 +217,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       take: 8
     }),
     prisma.contactLead.count({ where: { status: "NEW" } }),
+    prisma.business.findMany({
+      where: { listingStatus: "PUBLISHED" },
+      include: {
+        category: true,
+        location: true,
+        owner: true,
+        plan: true,
+        media: true,
+        featuredPlacements: {
+          where: {
+            status: "ACTIVE",
+            endsAt: { gte: now }
+          }
+        }
+      },
+      orderBy: [
+        { verificationStatus: "asc" },
+        { updatedAt: "desc" }
+      ],
+      take: 100
+    }),
     prisma.subscription.count({
       where: {
         status: "ACTIVE",
@@ -264,6 +305,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       take: paymentSearch || params.paymentStatus ? 25 : 10
     })
   ]);
+  const listingQuality = buildListingQualityDashboard(qualityBusinesses);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
@@ -284,6 +326,102 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <span className="text-sm text-slate-600">{label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <p className="text-sm font-extrabold uppercase text-ember">SEO readiness</p>
+          <h2 className="mt-1 text-2xl font-black">Listing quality dashboard</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Use this to improve the pages most likely to help Google trust and index Tradia: complete profiles, real media, verification, and strong feature candidates.
+          </p>
+        </div>
+        <div className="grid gap-4 border-b border-slate-200 p-5 md:grid-cols-2 lg:grid-cols-5">
+          {[
+            [String(listingQuality.totalPublished), "Published profiles"],
+            [`${listingQuality.strongPercent}%`, "80%+ complete"],
+            [`${listingQuality.mediaReadyPercent}%`, "Media ready"],
+            [`${listingQuality.verifiedPercent}%`, "Verified"],
+            [String(listingQuality.indexReadyCount), "Index-ready profiles"]
+          ].map(([value, label]) => (
+            <article key={label} className="rounded-tradia border border-slate-200 bg-slate-50 p-4">
+              <strong className="block text-2xl font-black text-ink">{value}</strong>
+              <span className="text-sm font-bold text-slate-500">{label}</span>
+            </article>
+          ))}
+        </div>
+        <div className="grid gap-6 p-5 xl:grid-cols-2">
+          <QualityPanel
+            title="Profiles needing work"
+            description="Improve these first before requesting indexing."
+            empty="Published profiles are in good shape."
+          >
+            {listingQuality.incompleteProfiles.map((item) => (
+              <QualityBusinessRow key={item.business.id} item={item} adminActionToken={adminActionToken} />
+            ))}
+          </QualityPanel>
+          <QualityPanel
+            title="Media gaps"
+            description="Logo, cover, and gallery images make profiles feel real."
+            empty="Every sampled profile has the expected media."
+          >
+            {listingQuality.mediaGaps.map((item) => (
+              <QualityBusinessRow key={item.business.id} item={item} adminActionToken={adminActionToken} />
+            ))}
+          </QualityPanel>
+          <QualityPanel
+            title="Unverified published listings"
+            description="Verification is one of the strongest trust signals."
+            empty="Every sampled published profile is verified."
+          >
+            {listingQuality.unverifiedProfiles.map((item) => (
+              <QualityBusinessRow key={item.business.id} item={item} adminActionToken={adminActionToken} />
+            ))}
+          </QualityPanel>
+          <QualityPanel
+            title="Feature candidates"
+            description="Strong profiles that are ready for extra homepage visibility."
+            empty="No unfeatured profile is ready yet."
+          >
+            {listingQuality.featureCandidates.map((item) => {
+              const canBeFeatured = getBusinessPlanState(item.business).benefits.canBeFeatured;
+
+              return (
+                <article key={item.business.id} className="rounded-tradia border border-slate-200 p-4">
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+                    <div>
+                      <h3 className="font-black">{item.business.name}</h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {item.business.category.name} in {item.business.location.name}
+                      </p>
+                      <p className="mt-2 text-xs font-bold text-slate-500">
+                        {item.completeness.percentage}% complete - {Number(item.business.averageRating).toFixed(1)}/5 - {item.business.viewCount} views
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 md:justify-end">
+                      <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={adminBusinessHref(item.business.id, adminActionToken)}>
+                        Edit
+                      </a>
+                      {canBeFeatured ? (
+                        <form action={featureBusinessAction}>
+                          <AdminActionTokenInput token={adminActionToken} />
+                          <input type="hidden" name="businessId" value={item.business.id} />
+                          <button className="rounded-tradia bg-forest px-3 py-2 text-xs font-black text-white">
+                            Feature
+                          </button>
+                        </form>
+                      ) : (
+                        <a className="rounded-tradia bg-amber-50 px-3 py-2 text-xs font-black text-ember" href="/pricing">
+                          Needs Gold
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </QualityPanel>
+        </div>
       </section>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -729,6 +867,152 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 function AdminActionTokenInput({ token }: { token: string }) {
   return <input type="hidden" name="adminActionToken" value={token} />;
+}
+
+function QualityPanel({
+  title,
+  description,
+  empty,
+  children
+}: {
+  title: string;
+  description: string;
+  empty: string;
+  children: ReactNode;
+}) {
+  const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
+
+  return (
+    <section className="rounded-tradia border border-slate-200 bg-white p-4">
+      <div className="mb-4">
+        <h3 className="text-xl font-black">{title}</h3>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+      </div>
+      <div className="grid gap-3">
+        {hasChildren ? children : (
+          <p className="rounded-tradia bg-emerald-50 p-4 text-sm font-bold text-forest">{empty}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function QualityBusinessRow({
+  item,
+  adminActionToken
+}: {
+  item: QualityItem;
+  adminActionToken: string;
+}) {
+  return (
+    <article className="rounded-tradia border border-slate-200 p-4">
+      <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+        <div>
+          <h3 className="font-black">{item.business.name}</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            {item.business.category.name} in {item.business.location.name}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{item.completeness.percentage}% complete</span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{item.business.media.length} media</span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{item.business.verificationStatus}</span>
+          </div>
+          <ul className="mt-3 grid gap-1 text-sm text-slate-600">
+            {item.notes.slice(0, 3).map((note) => (
+              <li key={note}>Needs: {note}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-wrap gap-2 md:justify-end">
+          <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={adminBusinessHref(item.business.id, adminActionToken)}>
+            Edit
+          </a>
+          <a className="rounded-tradia bg-emerald-50 px-3 py-2 text-xs font-black text-forest" href={`/businesses/${item.business.slug}`} target="_blank" rel="noreferrer">
+            View
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function buildListingQualityDashboard(businesses: QualityBusiness[]) {
+  const items = businesses.map((business) => {
+    const completeness = getBusinessProfileCompleteness(business);
+
+    return {
+      business,
+      completeness,
+      notes: buildQualityNotes(business, completeness.missing)
+    };
+  });
+  const totalPublished = items.length;
+  const strongProfiles = items.filter((item) => item.completeness.percentage >= 80).length;
+  const mediaReady = items.filter((item) => isMediaReady(item.business)).length;
+  const verifiedProfiles = items.filter((item) => item.business.verificationStatus === "VERIFIED").length;
+  const indexReadyCount = items.filter((item) =>
+    item.completeness.percentage >= 80 &&
+    isMediaReady(item.business) &&
+    item.business.verificationStatus === "VERIFIED"
+  ).length;
+
+  return {
+    totalPublished,
+    strongPercent: percent(strongProfiles, totalPublished),
+    mediaReadyPercent: percent(mediaReady, totalPublished),
+    verifiedPercent: percent(verifiedProfiles, totalPublished),
+    indexReadyCount,
+    incompleteProfiles: [...items]
+      .filter((item) => item.completeness.percentage < 80)
+      .sort((a, b) => a.completeness.percentage - b.completeness.percentage || b.business.updatedAt.getTime() - a.business.updatedAt.getTime())
+      .slice(0, 6),
+    mediaGaps: [...items]
+      .filter((item) => !isMediaReady(item.business))
+      .sort((a, b) => a.business.media.length - b.business.media.length || a.completeness.percentage - b.completeness.percentage)
+      .slice(0, 6),
+    unverifiedProfiles: [...items]
+      .filter((item) => item.business.verificationStatus !== "VERIFIED")
+      .sort((a, b) => b.completeness.percentage - a.completeness.percentage || b.business.viewCount - a.business.viewCount)
+      .slice(0, 6),
+    featureCandidates: [...items]
+      .filter((item) =>
+        item.completeness.percentage >= 80 &&
+        isMediaReady(item.business) &&
+        item.business.verificationStatus === "VERIFIED" &&
+        item.business.featuredPlacements.length === 0
+      )
+      .sort((a, b) => qualityScore(b) - qualityScore(a))
+      .slice(0, 6)
+  };
+}
+
+function buildQualityNotes(business: QualityBusiness, missing: string[]) {
+  const mediaNotes = [
+    business.logoUrl ? "" : "Upload business logo",
+    business.coverUrl ? "" : "Upload cover image",
+    business.media.length >= 3 ? "" : "Upload at least 3 media items"
+  ].filter(Boolean);
+  const notes = [...new Set([...mediaNotes, ...missing])];
+
+  return notes.length ? notes : ["Keep profile fresh with recent photos and reviews"];
+}
+
+function isMediaReady(business: QualityBusiness) {
+  return Boolean(business.logoUrl && business.coverUrl && business.media.length >= 3);
+}
+
+function qualityScore(item: QualityItem) {
+  return (
+    item.completeness.percentage * 1000 +
+    item.business.reviewCount * 30 +
+    item.business.viewCount * 2 +
+    Number(item.business.averageRating) * 50 +
+    (item.business.plan?.listingPriority ?? 0) * 25
+  );
+}
+
+function percent(value: number, total: number) {
+  return total ? Math.round((value / total) * 100) : 0;
 }
 
 function adminUserHref(userId: string, token: string) {

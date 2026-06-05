@@ -35,6 +35,15 @@ export function listWalletTransactions(userId: string, take = 12) {
   });
 }
 
+export function listWalletOrders(userId: string, take = 12) {
+  return prisma.walletTransaction.findMany({
+    where: { userId, type: "DEBIT" },
+    include: { business: true },
+    orderBy: { createdAt: "desc" },
+    take
+  });
+}
+
 export async function creditWalletTopUpFromPayment(input: ConfirmWalletTopUpInput) {
   const payment = await prisma.payment.findUnique({
     where: { providerReference: input.reference },
@@ -156,6 +165,8 @@ export async function spendWalletProduct(input: {
       throw new Error("Wallet balance is too low.");
     }
 
+    const now = new Date();
+    const isInstantFulfillment = product.code === "homepage_feature_30";
     const reference = `wallet-spend-${Date.now()}-${input.userId.slice(0, 8)}-${input.businessId.slice(0, 8)}`;
     const transaction = await tx.walletTransaction.create({
       data: {
@@ -167,13 +178,15 @@ export async function spendWalletProduct(input: {
         reference,
         metadata: {
           productCode: product.code,
-          productName: product.name
+          productName: product.name,
+          fulfillmentStatus: isInstantFulfillment ? "FULFILLED" : "OPEN",
+          fulfilledAt: isInstantFulfillment ? now.toISOString() : null,
+          fulfilledBy: isInstantFulfillment ? "SYSTEM" : null
         }
       }
     });
 
     if (product.code === "homepage_feature_30") {
-      const now = new Date();
       await tx.featuredPlacement.create({
         data: {
           businessId: input.businessId,

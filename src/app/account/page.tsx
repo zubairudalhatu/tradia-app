@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { addDays } from "@/lib/time";
-import { getWalletBalance, listWalletTransactions } from "@/lib/wallet/ledger";
+import { getWalletBalance, listWalletOrders, listWalletTransactions } from "@/lib/wallet/ledger";
 import { formatNaira, walletProducts } from "@/lib/wallet/products";
 import { spendWalletProductAction, startWalletTopUpAction, updateAccountAction } from "./actions";
 
@@ -48,6 +48,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const publishedBusinesses = businesses.filter((business) => business.listingStatus === "PUBLISHED");
   const walletBalance = walletState.balance;
   const walletTransactions = walletState.transactions;
+  const walletOrders = walletState.orders;
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">
@@ -182,6 +183,40 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
         </div>
         <div className="border-t border-slate-200 p-5">
+          <h3 className="text-lg font-black">Add-on orders</h3>
+          <div className="mt-3 divide-y divide-slate-200 rounded-tradia border border-slate-200">
+            {walletOrders.length ? walletOrders.map((order) => {
+              const metadata = walletMetadata(order.metadata);
+              const status = walletFulfillmentStatus(order.metadata);
+              const productCode = metadataString(metadata, "productCode");
+
+              return (
+                <article key={order.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-black">{walletProductName(order.description, metadata)}</h4>
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                        status === "FULFILLED" ? "bg-emerald-50 text-forest" : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {status === "FULFILLED" ? "Fulfilled" : "Open"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {order.business?.name ?? "Account wallet"} - {order.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {productCode ? productCode.replaceAll("_", " ") : order.reference}
+                    </p>
+                  </div>
+                  <span className="text-sm font-black text-ember">-{formatNaira(order.amount)}</span>
+                </article>
+              );
+            }) : (
+              <p className="p-4 text-sm text-slate-600">No add-on orders yet.</p>
+            )}
+          </div>
+        </div>
+        <div className="border-t border-slate-200 p-5">
           <h3 className="text-lg font-black">Wallet history</h3>
           <div className="mt-3 divide-y divide-slate-200 rounded-tradia border border-slate-200">
             {walletTransactions.length ? walletTransactions.map((transaction) => (
@@ -289,14 +324,16 @@ function formatAmount(amount: number, currency: string) {
 
 async function getAccountWalletState(userId: string) {
   try {
-    const [balance, transactions] = await Promise.all([
+    const [balance, transactions, orders] = await Promise.all([
       getWalletBalance(userId),
-      listWalletTransactions(userId)
+      listWalletTransactions(userId),
+      listWalletOrders(userId)
     ]);
 
     return {
       balance,
       transactions,
+      orders,
       unavailable: false
     };
   } catch (error) {
@@ -305,9 +342,32 @@ async function getAccountWalletState(userId: string) {
     return {
       balance: 0,
       transactions: [],
+      orders: [],
       unavailable: true
     };
   }
+}
+
+function walletMetadata(value: unknown) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  return {};
+}
+
+function metadataString(metadata: Record<string, unknown>, key: string) {
+  const value = metadata[key];
+  return typeof value === "string" ? value : "";
+}
+
+function walletProductName(description: string, metadata: Record<string, unknown>) {
+  return metadataString(metadata, "productName") || description;
+}
+
+function walletFulfillmentStatus(value: unknown) {
+  const status = metadataString(walletMetadata(value), "fulfillmentStatus");
+  return status === "FULFILLED" ? "FULFILLED" : "OPEN";
 }
 
 function walletMessage(status: string) {

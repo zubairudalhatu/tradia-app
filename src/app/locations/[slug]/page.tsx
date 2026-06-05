@@ -11,7 +11,7 @@ type LocationPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 export async function generateMetadata({ params }: LocationPageProps): Promise<Metadata> {
   const { slug } = await params;

@@ -6,7 +6,7 @@ import { listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Nigeria Business Directory for Verified Local Businesses",
@@ -29,11 +29,17 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCategories, locationGroups] = await Promise.all([
-    listFeaturedBusinesses(3),
-    listActiveCategories(),
-    listActiveStateAreaGroups()
-  ]);
+  const [featuredBusinesses, popularCategories, locationGroups] = hasDatabaseUrl()
+    ? await Promise.all([
+        listFeaturedBusinesses(3),
+        listActiveCategories(),
+        listActiveStateAreaGroups()
+      ])
+    : [
+        [] as Awaited<ReturnType<typeof listFeaturedBusinesses>>,
+        [] as Awaited<ReturnType<typeof listActiveCategories>>,
+        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>
+      ];
 
   return (
     <main>
@@ -184,6 +190,10 @@ export default async function HomePage() {
       </section>
     </main>
   );
+}
+
+function hasDatabaseUrl() {
+  return Boolean(process.env.DATABASE_URL?.trim());
 }
 
 function ProofPoint({ title, body }: { title: string; body: string }) {

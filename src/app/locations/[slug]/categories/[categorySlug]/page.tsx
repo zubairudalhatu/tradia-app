@@ -11,7 +11,7 @@ type CategoryLocationPageProps = {
   params: Promise<{ slug: string; categorySlug: string }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 export async function generateMetadata({ params }: CategoryLocationPageProps): Promise<Metadata> {
   const { slug, categorySlug } = await params;

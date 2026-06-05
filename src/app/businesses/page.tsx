@@ -18,7 +18,7 @@ type BusinessesPageProps = {
   }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Browse Nigerian Businesses | Verified Business Directory",
@@ -53,12 +53,19 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
     page: currentPage,
     rotate: !params.q && currentPage === 1
   };
-  const [businesses, totalBusinesses, popularCategories, locationGroups] = await Promise.all([
-    listPublishedBusinesses(filters),
-    countPublishedBusinesses(filters),
-    listActiveCategories(),
-    listActiveStateAreaGroups()
-  ]);
+  const [businesses, totalBusinesses, popularCategories, locationGroups] = hasDatabaseUrl()
+    ? await Promise.all([
+        listPublishedBusinesses(filters),
+        countPublishedBusinesses(filters),
+        listActiveCategories(),
+        listActiveStateAreaGroups()
+      ])
+    : [
+        [] as Awaited<ReturnType<typeof listPublishedBusinesses>>,
+        0,
+        [] as Awaited<ReturnType<typeof listActiveCategories>>,
+        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>
+      ];
   const totalPages = Math.max(Math.ceil(totalBusinesses / pageSize), 1);
   const safePage = Math.min(currentPage, totalPages);
   const showingStart = totalBusinesses ? (safePage - 1) * pageSize + 1 : 0;
@@ -212,6 +219,10 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
       </div>
     </main>
   );
+}
+
+function hasDatabaseUrl() {
+  return Boolean(process.env.DATABASE_URL?.trim());
 }
 
 function buildBusinessesHref(params: Awaited<BusinessesPageProps["searchParams"]>, page: number) {

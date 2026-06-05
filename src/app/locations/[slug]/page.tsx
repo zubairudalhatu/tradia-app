@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
-import { listPublishedBusinesses } from "@/lib/queries/businesses";
-import { listActiveCategories } from "@/lib/queries/categories";
-import { getActiveAreaBySlug, listActiveAreas } from "@/lib/queries/locations";
+import { countPublishedBusinesses, listPublishedBusinessAreas, listPublishedBusinessCategories, listPublishedBusinesses } from "@/lib/queries/businesses";
+import { getActiveAreaBySlug } from "@/lib/queries/locations";
 
 type LocationPageProps = {
   params: Promise<{ slug: string }>;
@@ -15,7 +14,10 @@ export const revalidate = 900;
 
 export async function generateMetadata({ params }: LocationPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const area = await getActiveAreaBySlug(slug);
+  const [area, businessCount] = await Promise.all([
+    getActiveAreaBySlug(slug),
+    countPublishedBusinesses({ location: slug })
+  ]);
 
   if (!area) return {};
 
@@ -34,6 +36,7 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
     alternates: {
       canonical: `/locations/${area.slug}`
     },
+    robots: businessCount ? undefined : { index: false, follow: true },
     openGraph: {
       title: `Businesses in ${area.name} | Tradia`,
       description: `Browse trusted businesses in ${area.name} with reviews, contact details, and verification signals.`,
@@ -48,8 +51,8 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const [area, businesses, categories, areas] = await Promise.all([
     getActiveAreaBySlug(slug),
     listPublishedBusinesses({ location: slug }),
-    listActiveCategories(),
-    listActiveAreas()
+    listPublishedBusinessCategories({ location: slug }),
+    listPublishedBusinessAreas()
   ]);
 
   if (!area) notFound();
@@ -79,7 +82,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
         <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5">
           <h2 className="mb-4 font-black">Popular searches</h2>
           <div className="grid gap-2">
-            {categories.map((category) => (
+            {categories.length ? categories.map((category) => (
               <Link
                 key={category.slug}
                 href={`/locations/${area.slug}/categories/${category.slug}`}
@@ -87,7 +90,9 @@ export default async function LocationPage({ params }: LocationPageProps) {
               >
                 {category.name} in {area.name}
               </Link>
-            ))}
+            )) : (
+              <p className="text-sm leading-6 text-slate-500">Category links will appear when this area has active listings.</p>
+            )}
           </div>
           <h2 className="mb-4 mt-7 font-black">Other areas</h2>
           <div className="grid gap-2">
@@ -109,7 +114,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
           )) : (
             <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
               <h2 className="text-xl font-black">No listings yet</h2>
-              <p className="mt-2 text-sm text-slate-600">This location page is ready for SEO as more businesses are onboarded.</p>
+              <p className="mt-2 text-sm text-slate-600">This location page will become indexable when published listings are available.</p>
               <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                 Add a business in {area.name}
               </Link>

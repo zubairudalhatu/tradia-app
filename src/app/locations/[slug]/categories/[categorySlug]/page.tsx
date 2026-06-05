@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
-import { listPublishedBusinesses } from "@/lib/queries/businesses";
-import { getActiveCategoryBySlug, listActiveCategories } from "@/lib/queries/categories";
-import { getActiveAreaBySlug, listActiveAreas } from "@/lib/queries/locations";
+import { countPublishedBusinesses, listPublishedBusinessAreas, listPublishedBusinessCategories, listPublishedBusinesses } from "@/lib/queries/businesses";
+import { getActiveCategoryBySlug } from "@/lib/queries/categories";
+import { getActiveAreaBySlug } from "@/lib/queries/locations";
 
 type CategoryLocationPageProps = {
   params: Promise<{ slug: string; categorySlug: string }>;
@@ -15,9 +15,10 @@ export const revalidate = 900;
 
 export async function generateMetadata({ params }: CategoryLocationPageProps): Promise<Metadata> {
   const { slug, categorySlug } = await params;
-  const [area, category] = await Promise.all([
+  const [area, category, businessCount] = await Promise.all([
     getActiveAreaBySlug(slug),
-    getActiveCategoryBySlug(categorySlug)
+    getActiveCategoryBySlug(categorySlug),
+    countPublishedBusinesses({ location: slug, category: categorySlug })
   ]);
 
   if (!area || !category) return {};
@@ -36,6 +37,7 @@ export async function generateMetadata({ params }: CategoryLocationPageProps): P
     alternates: {
       canonical: `/locations/${area.slug}/categories/${category.slug}`
     },
+    robots: businessCount ? undefined : { index: false, follow: true },
     openGraph: {
       title: `${category.name} in ${area.name} | Tradia`,
       description: `Compare trusted ${category.name.toLowerCase()} businesses in ${area.name} with reviews, verification, and contact details.`,
@@ -51,8 +53,8 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
     getActiveAreaBySlug(slug),
     getActiveCategoryBySlug(categorySlug),
     listPublishedBusinesses({ location: slug, category: categorySlug }),
-    listActiveCategories(),
-    listActiveAreas()
+    listPublishedBusinessCategories({ location: slug }),
+    listPublishedBusinessAreas({ category: categorySlug })
   ]);
 
   if (!area || !category) notFound();
@@ -83,7 +85,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
         <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5">
           <h2 className="mb-4 font-black">Related categories</h2>
           <div className="grid gap-2">
-            {categories.map((item) => (
+            {categories.length ? categories.map((item) => (
               <Link
                 key={item.slug}
                 href={`/locations/${area.slug}/categories/${item.slug}`}
@@ -91,11 +93,13 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
               >
                 {item.name} in {area.name}
               </Link>
-            ))}
+            )) : (
+              <p className="text-sm leading-6 text-slate-500">Related categories will appear when this area has active listings.</p>
+            )}
           </div>
           <h2 className="mb-4 mt-7 font-black">Other areas</h2>
           <div className="grid gap-2">
-            {areas.map((item) => (
+            {areas.length ? areas.map((item) => (
               <Link
                 key={item.slug}
                 href={`/locations/${item.slug}/categories/${category.slug}`}
@@ -103,7 +107,9 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
               >
                 {category.name} in {item.name}
               </Link>
-            ))}
+            )) : (
+              <p className="text-sm leading-6 text-slate-500">Other areas will appear when this category has active listings.</p>
+            )}
           </div>
         </aside>
 
@@ -113,7 +119,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
           )) : (
             <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
               <h2 className="text-xl font-black">No listings yet</h2>
-              <p className="mt-2 text-sm text-slate-600">This local search page is ready for SEO as more businesses are onboarded.</p>
+              <p className="mt-2 text-sm text-slate-600">This local search page will become indexable when published listings are available.</p>
               <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                 Add {category.name.toLowerCase()} in {area.name}
               </Link>

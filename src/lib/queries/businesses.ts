@@ -86,6 +86,46 @@ export async function listRotatingFeaturedBusinesses(limit = 3) {
   return rotated.slice(0, limit);
 }
 
+export async function listPublishedBusinessCategories(filters: Pick<BusinessSearchFilters, "location"> = {}) {
+  const groups = await prisma.business.groupBy({
+    by: ["categoryId"],
+    where: buildPublishedBusinessWhere(filters)
+  });
+  const categoryIds = groups.map((group) => group.categoryId);
+
+  if (!categoryIds.length) return [];
+
+  return prisma.category.findMany({
+    where: {
+      id: { in: categoryIds },
+      isActive: true
+    },
+    orderBy: [
+      { sortOrder: "asc" },
+      { name: "asc" }
+    ]
+  });
+}
+
+export async function listPublishedBusinessAreas(filters: Pick<BusinessSearchFilters, "category"> = {}) {
+  const groups = await prisma.business.groupBy({
+    by: ["locationId"],
+    where: buildPublishedBusinessWhere(filters)
+  });
+  const locationIds = groups.map((group) => group.locationId);
+
+  if (!locationIds.length) return [];
+
+  return prisma.location.findMany({
+    where: {
+      id: { in: locationIds },
+      isActive: true,
+      type: "AREA"
+    },
+    orderBy: { name: "asc" }
+  });
+}
+
 export function getBusinessBySlug(slug: string) {
   return prisma.business.findUnique({
     where: { slug },

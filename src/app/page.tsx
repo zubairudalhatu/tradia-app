@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const [featuredBusinesses, popularCategories, locationGroups] = hasDatabaseUrl()
     ? await Promise.all([
-        listFeaturedBusinesses(3),
+        listFeaturedBusinesses(6),
         listActiveCategories(),
         listActiveStateAreaGroups()
       ])
@@ -117,35 +117,48 @@ export default async function HomePage() {
               </div>
               <Link href="/pricing" className="text-sm font-black text-forest">Get featured</Link>
             </div>
-            <div className="grid gap-4">
-              {featuredBusinesses.slice(0, 3).map((business) => (
+            <div className="grid gap-3">
+              {featuredBusinesses.slice(0, 6).map((business) => (
                 <Link
                   href={`/businesses/${business.slug}`}
                   key={business.slug}
-                  className="rounded-tradia border border-slate-200 p-4 transition hover:border-forest"
+                  className="rounded-tradia border border-slate-200 p-3 transition hover:border-forest"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-lg font-black">{business.name}</h2>
-                      <p className="text-sm text-slate-600">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-base font-black">{business.name}</h2>
+                      <p className="text-xs font-bold text-slate-500">
                         {business.category.name} in {business.location.name}
                       </p>
                     </div>
-                    {business.featuredPlacements.length || business.plan?.canBeFeatured ? (
-                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-ember">
-                        Featured
-                      </span>
-                    ) : null}
-                    {business.verificationStatus === "VERIFIED" ? (
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-forest">
-                        Verified
-                      </span>
-                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      {business.featuredPlacements.length || business.plan?.canBeFeatured ? (
+                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-ember">
+                          Featured
+                        </span>
+                      ) : null}
+                      {business.verificationStatus === "VERIFIED" ? (
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-forest">
+                          Verified
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{business.description}</p>
+                  <p className="mt-2 text-sm leading-5 text-slate-600">{business.description}</p>
                 </Link>
               ))}
             </div>
+            {!featuredBusinesses.length ? (
+              <div className="rounded-tradia border border-dashed border-slate-300 bg-slate-50 p-5">
+                <h3 className="text-lg font-black">Featured slots are opening</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Businesses on eligible plans can appear here as Tradia grows its verified directory.
+                </p>
+              </div>
+            ) : null}
+            <Link href="/businesses" className="mt-4 inline-flex w-full justify-center rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-ink hover:bg-emerald-50 hover:text-forest">
+              Browse all businesses
+            </Link>
           </div>
         </div>
       </section>

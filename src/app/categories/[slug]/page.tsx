@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessCard } from "@/components/business-card";
-import { listPublishedBusinesses } from "@/lib/queries/businesses";
-import { getActiveCategoryBySlug, listActiveCategories } from "@/lib/queries/categories";
-import { listActiveAreas } from "@/lib/queries/locations";
+import { countPublishedBusinesses, listPublishedBusinessAreas, listPublishedBusinessCategories, listPublishedBusinesses } from "@/lib/queries/businesses";
+import { getActiveCategoryBySlug } from "@/lib/queries/categories";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -15,7 +14,10 @@ export const revalidate = 900;
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = await getActiveCategoryBySlug(slug);
+  const [category, businessCount] = await Promise.all([
+    getActiveCategoryBySlug(slug),
+    countPublishedBusinesses({ category: slug })
+  ]);
 
   if (!category) return {};
 
@@ -33,6 +35,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     alternates: {
       canonical: `/categories/${category.slug}`
     },
+    robots: businessCount ? undefined : { index: false, follow: true },
     openGraph: {
       title: `${category.name} Businesses in Nigeria | Tradia`,
       description: `Discover trusted ${category.name.toLowerCase()} businesses across Nigeria on Tradia.`,
@@ -47,8 +50,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const [category, businesses, categories, areas] = await Promise.all([
     getActiveCategoryBySlug(slug),
     listPublishedBusinesses({ category: slug }),
-    listActiveCategories(),
-    listActiveAreas()
+    listPublishedBusinessCategories(),
+    listPublishedBusinessAreas({ category: slug })
   ]);
 
   if (!category) notFound();
@@ -78,7 +81,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5">
           <h2 className="mb-4 font-black">Browse areas</h2>
           <div className="grid gap-2">
-            {areas.map((area) => (
+            {areas.length ? areas.map((area) => (
               <Link
                 key={area.slug}
                 href={`/locations/${area.slug}/categories/${category.slug}`}
@@ -86,7 +89,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               >
                 {category.name} in {area.name}
               </Link>
-            ))}
+            )) : (
+              <p className="text-sm leading-6 text-slate-500">Area links will appear when this category has active listings.</p>
+            )}
           </div>
           <h2 className="mb-4 mt-7 font-black">Other categories</h2>
           <div className="grid gap-2">
@@ -108,7 +113,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           )) : (
             <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
               <h2 className="text-xl font-black">No listings yet</h2>
-              <p className="mt-2 text-sm text-slate-600">This category page is ready for SEO as more businesses are onboarded.</p>
+              <p className="mt-2 text-sm text-slate-600">This category page will become indexable when published listings are available.</p>
               <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                 Add a {category.name.toLowerCase()} business
               </Link>

@@ -22,3 +22,39 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body > header,
+  body > footer,
+  .no-print {
+    display: none !important;
+  }
+
+  .receipt-print-shell {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .receipt-print-card {
+    break-inside: avoid;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .receipt-field,
+  .receipt-note {
+    break-inside: avoid;
+    padding: 10px !important;
+  }
+}

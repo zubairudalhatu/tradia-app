@@ -5,20 +5,50 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
-  const [categories, areas, businesses] = await Promise.all([
+  const publishedBusinessWhere = {
+    listingStatus: "PUBLISHED" as const
+  };
+  const [categories, areas, categoryGroups, areaGroups, localGroups, businesses] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true },
-      select: { slug: true }
+      select: { id: true, slug: true }
     }),
     prisma.location.findMany({
       where: { isActive: true, type: "AREA" },
-      select: { slug: true }
+      select: { id: true, slug: true }
+    }),
+    prisma.business.groupBy({
+      by: ["categoryId"],
+      where: {
+        ...publishedBusinessWhere,
+        category: { isActive: true }
+      },
+      _max: { updatedAt: true }
+    }),
+    prisma.business.groupBy({
+      by: ["locationId"],
+      where: {
+        ...publishedBusinessWhere,
+        location: { isActive: true, type: "AREA" }
+      },
+      _max: { updatedAt: true }
+    }),
+    prisma.business.groupBy({
+      by: ["locationId", "categoryId"],
+      where: {
+        ...publishedBusinessWhere,
+        category: { isActive: true },
+        location: { isActive: true, type: "AREA" }
+      },
+      _max: { updatedAt: true }
     }),
     prisma.business.findMany({
-      where: { listingStatus: "PUBLISHED" },
+      where: publishedBusinessWhere,
       select: { slug: true, updatedAt: true }
     })
   ]);
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
+  const areaById = new Map(areas.map((area) => [area.id, area]));
 
   const staticRoutes = [
     "",
@@ -37,28 +67,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.8
   }));
 
-  const categoryRoutes = categories.map((category) => ({
-    url: `${baseUrl}/categories/${category.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.7
-  }));
+  const categoryRoutes = categoryGroups.flatMap((group) => {
+    const category = categoryById.get(group.categoryId);
+    if (!category) return [];
 
-  const locationRoutes = areas.map((area) => ({
-    url: `${baseUrl}/locations/${area.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.7
-  }));
+    return [{
+      url: `${baseUrl}/categories/${category.slug}`,
+      lastModified: group._max.updatedAt ?? new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7
+    }];
+  });
 
-  const localSearchRoutes = areas.flatMap((area) =>
-    categories.map((category) => ({
+  const locationRoutes = areaGroups.flatMap((group) => {
+    const area = areaById.get(group.locationId);
+    if (!area) return [];
+
+    return [{
+      url: `${baseUrl}/locations/${area.slug}`,
+      lastModified: group._max.updatedAt ?? new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7
+    }];
+  });
+
+  const localSearchRoutes = localGroups.flatMap((group) => {
+    const area = areaById.get(group.locationId);
+    const category = categoryById.get(group.categoryId);
+    if (!area || !category) return [];
+
+    return [{
       url: `${baseUrl}/locations/${area.slug}/categories/${category.slug}`,
-      lastModified: new Date(),
+      lastModified: group._max.updatedAt ?? new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.6
-    }))
-  );
+    }];
+  });
 
   const businessRoutes = businesses.map((business) => ({
     url: `${baseUrl}/businesses/${business.slug}`,

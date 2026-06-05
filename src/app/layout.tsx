@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { MobileMenu } from "@/components/mobile-menu";
-import { getCurrentUser } from "@/lib/auth/session";
+import { SiteNavigation } from "@/components/site-navigation";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://www.tradia.business"),
   title: {
     default: "Tradia | Nigeria Business Directory for Verified Local Businesses",
     template: "%s | Tradia"
@@ -30,6 +29,22 @@ export const metadata: Metadata = {
     shortcut: "/icon.png",
     apple: "/icon.png"
   },
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    title: "Tradia | Nigeria Business Directory for Verified Local Businesses",
+    description: "Discover verified businesses across Nigeria, compare reviews and contact details, and list your Nigerian business for better visibility.",
+    url: "/",
+    siteName: "Tradia",
+    locale: "en_NG",
+    type: "website"
+  },
+  twitter: {
+    card: "summary",
+    title: "Tradia | Nigeria Business Directory for Verified Local Businesses",
+    description: "Discover verified businesses across Nigeria, compare reviews and contact details, and list your Nigerian business for better visibility."
+  },
   verification: process.env.GOOGLE_SITE_VERIFICATION
     ? {
         google: process.env.GOOGLE_SITE_VERIFICATION
@@ -37,16 +52,12 @@ export const metadata: Metadata = {
     : undefined
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const user = await getCurrentUser();
   const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
-  const canAccessAdmin = Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
-  const navLinkClass =
-    "rounded-tradia px-3 py-2 transition hover:bg-white hover:text-forest hover:shadow-md focus-visible:bg-white focus-visible:text-forest focus-visible:shadow-md focus-visible:outline-none";
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -56,7 +67,12 @@ export default async function RootLayout({
     logo: `${baseUrl}/brand/tradia-logo.png`,
     legalName: "Zamkah Technologies Limited",
     sameAs: [
-      "https://www.tradia.business"
+      "https://www.tradia.business",
+      "https://x.com/tradiabusiness",
+      "https://www.instagram.com/tradiabusiness",
+      "https://www.facebook.com/tradiabusiness",
+      "https://www.tiktok.com/@tradiabusiness",
+      "https://www.youtube.com/@tradiabusiness"
     ]
   };
   const websiteJsonLd = {
@@ -98,21 +114,7 @@ export default async function RootLayout({
             <Link href="/" className="block w-40" aria-label="Tradia home">
               <Image src="/brand/tradia-logo.png" alt="Tradia" width={320} height={93} priority />
             </Link>
-            <nav className="hidden items-center gap-1 text-sm font-semibold text-slate-600 md:flex">
-              <Link className={navLinkClass} href="/businesses">Browse</Link>
-              <Link className={navLinkClass} href="/pricing">Pricing</Link>
-              <Link className={navLinkClass} href="/dashboard">Business</Link>
-              {user ? <Link className={navLinkClass} href="/account">Account</Link> : null}
-              {canAccessAdmin ? <Link className={navLinkClass} href="/admin">Admin</Link> : null}
-              {user ? <a className={navLinkClass} href="/logout">Logout</a> : <Link className={navLinkClass} href="/login">Login</Link>}
-            </nav>
-            <MobileMenu isSignedIn={Boolean(user)} canAccessAdmin={canAccessAdmin} />
-            <Link
-              href="/businesses/new"
-              className="hidden rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white sm:inline-flex"
-            >
-              Add Business
-            </Link>
+            <SiteNavigation />
           </div>
         </header>
         {children}

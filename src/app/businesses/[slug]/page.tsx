@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
+import { BusinessGrowthTools } from "@/components/business-growth-tools";
 import { BusinessOwnerMediaPanel } from "@/components/business-owner-media-panel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -24,7 +25,7 @@ export const dynamic = "force-dynamic";
 
 type BusinessPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ review?: string; report?: string; enquiry?: string; media?: string }>;
+  searchParams: Promise<{ review?: string; report?: string; enquiry?: string; media?: string; claim?: string }>;
 };
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: BusinessPageProps): Promise<M
 
   if (!business) return {};
 
-  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
   const profileUrl = `${baseUrl}/businesses/${business.slug}`;
   const stateName = getStateName(business.location);
   const areaName = getAreaName(business.location);
@@ -114,7 +115,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const documentMedia = business.media.filter((item) => !isImageMedia(item.type));
   const primaryMedia = gallery[0] ?? imageMedia[0];
   const supportingMedia = gallery.filter((item) => item.id !== primaryMedia?.id).slice(0, 4);
-  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
   const isVerified = business.verificationStatus === "VERIFIED";
   const hasDirectContact = Boolean(business.phone || business.whatsapp || business.email || business.website);
   const contactMethods = [
@@ -124,9 +125,13 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
     business.website ? "Website" : null
   ].filter(Boolean);
   const activePlanName = benefits.name;
+  const stateName = getStateName(business.location);
+  const areaName = getAreaName(business.location);
   const profileUrl = `${baseUrl}/businesses/${business.slug}`;
+  const reviewUrl = `${profileUrl}#reviews`;
   const shareText = `View ${business.name} on Tradia`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${profileUrl}`)}`;
+  const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${business.address}, ${areaName}, ${stateName}, Nigeria`)}`;
   const isOwner = user?.id === business.ownerId;
   const canEditBusiness = user?.id === business.ownerId || Boolean(user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role));
   const editBusinessHref = user?.id === business.ownerId
@@ -135,8 +140,6 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const lastUpdated = business.updatedAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const listedSince = business.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" });
   const verifiedSince = business.verificationGrantedAt?.toLocaleDateString("en-NG", { dateStyle: "medium" });
-  const stateName = getStateName(business.location);
-  const areaName = getAreaName(business.location);
   const trustSignals = [
     {
       label: "Verification",
@@ -245,6 +248,15 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
           {mediaMessage(query.media)}
         </p>
       ) : null}
+      {query.claim ? (
+        <p className={`mt-5 rounded-tradia border p-4 text-sm font-bold ${
+          ["submitted", "already-pending"].includes(query.claim)
+            ? "border-emerald-200 bg-emerald-50 text-forest"
+            : "border-red-200 bg-red-50 text-red-700"
+        }`}>
+          {claimMessage(query.claim)}
+        </p>
+      ) : null}
       <section className="overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="relative">
           {business.coverUrl ? (
@@ -300,6 +312,14 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             deleteAction={ownerDeleteMediaAction}
           />
         ) : null}
+        {isOwner ? (
+          <BusinessGrowthTools
+            businessName={business.name}
+            profileUrl={profileUrl}
+            reviewUrl={reviewUrl}
+            isVerified={isVerified}
+          />
+        ) : null}
         <div className="grid gap-8 p-6 lg:grid-cols-[1fr_340px]">
           <div>
             <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -342,15 +362,20 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               ) : null}
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
-              <a href={whatsappShareUrl} target="_blank" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+              <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
                 Share on WhatsApp
               </a>
-              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`} target="_blank" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`} target="_blank" rel="noreferrer" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
                 Share on X
               </a>
-              <a href="/claims/new" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
-                Claim Business
+              <a href={directionsUrl} target="_blank" rel="noreferrer" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+                Open Map
               </a>
+              {!isOwner ? (
+                <a href={`/claims/new?businessId=${business.id}`} className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
+                  Claim Business
+                </a>
+              ) : null}
               {canEditBusiness ? (
                 <Link href={editBusinessHref} className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white transition hover:bg-forest/90">
                   Edit Business
@@ -428,7 +453,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             </div>
             {primaryMedia ? (
               <div className="mt-5 grid gap-3 lg:grid-cols-[1.35fr_1fr]">
-                <a href={primaryMedia.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+                <a href={primaryMedia.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
                   <img className="h-80 w-full object-cover transition duration-300 group-hover:scale-105" src={cropImageUrl(primaryMedia.url, primaryMedia.type === "COVER" ? "cover" : "gallery")} alt={`${business.name} ${mediaTypeLabel(primaryMedia.type).toLowerCase()}`} />
                   <span className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-ink">
                     <span>{mediaTypeLabel(primaryMedia.type)}</span>
@@ -438,7 +463,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 {supportingMedia.length ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {supportingMedia.map((item) => (
-                      <a key={item.id} href={item.url} target="_blank" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+                      <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
                         <img className="h-36 w-full object-cover transition duration-300 group-hover:scale-105" src={cropImageUrl(item.url, item.type === "COVER" ? "cover" : "gallery")} alt={`${business.name} ${mediaTypeLabel(item.type).toLowerCase()}`} />
                         <span className="block truncate px-3 py-2 text-sm font-bold text-ink">{mediaTypeLabel(item.type)}</span>
                       </a>
@@ -456,7 +481,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 <h3 className="text-lg font-black">Documents and resources</h3>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   {documentMedia.map((item) => (
-                    <a key={item.id} href={item.url} target="_blank" className="rounded-tradia border border-slate-200 bg-white p-4 transition hover:border-forest/30 hover:shadow-sm">
+                    <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="rounded-tradia border border-slate-200 bg-white p-4 transition hover:border-forest/30 hover:shadow-sm">
                       <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase text-slate-500">{mediaTypeLabel(item.type)}</span>
                       <strong className="mt-3 block text-ink">{mediaTypeLabel(item.type)}</strong>
                       <span className="mt-2 block text-sm font-semibold text-forest">View file</span>
@@ -474,7 +499,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         className="mt-8"
       />
 
-      <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+      <section id="reviews" className="mt-8 grid gap-8 scroll-mt-28 lg:grid-cols-[1fr_360px]">
         <div className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -742,6 +767,13 @@ function mediaMessage(value: string) {
   if (value === "forbidden") return "Only the business owner can update profile photos from this page.";
   if (value === "missing") return "That uploaded media item could not be found.";
   return "Please choose a valid image or file to upload.";
+}
+
+function claimMessage(value: string) {
+  if (value === "submitted") return "Business claim submitted for admin review.";
+  if (value === "already-pending") return "You already have a pending claim for this business.";
+
+  return "Business claim could not be submitted. Please try again.";
 }
 
 function cropImageUrl(url: string, mode: "cover" | "gallery") {

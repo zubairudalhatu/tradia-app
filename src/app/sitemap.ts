@@ -77,5 +77,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 }
 
 function getBaseUrl() {
-  return (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.NEXTAUTH_URL ?? "https://www.tradia.business").replace(/\/$/, "");
 }

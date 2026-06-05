@@ -56,7 +56,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
   ]);
 
   if (!area || !category) notFound();
-  const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: area.name, href: `/locations/${area.slug}` },
@@ -114,6 +114,9 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
             <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
               <h2 className="text-xl font-black">No listings yet</h2>
               <p className="mt-2 text-sm text-slate-600">This local search page is ready for SEO as more businesses are onboarded.</p>
+              <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+                Add {category.name.toLowerCase()} in {area.name}
+              </Link>
             </div>
           )}
         </section>

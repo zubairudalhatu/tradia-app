@@ -56,6 +56,11 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
     <main className="mx-auto max-w-7xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Plans</p>
       <h1 className="text-5xl font-black tracking-normal">Start free, upgrade for trust and visibility</h1>
+      <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
+        Create a free listing, then upgrade when your business needs more photos, analytics,
+        stronger placement, and eligibility for Tradia verification review. Paid plans improve
+        visibility tools; verification is still reviewed separately by admins.
+      </p>
       {params.checkout ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
           {checkoutMessage(params.checkout)}
@@ -101,13 +106,22 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                 Included in higher plan
               </p>
             ) : null}
-            <p className="mt-2 text-3xl font-black text-forest">N{plan.annualPrice.toLocaleString()}</p>
+            <p className="mt-2 text-3xl font-black text-forest">{formatNaira(plan.annualPrice)}</p>
             <p className="mt-1 text-sm text-slate-500">per year</p>
             <ul className="mt-5 grid gap-3 text-sm text-slate-600">
               {plan.featureList.map((feature) => (
-                <li key={feature}>{feature}</li>
+                <li key={feature}>{pricingFeatureLabel(feature)}</li>
               ))}
             </ul>
+            {plan.annualPrice > 0 ? (
+              <p className="mt-5 rounded-tradia bg-emerald-50 p-3 text-xs font-bold leading-5 text-forest">
+                Verification eligibility means this plan can request admin review; it is not automatic approval.
+              </p>
+            ) : (
+              <p className="mt-5 rounded-tradia bg-slate-50 p-3 text-xs font-bold leading-5 text-slate-600">
+                Best for getting listed and testing your public profile before upgrading.
+              </p>
+            )}
             {plan.annualPrice > 0 ? (
               user ? (
                 businesses.length ? (
@@ -171,4 +185,18 @@ function checkoutMessage(status: string) {
   }
 
   return "Checkout could not be started. Please try again.";
+}
+
+function formatNaira(amount: number) {
+  if (amount === 0) return "Free";
+
+  return `NGN ${amount.toLocaleString("en-NG")}`;
+}
+
+function pricingFeatureLabel(feature: string) {
+  if (feature.toLowerCase() === "verification eligibility") {
+    return "Eligible to request Tradia verification review";
+  }
+
+  return feature;
 }

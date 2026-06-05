@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { registerAction } from "./actions";
 
 type RegisterPageProps = {
   searchParams: Promise<{ error?: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Create a Tradia Account",
+  description: "Create a Tradia account to list a Nigerian business, verify your account, manage profile media, receive enquiries, and request business verification.",
+  robots: {
+    index: false,
+    follow: true
+  }
 };
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {

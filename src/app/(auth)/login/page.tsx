@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { loginAction } from "./actions";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string; next?: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Sign in to Tradia",
+  description: "Sign in to manage your Tradia account, business listings, verification requests, enquiries, reviews, and subscriptions.",
+  robots: {
+    index: false,
+    follow: true
+  }
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {

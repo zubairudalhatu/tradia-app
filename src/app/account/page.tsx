@@ -189,6 +189,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               const metadata = walletMetadata(order.metadata);
               const status = walletFulfillmentStatus(order.metadata);
               const productCode = metadataString(metadata, "productCode");
+              const fulfillmentNote = metadataString(metadata, "fulfillmentNote");
 
               return (
                 <article key={order.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -205,10 +206,20 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                       {order.business?.name ?? "Account wallet"} - {order.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {productCode ? productCode.replaceAll("_", " ") : order.reference}
+                      {productCode ? productCode.replaceAll("_", " ") : order.reference} - Ref: {order.reference}
                     </p>
+                    {fulfillmentNote ? (
+                      <p className="mt-2 rounded-tradia bg-slate-50 p-3 text-sm font-bold text-slate-600">
+                        Note: {fulfillmentNote}
+                      </p>
+                    ) : null}
                   </div>
-                  <span className="text-sm font-black text-ember">-{formatNaira(order.amount)}</span>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <span className="text-sm font-black text-ember">-{formatNaira(order.amount)}</span>
+                    <Link className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/account/wallet/${order.id}/receipt`}>
+                      Receipt
+                    </Link>
+                  </div>
                 </article>
               );
             }) : (
@@ -226,10 +237,16 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                   <p className="text-sm text-slate-600">
                     {transaction.business?.name ?? "Account wallet"} - {transaction.createdAt.toLocaleDateString("en-NG", { dateStyle: "medium" })}
                   </p>
+                  <p className="mt-1 text-xs text-slate-500">Ref: {transaction.reference}</p>
                 </div>
-                <span className={`text-sm font-black ${transaction.type === "CREDIT" ? "text-forest" : "text-ember"}`}>
-                  {transaction.type === "CREDIT" ? "+" : "-"}{formatNaira(transaction.amount)}
-                </span>
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  <span className={`text-sm font-black ${transaction.type === "CREDIT" ? "text-forest" : "text-ember"}`}>
+                    {transaction.type === "CREDIT" ? "+" : "-"}{formatNaira(transaction.amount)}
+                  </span>
+                  <Link className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/account/wallet/${transaction.id}/receipt`}>
+                    Receipt
+                  </Link>
+                </div>
               </article>
             )) : (
               <p className="p-4 text-sm text-slate-600">No wallet activity yet.</p>

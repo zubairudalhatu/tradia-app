@@ -331,6 +331,7 @@ export async function updateWalletFulfillmentAction(formData: FormData) {
   const admin = await requireAdminAction(formData);
   const walletTransactionId = String(formData.get("walletTransactionId") ?? "");
   const fulfillmentStatus = String(formData.get("fulfillmentStatus") ?? "") === "FULFILLED" ? "FULFILLED" : "OPEN";
+  const fulfillmentNote = optionalFulfillmentNote(formData.get("fulfillmentNote"));
 
   const transaction = await prisma.walletTransaction.findUnique({
     where: { id: walletTransactionId },
@@ -366,7 +367,10 @@ export async function updateWalletFulfillmentAction(formData: FormData) {
     ...metadata,
     fulfillmentStatus,
     fulfilledAt: fulfillmentStatus === "FULFILLED" ? new Date().toISOString() : null,
-    fulfilledBy: fulfillmentStatus === "FULFILLED" ? admin.id : null
+    fulfilledBy: fulfillmentStatus === "FULFILLED" ? admin.id : null,
+    fulfillmentNote: fulfillmentNote ?? metadata.fulfillmentNote ?? null,
+    fulfillmentUpdatedAt: new Date().toISOString(),
+    fulfillmentUpdatedBy: admin.id
   };
 
   await prisma.walletTransaction.update({
@@ -417,6 +421,11 @@ function normalizeLeadStatus(value: string) {
   }
 
   return "NEW";
+}
+
+function optionalFulfillmentNote(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  return text.length ? text.slice(0, 500) : null;
 }
 
 function jsonObject(value: Prisma.JsonValue | null) {

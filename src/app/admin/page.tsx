@@ -596,6 +596,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             const isSpend = transaction.type === "DEBIT";
             const isFulfilled = walletFulfillmentStatus(transaction.metadata) === "FULFILLED";
             const productCode = metadataString(metadata, "productCode");
+            const fulfillmentNote = metadataString(metadata, "fulfillmentNote");
             const paymentReference = transaction.payment?.providerReference ?? metadataString(metadata, "paymentReference");
 
             return (
@@ -626,6 +627,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <p className="mt-1 text-xs text-slate-500">
                     Reference: {transaction.reference}{paymentReference ? ` - Payment: ${paymentReference}` : ""}
                   </p>
+                  {fulfillmentNote ? (
+                    <p className="mt-2 rounded-tradia bg-slate-50 p-3 text-sm font-bold text-slate-600">
+                      Note: {fulfillmentNote}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                   <span className={`text-sm font-black ${transaction.type === "CREDIT" ? "text-forest" : "text-ember"}`}>
@@ -642,11 +648,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={adminUserHref(transaction.user.id, adminActionToken)}>
                     User
                   </a>
+                  <a className="rounded-tradia bg-slate-100 px-3 py-2 text-xs font-black text-ink" href={`/admin/wallet/${transaction.id}/receipt?adminActionToken=${encodeURIComponent(adminActionToken)}`}>
+                    Receipt
+                  </a>
                   {isSpend ? (
-                    <form action={updateWalletFulfillmentAction}>
+                    <form action={updateWalletFulfillmentAction} className="grid gap-2 sm:min-w-56">
                       <AdminActionTokenInput token={adminActionToken} />
                       <input type="hidden" name="walletTransactionId" value={transaction.id} />
                       <input type="hidden" name="fulfillmentStatus" value={isFulfilled ? "OPEN" : "FULFILLED"} />
+                      <textarea
+                        className="min-h-16 rounded-tradia border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                        name="fulfillmentNote"
+                        defaultValue={fulfillmentNote}
+                        placeholder="Fulfillment note"
+                      />
                       <button className={`rounded-tradia px-3 py-2 text-xs font-black ${
                         isFulfilled ? "bg-slate-100 text-ink" : "bg-forest text-white"
                       }`}>

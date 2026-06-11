@@ -6,7 +6,7 @@ import { SiteNavigation } from "@/components/site-navigation";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://www.tradia.business"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com"),
   title: {
     default: "Tradia | Nigeria Business Directory for Verified Local Businesses",
     template: "%s | Tradia"
@@ -57,7 +57,7 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -67,7 +67,7 @@ export default function RootLayout({
     logo: `${baseUrl}/brand/tradia-logo.png`,
     legalName: "Zamkah Technologies Limited",
     sameAs: [
-      "https://www.tradia.business",
+      "https://www.tradiabusiness.com",
       "https://x.com/tradiabusiness",
       "https://www.instagram.com/tradiabusiness",
       "https://www.facebook.com/tradiabusiness",

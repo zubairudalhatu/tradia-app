@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: BusinessPageProps): Promise<M
 
   if (!business) return {};
 
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
   const profileUrl = `${baseUrl}/businesses/${business.slug}`;
   const stateName = getStateName(business.location);
   const areaName = getAreaName(business.location);
@@ -115,7 +115,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const documentMedia = business.media.filter((item) => !isImageMedia(item.type));
   const primaryMedia = gallery[0] ?? imageMedia[0];
   const supportingMedia = gallery.filter((item) => item.id !== primaryMedia?.id).slice(0, 4);
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
   const isVerified = business.verificationStatus === "VERIFIED";
   const hasDirectContact = Boolean(business.phone || business.whatsapp || business.email || business.website);
   const contactMethods = [

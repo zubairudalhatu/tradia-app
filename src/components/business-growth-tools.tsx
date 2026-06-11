@@ -153,7 +153,7 @@ function buildPosterSvg({
   <image href="${escapeXml(qrUrl)}" x="320" y="505" width="440" height="440"/>
   <text x="540" y="1065" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#071d36">Scan to view this business profile</text>
   <text x="540" y="1130" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#64748b">${url}</text>
-  <text x="540" y="1220" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#047857">www.tradia.business</text>
+  <text x="540" y="1220" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#047857">www.tradiabusiness.com</text>
 </svg>`;
 }
 

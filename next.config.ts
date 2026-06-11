@@ -9,6 +9,28 @@ const nextConfig: NextConfig = {
       }
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "tradia.business" }],
+        destination: "https://www.tradiabusiness.com/:path*",
+        permanent: true
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.tradia.business" }],
+        destination: "https://www.tradiabusiness.com/:path*",
+        permanent: true
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "tradiabusiness.com" }],
+        destination: "https://www.tradiabusiness.com/:path*",
+        permanent: true
+      }
+    ];
+  },
   async headers() {
     const contentSecurityPolicy = [
       "default-src 'self'",

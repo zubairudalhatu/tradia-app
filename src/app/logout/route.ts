@@ -12,7 +12,15 @@ export async function GET() {
   });
 
   for (const name of ALL_SESSION_COOKIES) {
-    for (const domain of [undefined, ".tradia.business", "tradia.business", "www.tradia.business"]) {
+    for (const domain of [
+      undefined,
+      ".tradiabusiness.com",
+      "tradiabusiness.com",
+      "www.tradiabusiness.com",
+      ".tradia.business",
+      "tradia.business",
+      "www.tradia.business"
+    ]) {
       response.headers.append("Set-Cookie", expireCookieHeader(name, domain));
     }
   }

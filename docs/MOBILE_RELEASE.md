@@ -7,8 +7,8 @@ Google Play Console account ID: `5237067421982255990`
 - App name: `Tradia`
 - Android package: `business.tradia.app`
 - iOS bundle ID: `business.tradia.app`
-- Website: `https://www.tradia.business`
-- Privacy policy: `https://www.tradia.business/privacy`
+- Website: `https://www.tradiabusiness.com`
+- Privacy policy: `https://www.tradiabusiness.com/privacy`
 - Support email: `tradia@zamkah.com.ng`
 - Current app version: `1.0.0`
 

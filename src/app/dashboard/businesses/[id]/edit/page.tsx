@@ -145,7 +145,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Business page username
           <div className="flex overflow-hidden rounded-tradia border border-slate-200 bg-white">
-            <span className="flex items-center bg-slate-50 px-3 text-sm font-bold text-slate-500">tradia.business/businesses/</span>
+            <span className="flex items-center bg-slate-50 px-3 text-sm font-bold text-slate-500">tradiabusiness.com/businesses/</span>
             <input
               className="min-w-0 flex-1 px-4 py-3 outline-none"
               name="slug"

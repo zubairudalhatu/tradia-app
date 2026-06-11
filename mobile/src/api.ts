@@ -1,6 +1,6 @@
 import type { BusinessDetail, BusinessSummary, CategoryFilter, LocationGroup } from "./types";
 
-const apiBaseUrl = "https://www.tradia.business";
+const apiBaseUrl = "https://www.tradiabusiness.com";
 
 export type BusinessListFilters = {
   q?: string;

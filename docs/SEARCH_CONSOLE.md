@@ -5,7 +5,7 @@
 Use a URL prefix property for:
 
 ```text
-https://www.tradia.business
+https://www.tradiabusiness.com
 ```
 
 This matches the live production domain and works cleanly with the site's existing sitemap and meta-tag verification.
@@ -33,19 +33,19 @@ Add it to Production and Preview, then redeploy the project. The app will place 
 After verification, submit:
 
 ```text
-https://www.tradia.business/sitemap.xml
+https://www.tradiabusiness.com/sitemap.xml
 ```
 
 Robots file:
 
 ```text
-https://www.tradia.business/robots.txt
+https://www.tradiabusiness.com/robots.txt
 ```
 
 AdSense sellers file:
 
 ```text
-https://www.tradia.business/ads.txt
+https://www.tradiabusiness.com/ads.txt
 ```
 
 ## Notes

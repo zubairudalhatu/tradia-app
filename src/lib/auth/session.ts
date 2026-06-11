@@ -191,8 +191,8 @@ async function getCookieDomain() {
   const requestHost = (await headers()).get("host")?.split(":")[0];
   const hostname = requestHost ?? getConfiguredHostname();
 
-  if (hostname === "tradia.business" || hostname?.endsWith(".tradia.business")) {
-    return ".tradia.business";
+  if (hostname === "tradiabusiness.com" || hostname?.endsWith(".tradiabusiness.com")) {
+    return ".tradiabusiness.com";
   }
 
   return undefined;

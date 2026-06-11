@@ -6,7 +6,8 @@ Use this file when opening Tradia in a fresh Codex Project.
 
 Tradia is a Nigerian business discovery platform with:
 
-- Public website: `https://www.tradia.business`
+- Target public website: `https://www.tradiabusiness.com`
+- Current live website remains `https://www.tradia.business` until the new domain DNS is configured.
 - GitHub repo: `https://github.com/zubairudalhatu/tradia-app`
 - Main app folder: `tradia-app`
 - Mobile app folder: `tradia-app/mobile`
@@ -35,7 +36,7 @@ The Expo mobile app is in `mobile/`.
 Current scope:
 
 - Native home/business discovery screen.
-- Search published businesses from `https://www.tradia.business/api/businesses`.
+- Search published businesses from `https://www.tradiabusiness.com/api/businesses`.
 - Native filters for category, location, and verified status.
 - Native business detail screen.
 - Contact actions for call, WhatsApp, email, website.
@@ -122,6 +123,8 @@ Production website uses Vercel with:
 - Google Search Console
 
 Do not expose secrets in code or docs.
+
+The new-domain migration is prepared locally. See `docs/DOMAIN_MIGRATION.md` before deploying it.
 
 ## Useful Local Paths
 

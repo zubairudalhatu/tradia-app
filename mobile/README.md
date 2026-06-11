@@ -22,7 +22,7 @@ The Android package name is `business.tradia.app`. Do not change it after the fi
 ## Current Scope
 
 - Native business discovery screen.
-- Search published businesses from `https://www.tradia.business/api/businesses`.
+- Search published businesses from `https://www.tradiabusiness.com/api/businesses`.
 - Business detail screen with call, WhatsApp, email, website, and web profile actions.
 - Add Business and Account actions open the secure Tradia website.
 

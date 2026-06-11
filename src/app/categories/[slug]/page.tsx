@@ -55,7 +55,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   ]);
 
   if (!category) notFound();
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradia.business").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: "Categories", href: "/businesses" },

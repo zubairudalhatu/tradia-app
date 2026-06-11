@@ -121,5 +121,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 }
 
 function getBaseUrl() {
-  return (process.env.NEXTAUTH_URL ?? "https://www.tradia.business").replace(/\/$/, "");
+  return (process.env.NEXTAUTH_URL ?? "https://www.tradiabusiness.com").replace(/\/$/, "");
 }

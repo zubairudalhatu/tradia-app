@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { ALL_SESSION_COOKIES, clearSession } from "@/lib/auth/session";
+import { ALL_SESSION_COOKIES, SESSION_COOKIE } from "@/lib/auth/session";
 
 export async function GET() {
-  await clearSession();
   const response = new NextResponse(logoutHtml(), {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
@@ -12,17 +11,10 @@ export async function GET() {
   });
 
   for (const name of ALL_SESSION_COOKIES) {
-    for (const domain of [
-      undefined,
-      ".tradiabusiness.com",
-      "tradiabusiness.com",
-      "www.tradiabusiness.com",
-      ".tradia.business",
-      "tradia.business",
-      "www.tradia.business"
-    ]) {
-      response.headers.append("Set-Cookie", expireCookieHeader(name, domain));
-    }
+    const domain = process.env.NODE_ENV === "production" && name === SESSION_COOKIE
+      ? ".tradiabusiness.com"
+      : undefined;
+    response.headers.append("Set-Cookie", expireCookieHeader(name, domain));
   }
 
   return response;

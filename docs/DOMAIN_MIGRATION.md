@@ -11,9 +11,10 @@
 ## Current Status
 
 - `tradiabusiness.com` and `www.tradiabusiness.com` are attached to the Tradia Vercel project.
-- Vercel reports that both new hostnames are verified but DNS is misconfigured.
+- Both new hostnames resolve to Vercel and the migration was deployed on 2026-06-11.
+- `https://www.tradiabusiness.com` is live with the new canonical metadata, sitemap, login, logout, directory, and health endpoint.
 - The domain uses Go54 nameservers: `nsc.go54.com` and `nsd.go54.com`.
-- The migration code is prepared locally but must not be deployed until the new DNS records resolve.
+- Google Public DNS currently reports `tradia.business` and `www.tradia.business` as NXDOMAIN. Restore their Vercel DNS records so old backlinks and Google results can reach the permanent redirects.
 
 ## DNS Records To Add At Go54
 
@@ -25,6 +26,13 @@ Remove conflicting A, AAAA, or CNAME records for the same names before adding:
 | `www` | `CNAME` | `cname.vercel-dns.com` |
 
 Do not remove MX or email-related TXT records.
+
+The old `tradia.business` DNS zone also needs the same Vercel records while the redirect migration is active:
+
+| Name | Type | Value |
+| --- | --- | --- |
+| `@` | `A` | `76.76.21.21` |
+| `www` | `CNAME` | `cname.vercel-dns.com` |
 
 ## Safe Cutover
 

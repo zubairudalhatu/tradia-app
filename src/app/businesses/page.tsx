@@ -82,12 +82,12 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
   ].filter(Boolean).length;
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
         <div className="max-w-3xl">
           <p className="mb-2 text-sm font-extrabold uppercase text-ember">Directory</p>
-          <h1 className="text-5xl font-black tracking-normal">Browse Nigerian businesses</h1>
-          <p className="mt-4 text-lg text-slate-600">
+          <h1 className="break-words text-4xl font-black leading-tight tracking-normal md:text-5xl">Browse Nigerian businesses</h1>
+          <p className="mt-3 text-base leading-7 text-slate-600 sm:mt-4 sm:text-lg">
             Search Nigeria business listings by name, category, service, location, opening status, and verification.
           </p>
         </div>
@@ -98,7 +98,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
       </div>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
-        <aside className="h-fit min-w-0 overflow-hidden rounded-tradia border border-slate-200 bg-white p-5">
+        <aside className="h-fit min-w-0 overflow-hidden rounded-tradia border border-slate-200 bg-white p-4 sm:p-5">
           <h2 className="mb-4 font-black">Filters</h2>
           <form className="grid gap-4" action="/businesses">
             <label className="grid gap-2 text-sm font-bold text-slate-600">
@@ -143,8 +143,8 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
             <button className="w-full rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Apply Filters</button>
             <Link href="/businesses" className="text-sm font-bold text-forest">Clear filters</Link>
           </form>
-          <h3 className="mb-3 mt-7 font-black">Categories</h3>
-          <div className="grid gap-2">
+          <h3 className="mb-3 mt-7 hidden font-black lg:block">Categories</h3>
+          <div className="hidden gap-2 lg:grid">
             {popularCategories.map((category) => (
               <Link
                 href={`/businesses?category=${category.slug}`}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -9,7 +10,7 @@ type MobileMenuProps = {
   canAccessAdmin: boolean;
 };
 
-const menuLinkClass = "rounded-tradia px-3 py-2 transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none";
+const menuLinkClass = "rounded-tradia px-4 py-3 transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none";
 
 export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
   const pathname = usePathname();
@@ -25,24 +26,26 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
     <div className="relative md:hidden">
       <button
         type="button"
-        className="rounded-tradia border border-slate-200 px-3 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-forest/30 hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-tradia border border-slate-200 bg-white text-ink shadow-sm transition hover:border-forest/30 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
         aria-expanded={isOpen}
         aria-controls="mobile-site-menu"
+        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
         onClick={() => setIsOpen((current) => !current)}
       >
-        Menu
+        {isOpen ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
       </button>
       {isOpen ? (
         <nav
           id="mobile-site-menu"
-          className="absolute right-0 top-12 z-50 grid w-48 gap-1 rounded-tradia border border-slate-200 bg-white p-2 text-sm font-bold text-slate-700 shadow-xl"
+          className="fixed left-4 right-4 top-16 z-50 grid gap-1 rounded-tradia border border-slate-200 bg-white p-3 text-sm font-bold text-slate-700 shadow-xl"
         >
           <Link className={menuLinkClass} href="/businesses" onClick={closeMenu}>Browse</Link>
           <Link className={menuLinkClass} href="/pricing" onClick={closeMenu}>Pricing</Link>
           <Link className={menuLinkClass} href="/dashboard" onClick={closeMenu}>Business</Link>
+          <Link className={menuLinkClass} href="/support" onClick={closeMenu}>Support</Link>
           {isSignedIn ? <Link className={menuLinkClass} href="/account" onClick={closeMenu}>Account</Link> : null}
           {canAccessAdmin ? <Link className={menuLinkClass} href="/admin" onClick={closeMenu}>Admin</Link> : null}
-          <Link className="rounded-tradia px-3 py-2 text-forest transition hover:bg-emerald-50 focus-visible:bg-emerald-50 focus-visible:outline-none" href="/businesses/new" onClick={closeMenu}>
+          <Link className="rounded-tradia bg-forest px-4 py-3 text-center text-white transition hover:bg-forest/90 focus-visible:outline-none" href="/businesses/new" onClick={closeMenu}>
             List Your Business Free
           </Link>
           {isSignedIn ? (

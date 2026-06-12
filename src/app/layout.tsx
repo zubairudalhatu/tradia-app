@@ -107,8 +107,8 @@ export default function RootLayout({
       </head>
       <body>
         <header className="sticky top-0 z-40 border-b border-slate-200 bg-paper/95 backdrop-blur">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4">
-            <Link href="/" className="block w-40" aria-label="Tradia home">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:gap-6 sm:px-5 sm:py-4">
+            <Link href="/" className="block w-32 shrink-0 sm:w-40" aria-label="Tradia home">
               <Image src="/brand/tradia-logo.png" alt="Tradia" width={320} height={93} priority />
             </Link>
             <SiteNavigation />

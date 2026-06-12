@@ -229,7 +229,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-12">
+    <main className="mx-auto max-w-6xl px-3 py-6 sm:px-5 sm:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -261,13 +261,13 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         <div className="relative">
           {business.coverUrl ? (
             <img
-              className="h-64 w-full bg-slate-100 object-cover"
+              className="h-72 w-full bg-slate-100 object-cover sm:h-64"
               src={business.coverUrl}
               alt={`${business.name} cover image`}
               style={{ objectPosition: `${business.coverCropX}% ${business.coverCropY}%` }}
             />
           ) : (
-            <div className="h-64 bg-gradient-to-br from-forest to-ink" />
+            <div className="h-72 bg-gradient-to-br from-forest to-ink sm:h-64" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
           {isOwner ? (
@@ -287,18 +287,18 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               deleteAction={ownerDeleteMediaAction}
             />
           ) : null}
-          <div className="absolute bottom-5 left-5 right-5 flex flex-wrap items-end justify-between gap-4">
-            <div className="flex items-end gap-4">
+          <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-3 sm:bottom-5 sm:left-5 sm:right-5 sm:gap-4">
+            <div className="flex min-w-0 items-end gap-3 sm:gap-4">
               {business.logoUrl ? (
-                <img className="h-24 w-24 rounded-tradia border-4 border-white bg-white object-contain p-2 shadow-lg" src={business.logoUrl} alt={`${business.name} logo`} />
+                <img className="h-16 w-16 shrink-0 rounded-tradia border-4 border-white bg-white object-contain p-1 shadow-lg sm:h-24 sm:w-24 sm:p-2" src={business.logoUrl} alt={`${business.name} logo`} />
               ) : (
-                <div className="grid h-24 w-24 place-items-center rounded-tradia border-4 border-white bg-white text-3xl font-black text-forest shadow-lg">
+                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-tradia border-4 border-white bg-white text-2xl font-black text-forest shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
                   {business.name.charAt(0)}
                 </div>
               )}
-              <div>
-                <p className="mb-2 text-sm font-black text-white/80">{business.category.name} in {areaName}, {stateName}</p>
-                <h1 className="max-w-3xl text-4xl font-black tracking-normal text-white md:text-5xl">{business.name}</h1>
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-black text-white/80 sm:mb-2 sm:text-sm">{business.category.name} in {areaName}, {stateName}</p>
+                <h1 className="max-w-3xl break-words text-2xl font-black leading-tight tracking-normal text-white sm:text-4xl md:text-5xl">{business.name}</h1>
               </div>
             </div>
             {isVerified ? (
@@ -320,9 +320,9 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             isVerified={isVerified}
           />
         ) : null}
-        <div className="grid gap-8 p-6 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-[1fr_340px]">
           <div>
-            <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               <TrustMetric label="Rating" value={`${Number(business.averageRating).toFixed(1)} / 5`} />
               <TrustMetric label="Plan" value={activePlanName} />
               <TrustMetric label="Profile" value={`${completeness.percentage}%`} />

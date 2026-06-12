@@ -75,18 +75,18 @@ export default async function HomePage() {
   return (
     <main className="overflow-x-hidden">
       <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-5 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:py-20">
           <div className="min-w-0">
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>
             <h1 className="max-w-4xl break-words text-4xl font-black leading-[0.96] tracking-normal text-ink sm:text-6xl md:text-7xl">
               Find and grow trusted Nigerian businesses.
             </h1>
-            <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-xl sm:leading-8">
               Tradia is a Nigeria business directory that helps customers discover verified local
               businesses and gives SMEs a credible digital presence with reviews, claims,
               verification, and visibility plans.
             </p>
-            <div className="mt-6 grid max-w-3xl gap-3 md:grid-cols-2">
+            <div className="mt-5 grid max-w-3xl gap-3 md:mt-6 md:grid-cols-2">
               <Link href="/businesses" className="rounded-tradia border border-forest bg-forest p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
                 <span className="text-sm font-black uppercase text-white/70">For customers</span>
                 <strong className="mt-2 block text-2xl font-black">Find a trusted business</strong>
@@ -102,7 +102,7 @@ export default async function HomePage() {
                 </span>
               </Link>
             </div>
-            <form action="/businesses" className="mt-8 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:grid-cols-[1fr_180px_auto]">
+            <form action="/businesses" className="mt-6 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:mt-8 md:grid-cols-[1fr_180px_auto]">
               <input
                 className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3"
                 name="q"
@@ -142,11 +142,11 @@ export default async function HomePage() {
               <Link href="/pricing" className="text-sm font-black text-forest">Get featured</Link>
             </div>
             <div className="grid gap-3">
-              {featuredBusinesses.slice(0, 6).map((business) => (
+              {featuredBusinesses.slice(0, 6).map((business, index) => (
                 <Link
                   href={`/businesses/${business.slug}`}
                   key={business.slug}
-                  className="min-w-0 rounded-tradia border border-slate-200 p-3 transition hover:border-forest"
+                  className={`min-w-0 rounded-tradia border border-slate-200 p-3 transition hover:border-forest ${index >= 3 ? "hidden sm:block" : ""}`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">

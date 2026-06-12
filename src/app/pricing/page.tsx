@@ -57,10 +57,10 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
     : [];
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Plans</p>
-      <h1 className="text-5xl font-black tracking-normal">Start free, upgrade for trust and visibility</h1>
-      <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
+      <h1 className="break-words text-4xl font-black leading-tight tracking-normal md:text-5xl">Start free, upgrade for trust and visibility</h1>
+      <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
         Create a free listing, then upgrade when your business needs more photos, analytics,
         stronger placement, and eligibility for Tradia verification review. Paid plans improve
         visibility tools; verification is still reviewed separately by admins.

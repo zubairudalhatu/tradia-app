@@ -21,15 +21,15 @@ export function SupportShell({
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <Link href="/support" className="text-sm font-black text-forest hover:text-ink">
         Tradia Support
       </Link>
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="min-w-0">
           <p className="mb-2 text-sm font-extrabold uppercase text-ember">{eyebrow}</p>
-          <h1 className="max-w-4xl text-4xl font-black leading-tight text-ink md:text-5xl">{title}</h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">{intro}</p>
+          <h1 className="max-w-4xl break-words text-3xl font-black leading-tight text-ink sm:text-4xl md:text-5xl">{title}</h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">{intro}</p>
           <div className="mt-8">{children}</div>
         </div>
         <aside className="h-fit rounded-tradia border border-slate-200 bg-white p-5 shadow-sm">

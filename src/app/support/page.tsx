@@ -39,17 +39,17 @@ export default function SupportPage() {
   return (
     <main>
       <section className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-5 py-14">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-5 sm:py-14">
           <p className="mb-2 text-sm font-extrabold uppercase text-ember">Tradia Support</p>
-          <h1 className="max-w-4xl text-4xl font-black leading-tight text-ink md:text-6xl">
+          <h1 className="max-w-4xl break-words text-3xl font-black leading-tight text-ink sm:text-4xl md:text-6xl">
             Help for finding, listing, and growing trusted businesses.
           </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
             Start with a guide, find a quick answer, contact our team, or report a safety concern.
           </p>
         </div>
       </section>
-      <section className="mx-auto max-w-7xl px-5 py-12">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
         <div className="grid gap-4 md:grid-cols-2">
           {supportOptions.map(({ href, title, body, icon: Icon }) => (
             <Link

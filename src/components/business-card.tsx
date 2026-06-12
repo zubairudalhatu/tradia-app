@@ -30,9 +30,9 @@ export function BusinessCard({ business }: BusinessCardProps) {
   return (
     <Link
       href={`/businesses/${business.slug}`}
-      className="group rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-md"
+      className="group min-w-0 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-md sm:p-5"
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
           {business.logoUrl ? (
             <img
@@ -46,11 +46,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
             </span>
           )}
           <div className="min-w-0">
-          <h2 className="text-xl font-black">{business.name}</h2>
+          <h2 className="break-words text-lg font-black sm:text-xl">{business.name}</h2>
           <p className="text-sm text-slate-600">{business.category.name} in {business.location.name}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap gap-2">
           {isFeatured ? (
             <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-ember">Featured</span>
           ) : null}
@@ -59,7 +59,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
           ) : null}
         </div>
       </div>
-      <p className="text-sm leading-6 text-slate-600">{business.description}</p>
+      <p className="line-clamp-3 break-words text-sm leading-6 text-slate-600">{business.description}</p>
       <div className="mt-4 grid gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-bold text-slate-600 sm:grid-cols-3">
         <span>
           <strong className="block text-sm text-ink">{hasRating ? rating.toFixed(1) : "New"}</strong>

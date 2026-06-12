@@ -116,21 +116,43 @@ export default function RootLayout({
         </header>
         {children}
         <footer className="border-t border-slate-200 bg-ink text-white">
-          <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 text-sm md:grid-cols-[1fr_auto] md:items-center">
+          <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
               <strong>&copy; 2026 Zamkah Technologies Limited</strong>
+              <p className="mt-3 max-w-sm leading-6 text-white/65">
+                Helping customers discover trusted businesses and helping Nigerian SMEs build credible digital profiles.
+              </p>
             </div>
-            <nav className="flex flex-wrap gap-4 text-white/80 md:justify-end">
+            <FooterLinks title="Discover">
+              <Link href="/businesses">Browse businesses</Link>
+              <Link href="/pricing">Pricing</Link>
+              <Link href="/businesses/new">List your business</Link>
+            </FooterLinks>
+            <FooterLinks title="Support">
+              <Link href="/support/tutorials">Tutorials</Link>
+              <Link href="/support/knowledge-base">Knowledge Base</Link>
+              <Link href="/contact">Contact Us</Link>
+              <Link href="/support/report-abuse">Report Abuse</Link>
+            </FooterLinks>
+            <FooterLinks title="Company & policies">
               <Link href="/about">About</Link>
-              <Link href="/contact">Contact</Link>
               <Link href="/verification-policy">Verification</Link>
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
               <Link href="/refund-policy">Refunds</Link>
-            </nav>
+            </FooterLinks>
           </div>
         </footer>
       </body>
     </html>
+  );
+}
+
+function FooterLinks({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <nav className="grid content-start gap-3 text-white/75">
+      <p className="font-black text-white">{title}</p>
+      {children}
+    </nav>
   );
 }

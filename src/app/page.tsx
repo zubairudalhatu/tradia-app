@@ -1,5 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Building2,
+  CarFront,
+  Clapperboard,
+  GraduationCap,
+  Hammer,
+  HandHeart,
+  HeartPulse,
+  Landmark,
+  Leaf,
+  Search,
+  ShieldCheck,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  TrendingUp,
+  Utensils
+} from "lucide-react";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { getPublicDirectoryStats, listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -52,11 +74,11 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="relative min-h-[680px] overflow-hidden">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
+      <section className="relative overflow-hidden">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
           <div>
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>
-            <h1 className="max-w-4xl text-6xl font-black leading-[0.9] tracking-normal text-ink md:text-8xl">
+            <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-normal text-ink sm:text-6xl md:text-7xl">
               Find and grow trusted Nigerian businesses.
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
@@ -99,7 +121,8 @@ export default async function HomePage() {
                   </optgroup>
                 ))}
               </select>
-              <button className="rounded-tradia bg-forest px-6 py-3 text-center font-bold text-white">
+              <button className="inline-flex items-center justify-center gap-2 rounded-tradia bg-forest px-6 py-3 text-center font-bold text-white">
+                <Search aria-hidden="true" className="h-4 w-4" />
                 Search
               </button>
             </form>
@@ -186,16 +209,39 @@ export default async function HomePage() {
       />
 
       <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-4 px-5 py-10 md:grid-cols-5">
-          {popularCategories.map((category) => (
-            <Link
-              href={`/businesses?category=${category.slug}`}
-              key={category.slug}
-              className="rounded-tradia border border-slate-200 p-4 font-bold hover:border-forest"
-            >
-              {category.name}
+        <div className="mx-auto max-w-7xl px-5 py-12">
+          <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="mb-2 text-sm font-extrabold uppercase text-ember">Browse the directory</p>
+              <h2 className="text-3xl font-black text-ink">Find businesses by category</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Start with what you need, then narrow your search by location and verification status.
+              </p>
+            </div>
+            <Link href="/businesses" className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
+              Browse all businesses
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
-          ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {popularCategories.map((category) => {
+              const CategoryIcon = getCategoryIcon(category.name);
+
+              return (
+                <Link
+                  href={`/businesses?category=${category.slug}`}
+                  key={category.slug}
+                  className="group flex min-h-24 items-center gap-4 rounded-tradia border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-forest hover:shadow-md"
+                >
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-forest transition group-hover:bg-forest group-hover:text-white">
+                    <CategoryIcon aria-hidden="true" className="h-5 w-5" strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0 flex-1 font-black leading-5 text-ink">{category.name}</span>
+                  <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-forest" />
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
       <section className="bg-slate-50">
@@ -213,18 +259,21 @@ export default async function HomePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <ProofPoint
+              icon={Search}
               title="Search by place"
               body="Location and category pages help customers find businesses close to them."
               href="/businesses"
               cta="Browse Businesses"
             />
             <ProofPoint
+              icon={ShieldCheck}
               title="Show proof"
               body="Profiles support photos, documents, reviews, opening hours, and contact details."
               href="/verification-policy"
               cta="View Verification"
             />
             <ProofPoint
+              icon={TrendingUp}
               title="Grow visibility"
               body="Paid plans improve listing priority, media capacity, analytics, and featured eligibility."
               href="/pricing"
@@ -242,11 +291,13 @@ function hasDatabaseUrl() {
 }
 
 function ProofPoint({
+  icon: Icon,
   title,
   body,
   href,
   cta
 }: {
+  icon: LucideIcon;
   title: string;
   body: string;
   href: string;
@@ -255,8 +306,8 @@ function ProofPoint({
   return (
     <article className="flex min-h-56 flex-col rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
       <div>
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg font-black text-forest">
-          {title.slice(0, 1)}
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-forest">
+          <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.2} />
         </span>
         <h3 className="mt-4 text-xl font-black">{title}</h3>
         <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
@@ -266,4 +317,26 @@ function ProofPoint({
       </Link>
     </article>
   );
+}
+
+function getCategoryIcon(categoryName: string): LucideIcon {
+  const icons: Record<string, LucideIcon> = {
+    Hospitality: Utensils,
+    Healthcare: HeartPulse,
+    Education: GraduationCap,
+    Retail: ShoppingBag,
+    "Professional Services": BriefcaseBusiness,
+    "Home & Construction": Hammer,
+    "Automotive & Transport": CarFront,
+    Technology: Sparkles,
+    "Beauty & Fashion": Shirt,
+    "Agriculture & Food": Leaf,
+    "Finance & Insurance": Landmark,
+    "Manufacturing & Industrial": Building2,
+    "Media & Entertainment": Clapperboard,
+    "Public & Community Services": HandHeart,
+    Services: Store
+  };
+
+  return icons[categoryName] ?? BriefcaseBusiness;
 }

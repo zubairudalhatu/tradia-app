@@ -3,7 +3,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "Verification Policy | Tradia",
-  description: "Understand how Tradia reviews business verification requests and proof documents."
+  description: "Understand how Tradia reviews business verification requests and proof documents.",
+  alternates: {
+    canonical: "/verification-policy"
+  }
 };
 
 export default function VerificationPolicyPage() {

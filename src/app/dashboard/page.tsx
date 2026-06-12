@@ -4,6 +4,7 @@ import { isUserAccountVerified } from "@/lib/account-verification";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
+import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { updateLeadStatusAction } from "./actions";
 
 type DashboardPageProps = {
@@ -35,6 +36,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       reviews: {
         orderBy: { createdAt: "desc" },
         take: 3
+      },
+      media: {
+        select: { id: true }
       },
       _count: {
         select: {
@@ -77,6 +81,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           Enquiry status updated.
         </p>
       ) : null}
+      <section className="mt-8 rounded-tradia border border-emerald-200 bg-emerald-50 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase text-forest">Your next best step</p>
+            <h2 className="mt-1 text-2xl font-black text-ink">
+              {businesses.length ? "Keep building customer trust" : "Publish your first business profile"}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {businesses.length
+                ? "Complete profiles give customers more reasons to trust, contact, and choose your business."
+                : "Start free, add the essential business details, and submit your listing for review."}
+            </p>
+          </div>
+          <Link
+            href={businesses.length ? `/dashboard/businesses/${businesses[0].id}/edit` : "/businesses/new"}
+            className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white"
+          >
+            {businesses.length ? "Continue Profile Setup" : "Add Your Business"}
+          </Link>
+        </div>
+      </section>
       <section className="mt-8 grid gap-4 lg:grid-cols-4">
         {[
           [String(businesses.length), "Your listings"],
@@ -144,6 +169,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {businesses.length ? businesses.map((business) => {
             const planState = getBusinessPlanState(business);
             const benefits = planState.benefits;
+            const completeness = getBusinessProfileCompleteness(business);
+            const nextStep = completeness.missing[0];
 
             return (
             <article key={business.id} className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -172,6 +199,58 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   )}
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business._count.contactLeads} enquiries</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{business.reviewCount} reviews</span>
+                </div>
+                <div className="mt-4 rounded-tradia border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-black text-ink">Profile launch checklist</h4>
+                      <p className="mt-1 text-xs font-bold text-slate-500">
+                        {completeness.completed} of {completeness.total} trust-building steps complete
+                      </p>
+                    </div>
+                    <strong className="text-2xl font-black text-forest">{completeness.percentage}%</strong>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                    <div
+                      className="h-full rounded-full bg-forest"
+                      style={{ width: `${completeness.percentage}%` }}
+                    />
+                  </div>
+                  {nextStep ? (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm text-slate-600">
+                        <strong className="text-ink">Next:</strong> {nextStep}
+                      </p>
+                      <Link
+                        href={`/dashboard/businesses/${business.id}/edit`}
+                        className="rounded-tradia bg-white px-3 py-2 text-xs font-black text-forest shadow-sm"
+                      >
+                        Complete Next Step
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm font-bold text-forest">This profile is ready to promote.</p>
+                      <Link
+                        href={`/businesses/${business.slug}`}
+                        className="rounded-tradia bg-white px-3 py-2 text-xs font-black text-forest shadow-sm"
+                      >
+                        View Public Profile
+                      </Link>
+                    </div>
+                  )}
+                  {completeness.missing.length > 1 ? (
+                    <details className="mt-3 text-xs text-slate-600">
+                      <summary className="cursor-pointer font-black text-ink">
+                        View {completeness.missing.length - 1} more step{completeness.missing.length === 2 ? "" : "s"}
+                      </summary>
+                      <ul className="mt-2 grid gap-1 pl-4">
+                        {completeness.missing.slice(1).map((item) => (
+                          <li key={item} className="list-disc">{item}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
                 </div>
                 {benefits.analyticsEnabled ? (
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">

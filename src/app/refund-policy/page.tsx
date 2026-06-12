@@ -3,7 +3,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "Refund Policy | Tradia",
-  description: "Review Tradia's refund policy for subscriptions and paid visibility plans."
+  description: "Review Tradia's refund policy for subscriptions and paid visibility plans.",
+  alternates: {
+    canonical: "/refund-policy"
+  }
 };
 
 export default function RefundPolicyPage() {

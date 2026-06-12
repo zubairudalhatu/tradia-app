@@ -3,7 +3,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "Terms of Use | Tradia",
-  description: "Read the terms for using Tradia as a visitor, business owner, reviewer, or advertiser."
+  description: "Read the terms for using Tradia as a visitor, business owner, reviewer, or advertiser.",
+  alternates: {
+    canonical: "/terms"
+  }
 };
 
 export default function TermsPage() {

@@ -29,9 +29,6 @@ export const metadata: Metadata = {
     shortcut: "/icon.png",
     apple: "/icon.png"
   },
-  alternates: {
-    canonical: "/"
-  },
   openGraph: {
     title: "Tradia | Nigeria Business Directory for Verified Local Businesses",
     description: "Discover verified businesses across Nigeria, compare reviews and contact details, and list your Nigerian business for better visibility.",

@@ -4,7 +4,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "Contact Tradia | Zamkah Technologies Limited",
-  description: "Contact Tradia for business listing support, verification help, payments, and platform enquiries."
+  description: "Contact Tradia for business listing support, verification help, payments, and platform enquiries.",
+  alternates: {
+    canonical: "/contact"
+  }
 };
 
 export default function ContactPage() {

@@ -11,6 +11,9 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Nigeria Business Directory for Verified Local Businesses",
   description: "Discover verified businesses across Nigeria on Tradia. Find local services, view reviews, explore categories, and list your business for better visibility.",
+  alternates: {
+    canonical: "/"
+  },
   keywords: [
     "Nigeria business directory",
     "verified businesses in Nigeria",

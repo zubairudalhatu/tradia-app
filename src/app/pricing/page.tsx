@@ -16,6 +16,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "List Your Business in Nigeria | Tradia Pricing",
   description: "List your business online in Nigeria with Tradia. Start free or upgrade for verification eligibility, more photos, analytics, and stronger SME visibility.",
+  alternates: {
+    canonical: "/pricing"
+  },
   keywords: [
     "list your business in Nigeria",
     "free business listing Nigeria",

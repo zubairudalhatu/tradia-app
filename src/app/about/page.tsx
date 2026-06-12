@@ -3,7 +3,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "About Tradia | Nigeria Business Directory",
-  description: "Learn about Tradia, a Nigerian business directory helping SMEs build trust, visibility, reviews, and verified profiles."
+  description: "Learn about Tradia, a Nigerian business directory helping SMEs build trust, visibility, reviews, and verified profiles.",
+  alternates: {
+    canonical: "/about"
+  }
 };
 
 export default function AboutPage() {

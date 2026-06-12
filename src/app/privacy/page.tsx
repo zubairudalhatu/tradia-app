@@ -3,7 +3,10 @@ import { TrustPage } from "@/components/trust-page";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Tradia",
-  description: "Learn how Tradia handles account, listing, verification, payment, review, and contact information."
+  description: "Learn how Tradia handles account, listing, verification, payment, review, and contact information.",
+  alternates: {
+    canonical: "/privacy"
+  }
 };
 
 export default function PrivacyPage() {

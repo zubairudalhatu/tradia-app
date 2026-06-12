@@ -73,12 +73,12 @@ export default async function HomePage() {
       ];
 
   return (
-    <main>
+    <main className="overflow-x-hidden">
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-          <div>
+          <div className="min-w-0">
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>
-            <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-normal text-ink sm:text-6xl md:text-7xl">
+            <h1 className="max-w-4xl break-words text-4xl font-black leading-[0.96] tracking-normal text-ink sm:text-6xl md:text-7xl">
               Find and grow trusted Nigerian businesses.
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-slate-600">
@@ -104,12 +104,12 @@ export default async function HomePage() {
             </div>
             <form action="/businesses" className="mt-8 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:grid-cols-[1fr_180px_auto]">
               <input
-                className="rounded-tradia border border-slate-200 px-4 py-3"
+                className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3"
                 name="q"
                 placeholder="Hotels, schools, clinics, furniture..."
                 aria-label="Search businesses"
               />
-              <select className="rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="State or area">
+              <select className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="State or area">
                 <option value="">All Nigeria</option>
                 {locationGroups.map((state) => (
                   <optgroup key={state.id} label={state.name}>
@@ -133,8 +133,8 @@ export default async function HomePage() {
               <span className="rounded-full bg-white px-3 py-1">Reviews and media</span>
             </div>
           </div>
-          <div className="rounded-tradia border border-slate-200 bg-white p-5 shadow-xl">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="min-w-0 rounded-tradia border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase text-ember">Featured</p>
                 <h2 className="text-2xl font-black">Businesses to explore</h2>
@@ -146,11 +146,11 @@ export default async function HomePage() {
                 <Link
                   href={`/businesses/${business.slug}`}
                   key={business.slug}
-                  className="rounded-tradia border border-slate-200 p-3 transition hover:border-forest"
+                  className="min-w-0 rounded-tradia border border-slate-200 p-3 transition hover:border-forest"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="text-base font-black">{business.name}</h2>
+                      <h2 className="break-words text-base font-black">{business.name}</h2>
                       <p className="text-xs font-bold text-slate-500">
                         {business.category.name} in {business.location.name}
                       </p>
@@ -168,7 +168,7 @@ export default async function HomePage() {
                       ) : null}
                     </div>
                   </div>
-                  <p className="mt-2 text-sm leading-5 text-slate-600">{business.description}</p>
+                  <p className="mt-2 break-words text-sm leading-5 text-slate-600">{business.description}</p>
                 </Link>
               ))}
             </div>

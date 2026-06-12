@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { getPublicDirectoryStats, listFeaturedBusinesses } from "@/lib/queries/businesses";
@@ -54,14 +53,6 @@ export default async function HomePage() {
   return (
     <main>
       <section className="relative min-h-[680px] overflow-hidden">
-        <Image
-          src="/brand/tradia-main-logo.png"
-          alt=""
-          width={1024}
-          height={1024}
-          className="absolute right-[-120px] top-20 hidden w-[620px] opacity-[0.05] lg:block"
-          priority
-        />
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
           <div>
             <p className="mb-3 text-sm font-extrabold uppercase text-ember">Discover. Connect. Grow.</p>

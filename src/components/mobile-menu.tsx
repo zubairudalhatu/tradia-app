@@ -43,7 +43,7 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
           {isSignedIn ? <Link className={menuLinkClass} href="/account" onClick={closeMenu}>Account</Link> : null}
           {canAccessAdmin ? <Link className={menuLinkClass} href="/admin" onClick={closeMenu}>Admin</Link> : null}
           <Link className="rounded-tradia px-3 py-2 text-forest transition hover:bg-emerald-50 focus-visible:bg-emerald-50 focus-visible:outline-none" href="/businesses/new" onClick={closeMenu}>
-            Add Business
+            List Your Business Free
           </Link>
           {isSignedIn ? (
             <a className={menuLinkClass} href="/logout" onClick={closeMenu}>Logout</a>

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { createAuditLog } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { initializePaystackPayment } from "@/lib/payments/paystack";
@@ -63,7 +64,7 @@ export async function startWalletTopUpAction(formData: FormData) {
     userId: user.id
   };
 
-  await prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
       userId: user.id,
       provider: paymentProvider,
@@ -75,6 +76,17 @@ export async function startWalletTopUpAction(formData: FormData) {
     }
   });
 
+  await createAuditLog({
+    actorId: user.id,
+    action: "WALLET_TOP_UP_STARTED",
+    entityType: "Payment",
+    entityId: payment.id,
+    metadata: {
+      reference,
+      amount,
+      paymentProvider
+    }
+  });
   let authorizationUrl: string | undefined;
 
   try {

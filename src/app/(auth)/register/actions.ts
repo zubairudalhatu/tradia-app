@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { createSession } from "@/lib/auth/session";
 import { createAndSendAccountVerificationCode } from "@/lib/account-verification";
+import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
 export async function registerAction(formData: FormData) {
@@ -36,6 +37,16 @@ export async function registerAction(formData: FormData) {
     }
   });
 
+  await createAuditLog({
+    actorId: user.id,
+    action: "OWNER_ACCOUNT_REGISTERED",
+    entityType: "User",
+    entityId: user.id,
+    metadata: {
+      hasPhone: Boolean(phone),
+      source: "registration"
+    }
+  });
   await createSession(user.id);
   const verification = await createAndSendAccountVerificationCode(user, "EMAIL");
   redirect(`/verify-account?sent=email${verification.ok && verification.skipped ? "&delivery=skipped" : ""}`);

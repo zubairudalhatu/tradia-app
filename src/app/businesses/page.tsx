@@ -184,7 +184,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
                 <h2 className="text-xl font-black">No businesses found</h2>
                 <p className="mt-2 text-sm text-slate-600">Try a different search term, category, area, or remove one filter.</p>
                 <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
-                  Add a business in this area
+                  List your business free
                 </Link>
               </div>
             )}
@@ -214,7 +214,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               Add your business to Tradia to appear in category and location searches, collect reviews, request verification, and receive customer enquiries.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/businesses/new" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">List your business</Link>
+              <Link href="/businesses/new" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">List your business free</Link>
               <Link href="/pricing" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Compare plans</Link>
             </div>
           </div>

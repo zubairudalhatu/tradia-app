@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAuditLog } from "@/lib/audit";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { notifyVerificationSubmitted } from "@/lib/notifications";
@@ -171,7 +172,7 @@ export async function submitVerificationRequestAction(businessId: string, formDa
     redirect(`/dashboard/businesses/${businessId}/edit?error=upload-storage`);
   }
 
-  await prisma.verificationRequest.create({
+  const verificationRequest = await prisma.verificationRequest.create({
     data: {
       businessId: business.id,
       submittedBy: user.id,
@@ -182,6 +183,17 @@ export async function submitVerificationRequestAction(businessId: string, formDa
     }
   });
 
+  await createAuditLog({
+    actorId: user.id,
+    action: "BUSINESS_VERIFICATION_REQUESTED",
+    entityType: "VerificationRequest",
+    entityId: verificationRequest.id,
+    metadata: {
+      businessId: business.id,
+      businessName: business.name,
+      documentType
+    }
+  });
   await notifyVerificationSubmitted(
     {
       id: business.id,

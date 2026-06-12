@@ -121,7 +121,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
               <h2 className="text-xl font-black">No listings yet</h2>
               <p className="mt-2 text-sm text-slate-600">This local search page will become indexable when published listings are available.</p>
               <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
-                Add {category.name.toLowerCase()} in {area.name}
+                List your business free
               </Link>
             </div>
           )}

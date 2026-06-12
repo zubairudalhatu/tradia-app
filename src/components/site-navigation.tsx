@@ -57,7 +57,7 @@ export function SiteNavigation() {
         href="/businesses/new"
         className="hidden rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white sm:inline-flex"
       >
-        Add Business
+        List Your Business Free
       </Link>
     </>
   );

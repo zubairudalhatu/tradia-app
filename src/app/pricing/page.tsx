@@ -167,7 +167,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   )
                 ) : (
                   <Link className="mt-6 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white" href="/businesses/new">
-                    Add Business First
+                    List Your Business Free
                   </Link>
                 )
               ) : (

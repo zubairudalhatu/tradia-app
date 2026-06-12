@@ -24,7 +24,7 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
     return (
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Onboarding</p>
-        <h1 className="text-5xl font-black tracking-normal">Sign in to add your business</h1>
+        <h1 className="text-5xl font-black tracking-normal">Sign in to list your business free</h1>
         <p className="mt-4 text-lg text-slate-600">
           Business submissions are tied to owner accounts so Tradia can support approvals, edits, and verification.
         </p>
@@ -52,7 +52,7 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
   return (
     <main className="mx-auto max-w-4xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Onboarding</p>
-      <h1 className="text-5xl font-black tracking-normal">Add your business</h1>
+      <h1 className="text-5xl font-black tracking-normal">List your business free</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
         Create a profile customers can trust. Start with the required details, then add media, opening hours, verification documents, and a visibility plan from your dashboard.
       </p>

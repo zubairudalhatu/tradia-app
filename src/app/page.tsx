@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
-import { listFeaturedBusinesses } from "@/lib/queries/businesses";
+import { getPublicDirectoryStats, listFeaturedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
@@ -32,16 +32,23 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCategories, locationGroups] = hasDatabaseUrl()
+  const [featuredBusinesses, popularCategories, locationGroups, directoryStats] = hasDatabaseUrl()
     ? await Promise.all([
         listFeaturedBusinesses(6),
         listActiveCategories(),
-        listActiveStateAreaGroups()
+        listActiveStateAreaGroups(),
+        getPublicDirectoryStats()
       ])
     : [
         [] as Awaited<ReturnType<typeof listFeaturedBusinesses>>,
         [] as Awaited<ReturnType<typeof listActiveCategories>>,
-        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>
+        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>,
+        {
+          publishedBusinesses: 0,
+          verifiedBusinesses: 0,
+          coveredLocations: 0,
+          activeCategories: 0
+        }
       ];
 
   return (
@@ -76,7 +83,7 @@ export default async function HomePage() {
               </Link>
               <Link href="/businesses/new" className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
                 <span className="text-sm font-black uppercase text-ember">For business owners</span>
-                <strong className="mt-2 block text-2xl font-black text-ink">List your business</strong>
+                <strong className="mt-2 block text-2xl font-black text-ink">List your business free</strong>
                 <span className="mt-2 block text-sm leading-6 text-slate-600">
                   Build a profile with contact buttons, reviews, media, and verification.
                 </span>
@@ -166,6 +173,22 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="border-y border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-4 px-5 py-8 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            [directoryStats.publishedBusinesses, "Published businesses"],
+            [directoryStats.verifiedBusinesses, "Verified businesses"],
+            [directoryStats.coveredLocations, "Locations covered"],
+            [directoryStats.activeCategories, "Active categories"]
+          ].map(([value, label]) => (
+            <div key={label} className="border-l-4 border-forest pl-4">
+              <strong className="block text-3xl font-black text-ink">{Number(value).toLocaleString("en-NG")}</strong>
+              <span className="text-sm font-bold text-slate-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <AdsenseSlot
         slot={process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT}
         className="mx-auto max-w-7xl px-5 pb-10"
@@ -193,7 +216,7 @@ export default async function HomePage() {
               Customers need confidence before they call. Business owners need visibility that looks credible. Tradia brings both sides into one searchable directory.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/businesses/new" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Add your business</Link>
+              <Link href="/businesses/new" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">List Your Business Free</Link>
               <Link href="/verification-policy" className="rounded-tradia bg-white px-5 py-3 font-bold text-ink">How verification works</Link>
             </div>
           </div>

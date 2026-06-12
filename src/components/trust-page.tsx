@@ -19,7 +19,7 @@ export function TrustPage({ eyebrow, title, intro, children }: TrustPageProps) {
       </section>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link className="rounded-tradia bg-forest px-5 py-3 font-bold text-white" href="/businesses/new">
-          Add Business
+          List Your Business Free
         </Link>
         <Link className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink" href="/contact">
           Contact Tradia

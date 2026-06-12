@@ -51,6 +51,34 @@ export function countPublishedBusinesses(filters: BusinessSearchFilters = {}) {
   });
 }
 
+export async function getPublicDirectoryStats() {
+  const publishedWhere = { listingStatus: "PUBLISHED" as const };
+  const [publishedBusinesses, verifiedBusinesses, locations, categories] = await Promise.all([
+    prisma.business.count({ where: publishedWhere }),
+    prisma.business.count({
+      where: {
+        ...publishedWhere,
+        verificationStatus: "VERIFIED"
+      }
+    }),
+    prisma.business.groupBy({
+      by: ["locationId"],
+      where: publishedWhere
+    }),
+    prisma.business.groupBy({
+      by: ["categoryId"],
+      where: publishedWhere
+    })
+  ]);
+
+  return {
+    publishedBusinesses,
+    verifiedBusinesses,
+    coveredLocations: locations.length,
+    activeCategories: categories.length
+  };
+}
+
 export function listFeaturedBusinesses(limit = 3) {
   return listRotatingFeaturedBusinesses(limit);
 }

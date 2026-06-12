@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { createAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
@@ -56,7 +57,7 @@ export async function startPlanCheckoutAction(formData: FormData) {
   const reference = buildPaymentReference(paymentProvider, business.id, plan.id);
   const callbackUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/billing/callback`;
 
-  await prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
       userId: user.id,
       businessId: business.id,
@@ -74,6 +75,21 @@ export async function startPlanCheckoutAction(formData: FormData) {
     }
   });
 
+  await createAuditLog({
+    actorId: user.id,
+    action: "PLAN_CHECKOUT_STARTED",
+    entityType: "Payment",
+    entityId: payment.id,
+    metadata: {
+      reference,
+      businessId: business.id,
+      businessName: business.name,
+      planId: plan.id,
+      planName: plan.name,
+      amount: plan.annualPrice,
+      paymentProvider
+    }
+  });
   const metadata = {
     planId: plan.id,
     businessId: business.id,

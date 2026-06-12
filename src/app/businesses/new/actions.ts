@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { isUserAccountVerified } from "@/lib/account-verification";
+import { createAuditLog } from "@/lib/audit";
 import { createBusiness } from "@/lib/queries/businesses";
 import { businessCreateSchema } from "@/lib/validations/business";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -35,6 +36,16 @@ export async function submitBusinessAction(formData: FormData) {
   }
 
   const business = await createBusiness(parsed.data, user.id);
+  await createAuditLog({
+    actorId: user.id,
+    action: "BUSINESS_LISTING_SUBMITTED",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: {
+      businessName: business.name,
+      source: "owner_onboarding"
+    }
+  });
   try {
     await notifyBusinessSubmitted({
       id: business.id,

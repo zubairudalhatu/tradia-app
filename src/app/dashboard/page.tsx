@@ -50,6 +50,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     orderBy: { createdAt: "desc" }
   });
   const analyticsBusinesses = businesses.filter((business) => getBusinessPlanState(business).benefits.analyticsEnabled);
+  const recommendedBusiness = businesses
+    .map((business) => ({
+      business,
+      percentage: getBusinessProfileCompleteness(business).percentage
+    }))
+    .sort((left, right) => left.percentage - right.percentage)[0]?.business;
   const totalViews = analyticsBusinesses.reduce((sum, business) => sum + business.viewCount, 0);
   const contactClicks = analyticsBusinesses.reduce((sum, business) => sum + business.contactClickCount, 0);
   const totalLeads = businesses.reduce((sum, business) => sum + business._count.contactLeads, 0);
@@ -95,7 +101,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </p>
           </div>
           <Link
-            href={businesses.length ? `/dashboard/businesses/${businesses[0].id}/edit` : "/businesses/new"}
+            href={recommendedBusiness ? `/dashboard/businesses/${recommendedBusiness.id}/edit` : "/businesses/new"}
             className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white"
           >
             {businesses.length ? "Continue Profile Setup" : "Add Your Business"}

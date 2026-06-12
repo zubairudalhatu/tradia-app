@@ -270,6 +270,23 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             <div className="h-64 bg-gradient-to-br from-forest to-ink" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
+          {isOwner ? (
+            <BusinessOwnerMediaPanel
+              businessName={business.name}
+              logoUrl={business.logoUrl}
+              coverUrl={business.coverUrl}
+              coverCropX={business.coverCropX}
+              coverCropY={business.coverCropY}
+              media={business.media.map((item) => ({
+                id: item.id,
+                type: item.type,
+                url: item.url
+              }))}
+              uploadAction={ownerUploadAction}
+              cropAction={ownerCoverCropAction}
+              deleteAction={ownerDeleteMediaAction}
+            />
+          ) : null}
           <div className="absolute bottom-5 left-5 right-5 flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-end gap-4">
               {business.logoUrl ? (
@@ -295,23 +312,6 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             )}
           </div>
         </div>
-        {isOwner ? (
-          <BusinessOwnerMediaPanel
-            businessName={business.name}
-            logoUrl={business.logoUrl}
-            coverUrl={business.coverUrl}
-            coverCropX={business.coverCropX}
-            coverCropY={business.coverCropY}
-            media={business.media.map((item) => ({
-              id: item.id,
-              type: item.type,
-              url: item.url
-            }))}
-            uploadAction={ownerUploadAction}
-            cropAction={ownerCoverCropAction}
-            deleteAction={ownerDeleteMediaAction}
-          />
-        ) : null}
         {isOwner ? (
           <BusinessGrowthTools
             businessName={business.name}

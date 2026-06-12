@@ -298,7 +298,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               )}
               <div className="min-w-0">
                 <p className="mb-1 text-xs font-black text-white/80 sm:mb-2 sm:text-sm">{business.category.name} in {areaName}, {stateName}</p>
-                <h1 className="max-w-3xl break-words text-2xl font-black leading-tight tracking-normal text-white sm:text-4xl md:text-5xl">{business.name}</h1>
+                <h1 className="max-w-3xl break-words text-xl font-black leading-tight tracking-normal text-white sm:text-4xl md:text-5xl">{business.name}</h1>
               </div>
             </div>
             {isVerified ? (
@@ -361,7 +361,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                 />
               ) : null}
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
               <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink transition hover:bg-slate-200">
                 Share on WhatsApp
               </a>

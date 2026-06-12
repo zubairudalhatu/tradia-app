@@ -60,7 +60,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
         </div>
       </div>
       <p className="line-clamp-3 break-words text-sm leading-6 text-slate-600">{business.description}</p>
-      <div className="mt-4 grid gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-bold text-slate-600 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-3 gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-bold text-slate-600">
         <span>
           <strong className="block text-sm text-ink">{hasRating ? rating.toFixed(1) : "New"}</strong>
           {business.reviewCount ? `${business.reviewCount} review${business.reviewCount === 1 ? "" : "s"}` : "No reviews yet"}

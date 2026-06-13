@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorBody = await response.text();
       console.error("OpenAI help chat failed", { status: response.status, body: errorBody.slice(0, 300) });
-      return NextResponse.json({ error: "Live chat is temporarily unavailable. Please use Tradia Support." }, { status: 502 });
+      return NextResponse.json({ error: providerErrorMessage(response.status, errorBody) }, { status: 502 });
     }
 
     const result = await response.json() as {
@@ -121,4 +121,18 @@ function isRateLimited(clientId: string) {
 
   current.count += 1;
   return current.count > 10;
+}
+
+function providerErrorMessage(status: number, body: string) {
+  if (status === 401 || body.includes("invalid_api_key")) {
+    return "Live chat API authentication needs attention. Please use Tradia Support for now.";
+  }
+  if (status === 429 || body.includes("insufficient_quota")) {
+    return "Live chat API credit or usage limits need attention. Please use Tradia Support for now.";
+  }
+  if (body.includes("model_not_found") || body.includes("does not exist")) {
+    return "The configured live chat model is unavailable. Please use Tradia Support for now.";
+  }
+
+  return "Live chat is temporarily unavailable. Please use Tradia Support.";
 }

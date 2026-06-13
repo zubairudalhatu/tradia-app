@@ -17,6 +17,7 @@ export function BusinessGrowthTools({
   isVerified
 }: BusinessGrowthToolsProps) {
   const [copied, setCopied] = useState(false);
+  const [posterStatus, setPosterStatus] = useState<"idle" | "preparing" | "error">("idle");
   const qrUrl = useMemo(() => {
     const params = new URLSearchParams({
       size: "360x360",
@@ -39,23 +40,26 @@ export function BusinessGrowthTools({
     }
   }
 
-  function downloadPoster() {
-    const svg = buildPosterSvg({
-      businessName,
-      profileUrl,
-      qrUrl,
-      isVerified
-    });
-    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+  async function downloadPoster() {
+    setPosterStatus("preparing");
 
-    link.href = url;
-    link.download = `${slugify(businessName)}-tradia-qr-poster.svg`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    try {
+      const [logoDataUrl, qrDataUrl] = await Promise.all([
+        fetchAsDataUrl("/brand/tradia-logo.png"),
+        fetchAsDataUrl(qrUrl)
+      ]);
+      const svg = buildPosterSvg({
+        businessName,
+        qrUrl: qrDataUrl,
+        logoUrl: logoDataUrl,
+        isVerified
+      });
+      const pngBlob = await svgToPng(svg, 1080, 1350);
+      downloadBlob(pngBlob, `${slugify(businessName)}-tradia-qr-poster.png`);
+      setPosterStatus("idle");
+    } catch {
+      setPosterStatus("error");
+    }
   }
 
   return (
@@ -108,12 +112,19 @@ export function BusinessGrowthTools({
         <button
           type="button"
           onClick={downloadPoster}
-          className="inline-flex items-center justify-center gap-2 rounded-tradia bg-white px-4 py-3 text-sm font-black text-ink shadow-sm transition hover:border-forest/30 hover:text-forest"
+          disabled={posterStatus === "preparing"}
+          className="inline-flex items-center justify-center gap-2 rounded-tradia bg-white px-4 py-3 text-sm font-black text-ink shadow-sm transition hover:border-forest/30 hover:text-forest disabled:cursor-wait disabled:text-slate-400"
         >
           <Download size={18} aria-hidden="true" />
-          Download QR poster
+          {posterStatus === "preparing" ? "Preparing PNG..." : "Download QR poster"}
         </button>
       </div>
+
+      {posterStatus === "error" ? (
+        <p className="mt-4 rounded-tradia bg-red-50 px-4 py-3 text-sm font-bold text-red-700" role="alert">
+          The PNG poster could not be prepared. Please check your connection and try again.
+        </p>
+      ) : null}
 
       <a
         href={qrUrl}
@@ -130,13 +141,13 @@ export function BusinessGrowthTools({
 
 function buildPosterSvg({
   businessName,
-  profileUrl,
   qrUrl,
+  logoUrl,
   isVerified
 }: {
   businessName: string;
-  profileUrl: string;
   qrUrl: string;
+  logoUrl: string;
   isVerified: boolean;
 }) {
   const titleLines = wrapPosterTitle(businessName)
@@ -169,7 +180,7 @@ function buildPosterSvg({
   <rect x="74" y="70" width="932" height="178" rx="52" fill="#071d36"/>
   <rect x="74" y="196" width="932" height="52" fill="#071d36"/>
   <rect x="180" y="101" width="720" height="116" rx="30" fill="#ffffff"/>
-  <image href="https://www.tradiabusiness.com/brand/tradia-logo.png" x="245" y="110" width="590" height="98" preserveAspectRatio="xMidYMid meet"/>
+  <image href="${escapeXml(logoUrl)}" x="245" y="110" width="590" height="98" preserveAspectRatio="xMidYMid meet"/>
   <rect x="334" y="275" width="412" height="48" rx="24" fill="${isVerified ? "#e7f8ef" : "#fff5d9"}"/>
   <circle cx="368" cy="299" r="14" fill="${isVerified ? "#009b55" : "#ff8a18"}"/>
   <path d="M361 299L367 305L377 293" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -222,4 +233,54 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60) || "business";
+}
+
+async function fetchAsDataUrl(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Unable to load poster asset.");
+
+  const blob = await response.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function svgToPng(svg: string, width: number, height: number) {
+  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = reject;
+      nextImage.src = svgUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas is unavailable.");
+    context.drawImage(image, 0, 0, width, height);
+
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Unable to create PNG."))), "image/png");
+    });
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

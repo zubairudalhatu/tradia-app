@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SiteNavigation } from "@/components/site-navigation";
+import { TradiaHelpChat } from "@/components/tradia-help-chat";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -115,6 +116,7 @@ export default function RootLayout({
           </div>
         </header>
         {children}
+        <TradiaHelpChat />
         <footer className="border-t border-slate-200 bg-ink text-white">
           <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>

@@ -1,12 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
+import { ValidatedFileInput } from "@/components/validated-file-input";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
 import { addDays } from "@/lib/time";
 import { getWalletBalance, listWalletOrders, listWalletTransactions } from "@/lib/wallet/ledger";
 import { formatNaira, walletProducts } from "@/lib/wallet/products";
-import { spendWalletProductAction, startWalletTopUpAction, updateAccountAction } from "./actions";
+import { spendWalletProductAction, startWalletTopUpAction, updateAccountAction, updateAvatarAction } from "./actions";
 
 type AccountPageProps = {
   searchParams: Promise<{ error?: string; saved?: string; wallet?: string }>;
@@ -19,7 +21,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   if (!user) redirect("/login?next=/account");
 
-  const [businesses, payments, walletState] = await Promise.all([
+  const [profile, businesses, payments, walletState] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: user.id } }),
     prisma.business.findMany({
       where: { ownerId: user.id },
       include: {
@@ -62,12 +65,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
       {params.saved ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
-          Profile updated.
+          {params.saved === "avatar" ? "Profile photo updated." : "Profile updated."}
         </p>
       ) : null}
       {params.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          {params.error === "phone" ? "That phone number is already used by another account." : "Please enter a valid name."}
+          {accountErrorMessage(params.error)}
         </p>
       ) : null}
       {params.wallet ? (
@@ -80,27 +83,56 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </p>
       ) : null}
 
-      <form action={updateAccountAction} className="mt-8 grid max-w-3xl gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="mt-8 grid max-w-3xl gap-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[180px_1fr]">
+        <form action={updateAvatarAction} className="grid content-start gap-3">
+          <div className="relative aspect-square overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
+            {profile.avatarUrl ? (
+              <Image src={profile.avatarUrl} alt={`${profile.name} profile`} fill className="object-cover" sizes="180px" />
+            ) : (
+              <span className="flex h-full items-center justify-center text-5xl font-black text-slate-300">{profile.name.slice(0, 1).toUpperCase()}</span>
+            )}
+          </div>
+          <ValidatedFileInput name="avatar" accept="image/png,image/jpeg,image/webp" required className="w-full text-xs" />
+          <button className="rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-ink">Upload photo</button>
+        </form>
+        <form action={updateAccountAction} className="grid gap-4">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Display name / username
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={user.name} required minLength={2} />
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={profile.name} required minLength={2} />
           <span className="text-xs font-semibold text-slate-500">
             This is the name shown on your account, reviews, and business activity.
           </span>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Email
-          <input className="rounded-tradia border border-slate-200 bg-slate-50 px-4 py-3" value={user.email} disabled />
+          <input className="rounded-tradia border border-slate-200 bg-slate-50 px-4 py-3" value={profile.email} disabled />
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Phone
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" defaultValue={user.phone ?? ""} placeholder="+234..." />
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" defaultValue={profile.phone ?? ""} placeholder="+234..." />
         </label>
+        <fieldset className="grid gap-4 rounded-tradia border border-slate-200 p-4">
+          <legend className="px-2 text-sm font-black text-ink">Optional social profiles</legend>
+          <p className="text-xs font-semibold text-slate-500">Add full profile links or handles. Leave any field blank if you prefer.</p>
+          {[
+            ["facebookUrl", "Facebook", profile.facebookUrl],
+            ["instagramUrl", "Instagram", profile.instagramUrl],
+            ["xUrl", "X / Twitter", profile.xUrl],
+            ["linkedinUrl", "LinkedIn", profile.linkedinUrl],
+            ["tiktokUrl", "TikTok", profile.tiktokUrl]
+          ].map(([name, label, value]) => (
+            <label key={String(name)} className="grid gap-2 text-sm font-bold text-slate-600">
+              {label}
+              <input className="rounded-tradia border border-slate-200 px-4 py-3" name={String(name)} defaultValue={String(value ?? "")} placeholder={`${String(label).toLowerCase()}.com/your-profile`} />
+            </label>
+          ))}
+        </fieldset>
         <div className="rounded-tradia bg-slate-50 p-4 text-sm text-slate-600">
-          <strong className="text-ink">Account role:</strong> {user.role.replace("_", " ")}
+          <strong className="text-ink">Account role:</strong> {profile.role.replace("_", " ")}
         </div>
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Save Profile</button>
-      </form>
+        </form>
+      </section>
 
       <section className="mt-8 rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-5">
@@ -339,6 +371,14 @@ function formatAmount(amount: number, currency: string) {
     currency,
     maximumFractionDigits: 0
   }).format(amount);
+}
+
+function accountErrorMessage(error: string) {
+  if (error === "phone") return "That phone number is already used by another account.";
+  if (error === "avatar-size") return "That profile photo is larger than the approved 5 MB limit.";
+  if (error === "avatar-type") return "Choose a PNG, JPG, or WebP profile photo.";
+  if (error === "avatar") return "The profile photo could not be uploaded. Please try again.";
+  return "Please enter a valid name and valid social profile links.";
 }
 
 async function getAccountWalletState(userId: string) {

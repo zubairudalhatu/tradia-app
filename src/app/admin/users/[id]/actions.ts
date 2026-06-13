@@ -9,20 +9,25 @@ export async function updateAdminUserAction(userId: string, formData: FormData) 
   const admin = await requireAdminAction(formData);
 
   const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phone = optionalString(formData.get("phone"));
   const role = normalizeRole(String(formData.get("role") ?? "USER"));
   const status = normalizeStatus(String(formData.get("status") ?? "ACTIVE"));
 
-  if (name.length < 2) {
+  if (name.length < 2 || !isValidEmail(email)) {
     redirect(`/admin/users/${userId}?error=invalid`);
   }
 
   try {
+    const currentUser = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
     const managedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         name,
+        email,
         phone,
+        emailVerifiedAt: currentUser.email === email ? currentUser.emailVerifiedAt : null,
+        phoneVerifiedAt: currentUser.phone === phone ? currentUser.phoneVerifiedAt : null,
         role,
         status
       }
@@ -57,6 +62,10 @@ async function requireAdminAction(formData: FormData) {
 function optionalString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length ? text : null;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function normalizeRole(value: string) {

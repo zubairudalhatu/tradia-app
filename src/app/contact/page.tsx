@@ -1,84 +1,58 @@
 import type { Metadata } from "next";
-import { Clock3, Mail, MessageCircle, UsersRound } from "lucide-react";
+import { Clock3, MessageCircle, Send, UsersRound } from "lucide-react";
 import { SocialLinks } from "@/components/social-links";
 import { SupportShell } from "@/components/support-shell";
+import { getCurrentUser } from "@/lib/auth/session";
+import { createSupportRequestAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Contact Us | Support",
   description: "Contact Tradia for business listing support, verification help, payments, and platform enquiries.",
-  alternates: {
-    canonical: "/contact"
-  }
+  alternates: { canonical: "/contact" }
 };
 
-export default function ContactPage() {
+export default async function ContactPage({ searchParams }: { searchParams: Promise<{ sent?: string; error?: string }> }) {
+  const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
+
   return (
-    <SupportShell
-      eyebrow="Contact Us"
-      title="Talk to the Tradia team"
-      intro="Get help with your account, business listing, verification request, payment, partnership, or a technical issue."
-    >
-      <div className="grid gap-4 md:grid-cols-2">
-        <ContactOption
-          icon={Mail}
-          title="Email support"
-          body="Best for account, verification, billing, technical, and partnership enquiries."
-          href="mailto:tradia@zamkah.com.ng"
-          label="tradia@zamkah.com.ng"
-        />
-        <ContactOption
-          icon={MessageCircle}
-          title="WhatsApp"
-          body="Best for short questions and guidance during business hours."
-          href="https://wa.me/2349055091300"
-          label="+234 905 509 1300"
-        />
-      </div>
+    <SupportShell eyebrow="Contact Us" title="Talk to the Tradia team" intro="Send your question securely to the support centre. We will reply to the email address you provide.">
+      <form id="support-form" action={createSupportRequestAction} className="grid gap-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-forest"><Send aria-hidden="true" className="h-5 w-5" /></span>
+          <div><h2 className="text-xl font-black text-ink">Send a support request</h2><p className="mt-1 text-sm text-slate-600">Include the affected business, page, or payment reference where relevant.</p></div>
+        </div>
+        {params.sent ? <p className="rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">Your request has reached the Tradia support centre.</p> : null}
+        {params.error ? <p className="rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">Please complete your name, valid email, and a clear message of at least 15 characters.</p> : null}
+        <input className="hidden" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Name" name="name" defaultValue={user?.name} required />
+          <Field label="Reply email" name="email" type="email" defaultValue={user?.email} required />
+          <Field label="Phone (optional)" name="phone" defaultValue={user?.phone ?? ""} />
+          <label className="grid gap-2 text-sm font-bold text-slate-600">Topic
+            <select className="rounded-tradia border border-slate-200 px-4 py-3" name="topic">
+              {["Account help", "Business listing", "Verification", "Payment or wallet", "Partnership", "Technical issue", "Other"].map((topic) => <option key={topic}>{topic}</option>)}
+            </select>
+          </label>
+        </div>
+        <label className="grid gap-2 text-sm font-bold text-slate-600">How can we help?
+          <textarea className="min-h-36 rounded-tradia border border-slate-200 px-4 py-3" name="message" minLength={15} maxLength={3000} required />
+        </label>
+        <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Send to support centre</button>
+      </form>
       <div className="mt-5 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2">
-        <div className="flex gap-3">
-          <Clock3 aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-forest" />
-          <div>
-            <h2 className="font-black text-ink">Help us respond faster</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Include your account email, business name, affected page, and any payment or request reference.</p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <UsersRound aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-forest" />
-          <div>
-            <h2 className="font-black text-ink">Company</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Tradia is operated by Zamkah Technologies Limited.</p>
-          </div>
-        </div>
+        <Info icon={Clock3} title="Help us respond faster" body="Include your account email, business name, affected page, and any payment or request reference." />
+        <Info icon={UsersRound} title="Company" body="Tradia is operated by Zamkah Technologies Limited." />
       </div>
-      <div className="mt-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="font-black text-ink">Follow Tradia</h2>
-        <SocialLinks className="mt-3 text-forest" showHandle />
-      </div>
+      <a href="https://wa.me/2349055091300" className="mt-5 flex items-center gap-3 rounded-tradia border border-slate-200 bg-white p-5 font-black text-forest shadow-sm"><MessageCircle className="h-5 w-5" />Ask a short question on WhatsApp</a>
+      <div className="mt-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm"><h2 className="font-black text-ink">Follow Tradia</h2><SocialLinks className="mt-3 text-forest" showHandle /></div>
     </SupportShell>
   );
 }
 
-function ContactOption({
-  icon: Icon,
-  title,
-  body,
-  href,
-  label
-}: {
-  icon: typeof Mail;
-  title: string;
-  body: string;
-  href: string;
-  label: string;
-}) {
-  return (
-    <a href={href} className="rounded-tradia border border-slate-200 bg-white p-6 shadow-sm transition hover:border-forest hover:shadow-lg">
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-forest">
-        <Icon aria-hidden="true" className="h-5 w-5" />
-      </span>
-      <h2 className="mt-5 text-xl font-black text-ink">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
-      <span className="mt-5 block break-words text-sm font-black text-forest">{label}</span>
-    </a>
-  );
+function Field({ label, name, type = "text", defaultValue, required }: { label: string; name: string; type?: string; defaultValue?: string; required?: boolean }) {
+  return <label className="grid gap-2 text-sm font-bold text-slate-600">{label}<input className="rounded-tradia border border-slate-200 px-4 py-3" name={name} type={type} defaultValue={defaultValue} required={required} /></label>;
+}
+
+function Info({ icon: Icon, title, body }: { icon: typeof Clock3; title: string; body: string }) {
+  return <div className="flex gap-3"><Icon aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-forest" /><div><h2 className="font-black text-ink">{title}</h2><p className="mt-1 text-sm leading-6 text-slate-600">{body}</p></div></div>;
 }

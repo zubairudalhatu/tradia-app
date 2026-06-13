@@ -5,7 +5,8 @@ const items = [
   { href: "/admin/businesses", label: "Businesses" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/finance", label: "Finance" },
-  { href: "/admin/communications", label: "Communications" }
+  { href: "/admin/communications", label: "Communications" },
+  { href: "/admin/support", label: "Support" }
 ];
 
 export function AdminSecondaryNav() {

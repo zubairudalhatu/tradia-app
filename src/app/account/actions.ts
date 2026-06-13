@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createAuditLog } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { saveUpload, UploadValidationError } from "@/lib/uploads";
 import { initializePaystackPayment } from "@/lib/payments/paystack";
 import { initializeSquadPayment } from "@/lib/payments/squad";
 import { getWalletBalance, spendWalletProduct } from "@/lib/wallet/ledger";
@@ -17,17 +18,31 @@ export async function updateAccountAction(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const phone = optionalString(formData.get("phone"));
+  const socialProfiles = {
+    facebookUrl: optionalUrl(formData.get("facebookUrl")),
+    instagramUrl: optionalUrl(formData.get("instagramUrl")),
+    xUrl: optionalUrl(formData.get("xUrl")),
+    linkedinUrl: optionalUrl(formData.get("linkedinUrl")),
+    tiktokUrl: optionalUrl(formData.get("tiktokUrl"))
+  };
 
-  if (name.length < 2) {
+  if (name.length < 2 || Object.values(socialProfiles).some((value) => value === "invalid")) {
     redirect("/account?error=invalid");
   }
 
   try {
+    const currentUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     await prisma.user.update({
       where: { id: user.id },
       data: {
         name,
-        phone
+        phone,
+        phoneVerifiedAt: currentUser.phone === phone ? currentUser.phoneVerifiedAt : null,
+        facebookUrl: socialProfiles.facebookUrl,
+        instagramUrl: socialProfiles.instagramUrl,
+        xUrl: socialProfiles.xUrl,
+        linkedinUrl: socialProfiles.linkedinUrl,
+        tiktokUrl: socialProfiles.tiktokUrl
       }
     });
   } catch {
@@ -35,6 +50,29 @@ export async function updateAccountAction(formData: FormData) {
   }
 
   redirect("/account?saved=1");
+}
+
+export async function updateAvatarAction(formData: FormData) {
+  const user = await getCurrentUser();
+
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/login?next=/account");
+  }
+
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || !file.size || !file.type.startsWith("image/")) {
+    redirect("/account?error=avatar-type");
+  }
+
+  try {
+    const avatarUrl = await saveUpload(file, `users/${user.id}`);
+    await prisma.user.update({ where: { id: user.id }, data: { avatarUrl } });
+  } catch (error) {
+    if (error instanceof UploadValidationError) redirect(`/account?error=avatar-${error.code}`);
+    redirect("/account?error=avatar");
+  }
+
+  redirect("/account?saved=avatar");
 }
 
 export async function startWalletTopUpAction(formData: FormData) {
@@ -162,6 +200,18 @@ export async function spendWalletProductAction(formData: FormData) {
 function optionalString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length ? text : null;
+}
+
+function optionalUrl(value: FormDataEntryValue | null) {
+  const text = optionalString(value);
+  if (!text) return null;
+
+  try {
+    const url = new URL(text.startsWith("http") ? text : `https://${text}`);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "invalid";
+  } catch {
+    return "invalid";
+  }
 }
 
 function normalizeTopUpAmount(value: FormDataEntryValue | null) {

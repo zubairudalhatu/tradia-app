@@ -50,7 +50,7 @@ export default async function AdminUserPage({ params, searchParams }: AdminUserP
       ) : null}
       {query.error ? (
         <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          Could not save this user. Check the name and phone number.
+          Could not save this user. Check the name, email, and phone number. The email or phone may already belong to another account.
         </p>
       ) : null}
 
@@ -62,7 +62,8 @@ export default async function AdminUserPage({ params, searchParams }: AdminUserP
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Email
-          <input className="rounded-tradia border border-slate-200 bg-slate-50 px-4 py-3" value={user.email} disabled />
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="email" type="email" defaultValue={user.email} required />
+          <span className="text-xs font-semibold text-slate-500">Changing the email requires the user to verify the new address.</span>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Phone

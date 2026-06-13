@@ -457,6 +457,7 @@ export async function updateWalletFulfillmentAction(formData: FormData) {
   );
 
   revalidatePath("/admin");
+  revalidatePath("/admin/finance");
 }
 
 async function requireAdminAction(formData: FormData) {

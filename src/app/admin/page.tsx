@@ -522,7 +522,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       </section>
 
-      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+      <section className="hidden">
         <div className="border-b border-slate-200 p-5">
           <h2 className="text-2xl font-black">Payment history</h2>
           <p className="mt-1 text-sm text-slate-600">Review recent checkout attempts, successful payments, and provider references.</p>
@@ -579,7 +579,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       </section>
 
-      <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+      <section className="hidden">
         <div className="border-b border-slate-200 p-5">
           <p className="text-sm font-extrabold uppercase text-ember">Wallet operations</p>
           <h2 className="mt-1 text-2xl font-black">Wallet add-ons and top-ups</h2>

@@ -168,12 +168,8 @@ function buildPosterSvg({
   <rect x="74" y="70" width="932" height="1200" rx="52" fill="#ffffff" stroke="#ffffff" stroke-width="8" filter="url(#shadow)"/>
   <rect x="74" y="70" width="932" height="178" rx="52" fill="#071d36"/>
   <rect x="74" y="196" width="932" height="52" fill="#071d36"/>
-  <circle cx="210" cy="159" r="58" fill="#ffffff"/>
-  <path d="M181 119C218 103 252 111 263 139C233 134 212 145 194 170C178 157 171 139 181 119Z" fill="#00a95c"/>
-  <path d="M194 170C220 145 245 139 270 150C270 186 244 214 210 217C212 193 207 179 194 170Z" fill="url(#warmSweep)"/>
-  <path d="M194 170C180 186 175 200 178 215C148 202 136 168 151 139C163 151 177 162 194 170Z" fill="#007b70"/>
-  <text x="292" y="180" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="900" fill="#ffffff">TRADIA</text>
-  <text x="295" y="219" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" letter-spacing="4" fill="#b9f3d2">DISCOVER. CONNECT. GROW.</text>
+  <rect x="180" y="101" width="720" height="116" rx="30" fill="#ffffff"/>
+  <image href="https://www.tradiabusiness.com/brand/tradia-logo.png" x="245" y="110" width="590" height="98" preserveAspectRatio="xMidYMid meet"/>
   <rect x="334" y="275" width="412" height="48" rx="24" fill="${isVerified ? "#e7f8ef" : "#fff5d9"}"/>
   <circle cx="368" cy="299" r="14" fill="${isVerified ? "#009b55" : "#ff8a18"}"/>
   <path d="M361 299L367 305L377 293" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>

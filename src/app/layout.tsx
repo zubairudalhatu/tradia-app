@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SiteNavigation } from "@/components/site-navigation";
+import { SocialLinks } from "@/components/social-links";
 import { TradiaHelpChat } from "@/components/tradia-help-chat";
 import "./globals.css";
 
@@ -124,6 +125,7 @@ export default function RootLayout({
               <p className="mt-3 max-w-sm leading-6 text-white/65">
                 Helping customers discover trusted businesses and helping Nigerian SMEs build credible digital profiles.
               </p>
+              <SocialLinks className="mt-5 text-white" compact />
             </div>
             <FooterLinks title="Discover">
               <Link href="/businesses">Browse businesses</Link>

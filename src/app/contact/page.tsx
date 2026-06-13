@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Clock3, MessageCircle, Send, UsersRound } from "lucide-react";
-import { SocialLinks } from "@/components/social-links";
 import { SupportShell } from "@/components/support-shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createSupportRequestAction } from "./actions";
@@ -44,7 +43,6 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
         <Info icon={UsersRound} title="Company" body="Tradia is operated by Zamkah Technologies Limited." />
       </div>
       <a href="https://wa.me/2349055091300" className="mt-5 flex items-center gap-3 rounded-tradia border border-slate-200 bg-white p-5 font-black text-forest shadow-sm"><MessageCircle className="h-5 w-5" />Ask a short question on WhatsApp</a>
-      <div className="mt-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm"><h2 className="font-black text-ink">Follow Tradia</h2><SocialLinks className="mt-3 text-forest" showHandle /></div>
     </SupportShell>
   );
 }

@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const [featuredBusinesses, popularCategories, locationGroups, directoryStats] = hasDatabaseUrl()
     ? await Promise.all([
-        listFeaturedBusinesses(6),
+        listFeaturedBusinesses(4),
         listActiveCategories(),
         listActiveStateAreaGroups(),
         getPublicDirectoryStats()
@@ -142,7 +142,7 @@ export default async function HomePage() {
               <Link href="/pricing" className="text-sm font-black text-forest">Get featured</Link>
             </div>
             <div className="grid gap-3">
-              {featuredBusinesses.slice(0, 6).map((business, index) => (
+              {featuredBusinesses.slice(0, 4).map((business, index) => (
                 <Link
                   href={`/businesses/${business.slug}`}
                   key={business.slug}

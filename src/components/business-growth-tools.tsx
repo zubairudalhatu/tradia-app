@@ -140,7 +140,7 @@ function buildPosterSvg({
   isVerified: boolean;
 }) {
   const titleLines = wrapPosterTitle(businessName)
-    .map((line, index) => `<text x="540" y="${350 + index * 62}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="900" fill="#071d36">${escapeXml(line)}</text>`)
+    .map((line, index) => `<text x="540" y="${390 + index * 56}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="900" fill="#071d36">${escapeXml(line)}</text>`)
     .join("\n  ");
   const badge = isVerified ? "VERIFIED BUSINESS" : "LISTED BUSINESS";
   const instruction = isVerified ? "Scan to view this verified profile" : "Scan to view this business profile";

@@ -24,6 +24,8 @@ type BusinessOwnerMediaPanelProps = {
 
 type EditorMode = "logo" | "cover" | null;
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
 export function BusinessOwnerMediaPanel({
   businessName,
   logoUrl,
@@ -236,6 +238,7 @@ function CoverUploadForm({ uploadAction }: { uploadAction: BusinessOwnerMediaPan
   const frameRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 50, y: 50 });
+  const [fileError, setFileError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -246,6 +249,15 @@ function CoverUploadForm({ uploadAction }: { uploadAction: BusinessOwnerMediaPan
   function updatePreview() {
     const file = inputRef.current?.files?.[0];
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+    if (file && file.size > MAX_IMAGE_SIZE) {
+      if (inputRef.current) inputRef.current.value = "";
+      setPreviewUrl(null);
+      setFileError("This image is larger than 5 MB. Choose a smaller image and try again.");
+      return;
+    }
+
+    setFileError(null);
     setPreviewUrl(file ? URL.createObjectURL(file) : null);
     setCrop({ x: 50, y: 50 });
   }
@@ -268,9 +280,14 @@ function CoverUploadForm({ uploadAction }: { uploadAction: BusinessOwnerMediaPan
       <label className="grid cursor-pointer place-items-center gap-2 rounded-tradia border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition hover:border-forest hover:bg-emerald-50">
         <ImagePlus className="text-forest" size={24} aria-hidden="true" />
         <strong className="text-ink">Choose a new cover photo</strong>
-        <span className="text-xs text-slate-500">Wide landscape images work best</span>
+        <span className="text-xs text-slate-500">Wide PNG, JPG, or WebP images up to 5 MB work best</span>
         <input ref={inputRef} className="sr-only" name="file" type="file" accept="image/png,image/jpeg,image/webp" required onChange={updatePreview} />
       </label>
+      {fileError ? (
+        <p className="rounded-tradia bg-red-50 px-4 py-3 text-sm font-bold text-red-700" role="alert">
+          {fileError}
+        </p>
+      ) : null}
       {previewUrl ? (
         <div
           ref={frameRef}
@@ -288,7 +305,9 @@ function CoverUploadForm({ uploadAction }: { uploadAction: BusinessOwnerMediaPan
           <span className="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-forest shadow-lg" style={{ left: `${crop.x}%`, top: `${crop.y}%` }} />
         </div>
       ) : null}
-      <button className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">Save New Cover</button>
+      <button disabled={!previewUrl} className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">
+        Save New Cover
+      </button>
     </form>
   );
 }

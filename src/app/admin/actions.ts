@@ -20,7 +20,7 @@ const MAX_BROADCAST_RECIPIENTS = 250;
 
 export async function sendBroadcastAction(formData: FormData) {
   const admin = await requireAdminAction(formData);
-  if (!["ADMIN", "SUPER_ADMIN"].includes(admin.role)) redirect("/admin?broadcast=forbidden");
+  if (!["ADMIN", "SUPER_ADMIN"].includes(admin.role)) redirect("/admin/communications?broadcast=forbidden");
 
   const channel = normalizeBroadcastChannel(String(formData.get("channel") ?? ""));
   const audience = normalizeBroadcastAudience(String(formData.get("audience") ?? ""));
@@ -29,7 +29,7 @@ export async function sendBroadcastAction(formData: FormData) {
   const confirmation = String(formData.get("confirmation") ?? "").trim().toUpperCase();
 
   if (!channel || !audience || message.length < 10 || confirmation !== "SEND" || (channel === "EMAIL" && subject.length < 3)) {
-    redirect("/admin?broadcast=invalid");
+    redirect("/admin/communications?broadcast=invalid");
   }
 
   const recipients = await prisma.user.findMany({
@@ -74,7 +74,7 @@ export async function sendBroadcastAction(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  redirect(`/admin?broadcast=sent&delivered=${delivered}&attempted=${recipients.length}`);
+  redirect(`/admin/communications?broadcast=sent&delivered=${delivered}&attempted=${recipients.length}`);
 }
 
 export async function approveBusinessAction(formData: FormData) {

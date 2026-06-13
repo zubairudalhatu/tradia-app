@@ -83,6 +83,29 @@ export function listFeaturedBusinesses(limit = 3) {
   return listRotatingFeaturedBusinesses(limit);
 }
 
+export function listPopularBusinesses(limit = 10) {
+  return prisma.business.findMany({
+    where: {
+      listingStatus: "PUBLISHED",
+      OR: [
+        { viewCount: { gt: 0 } },
+        { contactClickCount: { gt: 0 } },
+        { reviewCount: { gt: 0 } }
+      ]
+    },
+    include: businessInclude,
+    orderBy: [
+      { contactClickCount: "desc" },
+      { viewCount: "desc" },
+      { reviewCount: "desc" },
+      { averageRating: "desc" },
+      { verificationStatus: "desc" },
+      { updatedAt: "desc" }
+    ],
+    take: Math.min(Math.max(limit, 1), 30)
+  });
+}
+
 export async function listRotatingFeaturedBusinesses(limit = 3) {
   const candidates = await prisma.business.findMany({
     where: {

@@ -23,7 +23,8 @@ import {
   Utensils
 } from "lucide-react";
 import { AdsenseSlot } from "@/components/adsense-slot";
-import { getPublicDirectoryStats, listFeaturedBusinesses } from "@/lib/queries/businesses";
+import { BusinessCard } from "@/components/business-card";
+import { getPublicDirectoryStats, listFeaturedBusinesses, listPopularBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateAreaGroups } from "@/lib/queries/locations";
 
@@ -53,15 +54,17 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCategories, locationGroups, directoryStats] = hasDatabaseUrl()
+  const [featuredBusinesses, popularCandidates, popularCategories, locationGroups, directoryStats] = hasDatabaseUrl()
     ? await Promise.all([
         listFeaturedBusinesses(4),
+        listPopularBusinesses(12),
         listActiveCategories(),
         listActiveStateAreaGroups(),
         getPublicDirectoryStats()
       ])
     : [
         [] as Awaited<ReturnType<typeof listFeaturedBusinesses>>,
+        [] as Awaited<ReturnType<typeof listPopularBusinesses>>,
         [] as Awaited<ReturnType<typeof listActiveCategories>>,
         [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>,
         {
@@ -71,6 +74,8 @@ export default async function HomePage() {
           activeCategories: 0
         }
       ];
+  const featuredIds = new Set(featuredBusinesses.map((business) => business.id));
+  const popularBusinesses = popularCandidates.filter((business) => !featuredIds.has(business.id)).slice(0, 6);
 
   return (
     <main className="overflow-x-hidden">
@@ -207,6 +212,31 @@ export default async function HomePage() {
         slot={process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT}
         className="mx-auto max-w-7xl px-5 pb-10"
       />
+
+      {popularBusinesses.length ? (
+        <section className="border-y border-slate-200 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-5 py-12">
+            <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="mb-2 text-sm font-extrabold uppercase text-ember">Popular businesses</p>
+                <h2 className="text-3xl font-black text-ink">Businesses customers are exploring</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Discover published profiles earning attention through customer visits, contact activity, reviews, and trust.
+                </p>
+              </div>
+              <Link href="/businesses" className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
+                Explore the directory
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {popularBusinesses.map((business) => (
+                <BusinessCard key={business.id} business={business} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-12">

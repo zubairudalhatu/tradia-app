@@ -152,6 +152,24 @@ function LogoEditor({
   uploadAction: BusinessOwnerMediaPanelProps["uploadAction"];
   deleteAction: BusinessOwnerMediaPanelProps["deleteAction"];
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [hasFile, setHasFile] = useState(false);
+
+  function validateLogo() {
+    const file = inputRef.current?.files?.[0];
+
+    if (file && file.size > MAX_IMAGE_SIZE) {
+      if (inputRef.current) inputRef.current.value = "";
+      setHasFile(false);
+      setFileError("This image is larger than the approved 5 MB limit. Choose a smaller image.");
+      return;
+    }
+
+    setHasFile(Boolean(file));
+    setFileError(null);
+  }
+
   return (
     <div className="grid gap-5 md:grid-cols-[180px_1fr]">
       <div className="grid aspect-square place-items-center overflow-hidden rounded-tradia border border-slate-200 bg-slate-50 p-4">
@@ -167,10 +185,17 @@ function LogoEditor({
           <label className="grid cursor-pointer place-items-center gap-2 rounded-tradia border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center transition hover:border-forest hover:bg-emerald-50">
             <ImagePlus className="text-forest" size={24} aria-hidden="true" />
             <strong className="text-ink">Choose a new logo</strong>
-            <span className="text-xs text-slate-500">PNG, JPG, or WebP</span>
-            <input className="sr-only" name="file" type="file" accept="image/png,image/jpeg,image/webp" required />
+            <span className="text-xs text-slate-500">PNG, JPG, or WebP, up to 5 MB</span>
+            <input ref={inputRef} className="sr-only" name="file" type="file" accept="image/png,image/jpeg,image/webp" required onChange={validateLogo} />
           </label>
-          <button className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white">Save New Logo</button>
+          {fileError ? (
+            <p className="rounded-tradia bg-red-50 px-4 py-3 text-sm font-bold text-red-700" role="alert">
+              {fileError}
+            </p>
+          ) : null}
+          <button disabled={!hasFile} className="rounded-tradia bg-forest px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">
+            Save New Logo
+          </button>
         </form>
         {logoItem ? <DeleteMediaButton item={logoItem} label="Remove current logo" deleteAction={deleteAction} /> : null}
       </div>

@@ -9,7 +9,14 @@ const allowedTypes = new Set([
   "application/pdf"
 ]);
 
-const maxSize = 5 * 1024 * 1024;
+export const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
+
+export class UploadValidationError extends Error {
+  constructor(public readonly code: "type" | "size") {
+    super(code === "size" ? "Upload exceeds 5MB." : "Unsupported upload type.");
+    this.name = "UploadValidationError";
+  }
+}
 
 export async function saveUpload(file: File, folder: string) {
   validateUpload(file);
@@ -27,11 +34,11 @@ export async function saveUpload(file: File, folder: string) {
 
 export function validateUpload(file: File) {
   if (!allowedTypes.has(file.type)) {
-    throw new Error("Unsupported upload type.");
+    throw new UploadValidationError("type");
   }
 
-  if (file.size > maxSize) {
-    throw new Error("Upload exceeds 5MB.");
+  if (file.size > MAX_UPLOAD_SIZE) {
+    throw new UploadValidationError("size");
   }
 }
 

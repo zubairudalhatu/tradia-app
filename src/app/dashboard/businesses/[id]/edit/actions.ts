@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { notifyVerificationSubmitted } from "@/lib/notifications";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
 import { updateOwnedBusiness } from "@/lib/queries/businesses";
-import { saveUpload } from "@/lib/uploads";
+import { saveUpload, UploadValidationError } from "@/lib/uploads";
 import { businessProfileUpdateSchema } from "@/lib/validations/business";
 
 export async function updateBusinessProfileAction(businessId: string, formData: FormData) {
@@ -91,7 +91,10 @@ export async function uploadBusinessMediaAction(businessId: string, formData: Fo
 
   try {
     url = await saveUpload(file, `businesses/${business.id}`);
-  } catch {
+  } catch (error) {
+    if (error instanceof UploadValidationError) {
+      redirect(`/dashboard/businesses/${businessId}/edit?error=${error.code === "size" ? "upload-too-large" : "media"}`);
+    }
     redirect(`/dashboard/businesses/${businessId}/edit?error=upload-storage`);
   }
 
@@ -168,7 +171,10 @@ export async function submitVerificationRequestAction(businessId: string, formDa
 
   try {
     documentUrl = await saveUpload(file, `verification/${business.id}`);
-  } catch {
+  } catch (error) {
+    if (error instanceof UploadValidationError) {
+      redirect(`/dashboard/businesses/${businessId}/edit?error=${error.code === "size" ? "upload-too-large" : "verification"}`);
+    }
     redirect(`/dashboard/businesses/${businessId}/edit?error=upload-storage`);
   }
 

@@ -763,6 +763,7 @@ function mediaMessage(value: string) {
   if (value === "crop-saved") return "Cover photo position saved.";
   if (value === "deleted") return "Uploaded media deleted.";
   if (value === "photo-limit") return "This business has reached the photo limit for its current plan.";
+  if (value === "upload-too-large") return "This file is larger than the approved 5 MB upload limit. Choose a smaller file and try again.";
   if (value === "upload-storage") return "Uploads are not configured yet. Please add Cloudinary credentials in Vercel.";
   if (value === "forbidden") return "Only the business owner can update profile photos from this page.";
   if (value === "missing") return "That uploaded media item could not be found.";

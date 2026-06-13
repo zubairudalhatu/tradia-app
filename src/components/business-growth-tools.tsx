@@ -139,22 +139,76 @@ function buildPosterSvg({
   qrUrl: string;
   isVerified: boolean;
 }) {
-  const title = escapeXml(businessName);
-  const url = escapeXml(profileUrl);
-  const badge = isVerified ? "Verified by Tradia" : "Listed on Tradia";
+  const titleLines = wrapPosterTitle(businessName)
+    .map((line, index) => `<text x="540" y="${350 + index * 62}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="900" fill="#071d36">${escapeXml(line)}</text>`)
+    .join("\n  ");
+  const badge = isVerified ? "VERIFIED BUSINESS" : "LISTED BUSINESS";
+  const instruction = isVerified ? "Scan to view this verified profile" : "Scan to view this business profile";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
-  <rect width="1080" height="1350" fill="#f8fafc"/>
-  <rect x="80" y="80" width="920" height="1190" rx="32" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
-  <text x="540" y="190" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900" fill="#071d36">TRADIA</text>
-  <text x="540" y="255" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#047857">${badge}</text>
-  <text x="540" y="380" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="900" fill="#071d36">${title}</text>
-  <rect x="280" y="465" width="520" height="520" rx="20" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
-  <image href="${escapeXml(qrUrl)}" x="320" y="505" width="440" height="440"/>
-  <text x="540" y="1065" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#071d36">Scan to view this business profile</text>
-  <text x="540" y="1130" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#64748b">${url}</text>
-  <text x="540" y="1220" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#047857">www.tradiabusiness.com</text>
+  <defs>
+    <linearGradient id="brandSweep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#009b55"/>
+      <stop offset="0.55" stop-color="#00856d"/>
+      <stop offset="1" stop-color="#071d36"/>
+    </linearGradient>
+    <linearGradient id="warmSweep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd21e"/>
+      <stop offset="1" stop-color="#ff5b1a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#071d36" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect width="1080" height="1350" fill="#edf6f1"/>
+  <path d="M0 0H1080V250C875 310 680 282 525 218C340 142 176 126 0 190Z" fill="url(#brandSweep)"/>
+  <path d="M0 1180C178 1112 325 1124 477 1195C650 1276 842 1270 1080 1170V1350H0Z" fill="#071d36"/>
+  <path d="M0 1228C165 1158 320 1170 474 1235C650 1310 841 1304 1080 1215V1350H0Z" fill="url(#brandSweep)" opacity="0.9"/>
+  <path d="M860 0H1080V310C1015 270 950 214 912 148C884 100 869 51 860 0Z" fill="url(#warmSweep)"/>
+  <rect x="74" y="70" width="932" height="1200" rx="52" fill="#ffffff" stroke="#ffffff" stroke-width="8" filter="url(#shadow)"/>
+  <rect x="74" y="70" width="932" height="178" rx="52" fill="#071d36"/>
+  <rect x="74" y="196" width="932" height="52" fill="#071d36"/>
+  <circle cx="210" cy="159" r="58" fill="#ffffff"/>
+  <path d="M181 119C218 103 252 111 263 139C233 134 212 145 194 170C178 157 171 139 181 119Z" fill="#00a95c"/>
+  <path d="M194 170C220 145 245 139 270 150C270 186 244 214 210 217C212 193 207 179 194 170Z" fill="url(#warmSweep)"/>
+  <path d="M194 170C180 186 175 200 178 215C148 202 136 168 151 139C163 151 177 162 194 170Z" fill="#007b70"/>
+  <text x="292" y="180" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="900" fill="#ffffff">TRADIA</text>
+  <text x="295" y="219" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" letter-spacing="4" fill="#b9f3d2">DISCOVER. CONNECT. GROW.</text>
+  <rect x="334" y="275" width="412" height="48" rx="24" fill="${isVerified ? "#e7f8ef" : "#fff5d9"}"/>
+  <circle cx="368" cy="299" r="14" fill="${isVerified ? "#009b55" : "#ff8a18"}"/>
+  <path d="M361 299L367 305L377 293" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="397" y="308" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="900" letter-spacing="1" fill="${isVerified ? "#047857" : "#b45309"}">${badge}</text>
+  ${titleLines}
+  <rect x="234" y="472" width="612" height="612" rx="44" fill="#ffffff" stroke="#d9e7e0" stroke-width="5" filter="url(#shadow)"/>
+  <rect x="270" y="508" width="540" height="540" rx="26" fill="#ffffff"/>
+  <image href="${escapeXml(qrUrl)}" x="305" y="543" width="470" height="470"/>
+  <rect x="298" y="1098" width="484" height="64" rx="32" fill="#071d36"/>
+  <text x="540" y="1140" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="900" fill="#ffffff">${instruction}</text>
+  <text x="540" y="1208" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="800" fill="#047857">Open the camera on your phone and scan</text>
+  <rect x="278" y="1242" width="524" height="60" rx="30" fill="#ffffff"/>
+  <circle cx="322" cy="1272" r="18" fill="#00a95c"/>
+  <path d="M313 1272H331M322 1263V1281" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <text x="356" y="1281" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="900" fill="#071d36">www.tradiabusiness.com</text>
 </svg>`;
+}
+
+function wrapPosterTitle(value: string) {
+  const words = value.trim().split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > 28 && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+
+  if (current) lines.push(current);
+  return lines.slice(0, 2);
 }
 
 function escapeXml(value: string) {

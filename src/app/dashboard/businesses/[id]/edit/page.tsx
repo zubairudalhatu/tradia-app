@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ValidatedFileInput } from "@/components/validated-file-input";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
@@ -268,7 +269,12 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           </label>
           <label className="grid gap-2 text-sm font-bold text-slate-600">
             Proof file
-            <input className="rounded-tradia border border-slate-200 px-4 py-3" name="document" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required />
+            <ValidatedFileInput
+              className="rounded-tradia border border-slate-200 px-4 py-3"
+              name="document"
+              accept="image/png,image/jpeg,image/webp,application/pdf"
+              required
+            />
           </label>
           <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
             Notes
@@ -342,6 +348,10 @@ function errorMessage(error: string) {
 
   if (error === "upload-storage") {
     return "Uploads are not configured yet. Please add Cloudinary credentials in Vercel before uploading media or verification documents.";
+  }
+
+  if (error === "upload-too-large") {
+    return "This file is larger than the approved 5 MB upload limit. Choose a smaller file and try again.";
   }
 
   if (error === "media") {

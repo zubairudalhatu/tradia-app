@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { notifyBusinessLead } from "@/lib/notifications";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
-import { saveUpload } from "@/lib/uploads";
+import { saveUpload, UploadValidationError } from "@/lib/uploads";
 
 export async function uploadProfileMediaAction(businessId: string, slug: string, formData: FormData) {
   const user = await requireUser();
@@ -36,7 +36,10 @@ export async function uploadProfileMediaAction(businessId: string, slug: string,
 
   try {
     url = await saveUpload(file, `businesses/${business.id}`);
-  } catch {
+  } catch (error) {
+    if (error instanceof UploadValidationError) {
+      redirect(`/businesses/${slug}?media=${error.code === "size" ? "upload-too-large" : "invalid"}`);
+    }
     redirect(`/businesses/${slug}?media=upload-storage`);
   }
 

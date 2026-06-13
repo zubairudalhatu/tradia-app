@@ -14,6 +14,68 @@ import {
 } from "@/lib/notifications";
 import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/queries/featured";
 import { refreshBusinessRating } from "@/lib/ratings";
+import { sendAdminBroadcast, type BroadcastChannel } from "@/lib/admin-broadcast";
+
+const MAX_BROADCAST_RECIPIENTS = 250;
+
+export async function sendBroadcastAction(formData: FormData) {
+  const admin = await requireAdminAction(formData);
+  if (!["ADMIN", "SUPER_ADMIN"].includes(admin.role)) redirect("/admin?broadcast=forbidden");
+
+  const channel = normalizeBroadcastChannel(String(formData.get("channel") ?? ""));
+  const audience = normalizeBroadcastAudience(String(formData.get("audience") ?? ""));
+  const subject = String(formData.get("subject") ?? "").trim().slice(0, 120);
+  const message = String(formData.get("message") ?? "").trim().slice(0, 500);
+  const confirmation = String(formData.get("confirmation") ?? "").trim().toUpperCase();
+
+  if (!channel || !audience || message.length < 10 || confirmation !== "SEND" || (channel === "EMAIL" && subject.length < 3)) {
+    redirect("/admin?broadcast=invalid");
+  }
+
+  const recipients = await prisma.user.findMany({
+    where: {
+      status: "ACTIVE",
+      ...(audience === "BUSINESS_OWNERS"
+        ? { businesses: { some: {} } }
+        : audience === "REGULAR_USERS"
+        ? { businesses: { none: {} } }
+        : {}),
+      ...(channel === "EMAIL"
+        ? { emailVerifiedAt: { not: null } }
+        : { phone: { not: null }, phoneVerifiedAt: { not: null } })
+    },
+    select: { id: true, name: true, email: true, phone: true },
+    orderBy: { createdAt: "asc" },
+    take: MAX_BROADCAST_RECIPIENTS
+  });
+
+  let delivered = 0;
+  for (const batch of chunk(recipients, 20)) {
+    const results = await Promise.allSettled(
+      batch.map((recipient) => sendAdminBroadcast({ channel, recipient, subject: subject || "Tradia update", message }))
+    );
+    delivered += results.filter((result) => result.status === "fulfilled" && result.value).length;
+  }
+
+  await createAuditLog({
+    actorId: admin.id,
+    action: "SENT_USER_BROADCAST",
+    entityType: "Broadcast",
+    entityId: crypto.randomUUID(),
+    metadata: {
+      channel,
+      audience,
+      subject,
+      message,
+      eligibleRecipients: recipients.length,
+      delivered,
+      failed: recipients.length - delivered
+    }
+  });
+
+  revalidatePath("/admin");
+  redirect(`/admin?broadcast=sent&delivered=${delivered}&attempted=${recipients.length}`);
+}
 
 export async function approveBusinessAction(formData: FormData) {
   const admin = await requireAdminAction(formData);
@@ -442,4 +504,25 @@ async function safeAdminNotification(send: () => Promise<unknown>) {
   } catch (error) {
     console.error("Admin notification failed", error);
   }
+}
+
+function normalizeBroadcastChannel(value: string): BroadcastChannel | null {
+  if (["EMAIL", "SMS", "WHATSAPP"].includes(value)) return value as BroadcastChannel;
+  return null;
+}
+
+function normalizeBroadcastAudience(value: string) {
+  if (["ALL_ACTIVE", "BUSINESS_OWNERS", "REGULAR_USERS"].includes(value)) {
+    return value as "ALL_ACTIVE" | "BUSINESS_OWNERS" | "REGULAR_USERS";
+  }
+
+  return null;
+}
+
+function chunk<T>(items: T[], size: number) {
+  const groups: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    groups.push(items.slice(index, index + size));
+  }
+  return groups;
 }

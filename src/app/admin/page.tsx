@@ -17,6 +17,7 @@ import {
   rejectVerificationAction,
   removeReviewAction,
   resolveReportAction,
+  sendBroadcastAction,
   unfeatureBusinessAction,
   updateAdminLeadStatusAction,
   updateWalletFulfillmentAction
@@ -51,6 +52,9 @@ type AdminPageProps = {
     paymentStatus?: string;
     walletSearch?: string;
     walletType?: string;
+    broadcast?: string;
+    delivered?: string;
+    attempted?: string;
   }>;
 };
 
@@ -335,6 +339,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     })
   ]);
   const listingQuality = buildListingQualityDashboard(qualityBusinesses);
+  const [verifiedEmailUsers, verifiedPhoneUsers, activeUsers] = await Promise.all([
+    prisma.user.count({ where: { status: "ACTIVE", emailVerifiedAt: { not: null } } }),
+    prisma.user.count({ where: { status: "ACTIVE", phone: { not: null }, phoneVerifiedAt: { not: null } } }),
+    prisma.user.count({ where: { status: "ACTIVE" } })
+  ]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-12">
@@ -356,6 +365,70 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </article>
         ))}
       </section>
+
+      {["ADMIN", "SUPER_ADMIN"].includes(user.role) ? (
+        <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
+            <p className="text-sm font-extrabold uppercase text-ember">User communications</p>
+            <h2 className="mt-1 text-2xl font-black">Send a registered-user broadcast</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+              Reach eligible active users through one channel at a time. Email requires a verified email address; SMS and WhatsApp require a verified phone number.
+            </p>
+          </div>
+          {params.broadcast ? (
+            <p className={`mx-5 mt-5 rounded-tradia border p-4 text-sm font-bold ${
+              params.broadcast === "sent" ? "border-emerald-200 bg-emerald-50 text-forest" : "border-red-200 bg-red-50 text-red-700"
+            }`}>
+              {broadcastResultMessage(params.broadcast, params.delivered, params.attempted)}
+            </p>
+          ) : null}
+          <div className="grid gap-5 p-5 xl:grid-cols-[0.72fr_1.28fr]">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              <BroadcastMetric value={activeUsers} label="Active registered users" />
+              <BroadcastMetric value={verifiedEmailUsers} label="Eligible for email" />
+              <BroadcastMetric value={verifiedPhoneUsers} label="Eligible for SMS or WhatsApp" />
+            </div>
+            <form action={sendBroadcastAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-slate-50 p-5 md:grid-cols-2">
+              <AdminActionTokenInput token={adminActionToken} />
+              <label className="grid gap-2 text-sm font-bold text-slate-600">
+                Delivery channel
+                <select className="rounded-tradia border border-slate-200 bg-white px-4 py-3" name="channel" required>
+                  <option value="EMAIL">Email</option>
+                  <option value="SMS">SMS</option>
+                  <option value="WHATSAPP">WhatsApp</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-slate-600">
+                Audience
+                <select className="rounded-tradia border border-slate-200 bg-white px-4 py-3" name="audience" required>
+                  <option value="ALL_ACTIVE">All eligible active users</option>
+                  <option value="BUSINESS_OWNERS">Business owners</option>
+                  <option value="REGULAR_USERS">Users without a business</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
+                Email subject
+                <input className="rounded-tradia border border-slate-200 bg-white px-4 py-3" name="subject" maxLength={120} placeholder="Required when sending email" />
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
+                Message
+                <textarea className="min-h-36 rounded-tradia border border-slate-200 bg-white px-4 py-3" name="message" minLength={10} maxLength={500} required placeholder="Write the update registered users should receive." />
+                <span className="text-xs font-semibold text-slate-500">Maximum 500 characters. One send reaches up to 250 eligible users and is recorded in the audit log.</span>
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">
+                Type SEND to confirm
+                <input className="rounded-tradia border border-slate-200 bg-white px-4 py-3" name="confirmation" pattern="SEND" required autoComplete="off" />
+              </label>
+              <p className="rounded-tradia bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800 md:col-span-2">
+                Use broadcasts for necessary Tradia service and account updates. Promotional messaging should wait until user marketing preferences and unsubscribe controls are available.
+              </p>
+              <button className="rounded-tradia bg-forest px-5 py-3 font-black text-white md:col-span-2">
+                Send Broadcast
+              </button>
+            </form>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-10 rounded-tradia border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-5">
@@ -1008,6 +1081,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 function AdminActionTokenInput({ token }: { token: string }) {
   return <input type="hidden" name="adminActionToken" value={token} />;
+}
+
+function BroadcastMetric({ value, label }: { value: number; label: string }) {
+  return (
+    <article className="rounded-tradia border border-slate-200 bg-white p-4">
+      <strong className="block text-2xl font-black text-ink">{value.toLocaleString("en-NG")}</strong>
+      <span className="text-sm font-bold text-slate-500">{label}</span>
+    </article>
+  );
+}
+
+function broadcastResultMessage(status: string, delivered?: string, attempted?: string) {
+  if (status === "sent") return `Broadcast completed: ${delivered ?? "0"} of ${attempted ?? "0"} eligible recipients accepted for delivery.`;
+  if (status === "forbidden") return "Only administrators and super administrators can send registered-user broadcasts.";
+  return "Broadcast was not sent. Complete every required field and type SEND exactly to confirm.";
 }
 
 function QualityPanel({

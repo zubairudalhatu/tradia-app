@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAdminActionToken, getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { normalizeNigerianPhone } from "@/lib/phone";
 import { sendBroadcastAction } from "../actions";
 
 type CommunicationsPageProps = {
@@ -14,18 +15,22 @@ export default async function CommunicationsPage({ searchParams }: Communication
   if (!user) redirect("/login");
   if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) redirect("/admin");
 
-  const [verifiedEmailUsers, verifiedPhoneUsers, activeUsers] = await Promise.all([
+  const [verifiedEmailUsers, phoneUsers, activeUsers] = await Promise.all([
     prisma.user.count({ where: { status: "ACTIVE", emailVerifiedAt: { not: null } } }),
-    prisma.user.count({ where: { status: "ACTIVE", phone: { not: null }, phoneVerifiedAt: { not: null } } }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", phone: { not: null } },
+      select: { phone: true }
+    }),
     prisma.user.count({ where: { status: "ACTIVE" } })
   ]);
+  const contactablePhoneUsers = phoneUsers.filter((candidate) => normalizeNigerianPhone(candidate.phone)).length;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Admin communications</p>
       <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Registered-user broadcasts</h1>
       <p className="mt-2 max-w-3xl leading-7 text-slate-600">
-        Send necessary Tradia service and account updates through one verified channel at a time.
+        Send necessary Tradia service and account updates through one available channel at a time.
       </p>
 
       {params.broadcast ? (
@@ -40,7 +45,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
         <section className="grid content-start gap-3 sm:grid-cols-3 xl:grid-cols-1">
           <Metric value={activeUsers} label="Active registered users" />
           <Metric value={verifiedEmailUsers} label="Eligible for email" />
-          <Metric value={verifiedPhoneUsers} label="Eligible for SMS or WhatsApp" />
+          <Metric value={contactablePhoneUsers} label="Eligible for SMS or WhatsApp" />
         </section>
         <form action={sendBroadcastAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-2">
           <input type="hidden" name="adminActionToken" value={createAdminActionToken(user)} />
@@ -74,7 +79,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
             <input className="rounded-tradia border border-slate-200 px-4 py-3" name="confirmation" pattern="SEND" required autoComplete="off" />
           </label>
           <p className="rounded-tradia bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800 md:col-span-2">
-            Promotional campaigns should wait until user marketing preferences and unsubscribe controls are available.
+            Phone broadcasts reach active users who supplied a valid Nigerian number. Promotional campaigns should wait until user marketing preferences and unsubscribe controls are available.
           </p>
           <button className="rounded-tradia bg-forest px-5 py-3 font-black text-white md:col-span-2">Send Broadcast</button>
         </form>

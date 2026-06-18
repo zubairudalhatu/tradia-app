@@ -15,7 +15,7 @@ export async function registerAction(formData: FormData) {
   const phone = normalizeNigerianPhone(rawPhone);
   const password = String(formData.get("password") ?? "");
 
-  if (name.length < 2 || !email || password.length < 8 || (rawPhone && !phone)) {
+  if (name.length < 2 || !email || password.length < 8 || !phone) {
     redirect("/register?error=invalid");
   }
 

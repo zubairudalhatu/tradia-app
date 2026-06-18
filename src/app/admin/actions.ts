@@ -15,6 +15,7 @@ import {
 import { createHomepagePlacement, deactivateBusinessPlacements } from "@/lib/queries/featured";
 import { refreshBusinessRating } from "@/lib/ratings";
 import { sendAdminBroadcast, type BroadcastChannel } from "@/lib/admin-broadcast";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 const MAX_BROADCAST_RECIPIENTS = 250;
 
@@ -32,7 +33,7 @@ export async function sendBroadcastAction(formData: FormData) {
     redirect("/admin/communications?broadcast=invalid");
   }
 
-  const recipients = await prisma.user.findMany({
+  const recipientCandidates = await prisma.user.findMany({
     where: {
       status: "ACTIVE",
       ...(audience === "BUSINESS_OWNERS"
@@ -42,12 +43,15 @@ export async function sendBroadcastAction(formData: FormData) {
         : {}),
       ...(channel === "EMAIL"
         ? { emailVerifiedAt: { not: null } }
-        : { phone: { not: null }, phoneVerifiedAt: { not: null } })
+        : { phone: { not: null } })
     },
     select: { id: true, name: true, email: true, phone: true },
     orderBy: { createdAt: "asc" },
-    take: MAX_BROADCAST_RECIPIENTS
+    take: channel === "EMAIL" ? MAX_BROADCAST_RECIPIENTS : MAX_BROADCAST_RECIPIENTS * 2
   });
+  const recipients = recipientCandidates
+    .filter((recipient) => channel === "EMAIL" || Boolean(normalizeNigerianPhone(recipient.phone)))
+    .slice(0, MAX_BROADCAST_RECIPIENTS);
 
   let delivered = 0;
   const batches = chunk(recipients, channel === "EMAIL" ? 4 : 10);

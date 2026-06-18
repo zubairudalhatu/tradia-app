@@ -83,8 +83,9 @@ export function listFeaturedBusinesses(limit = 3) {
   return listRotatingFeaturedBusinesses(limit);
 }
 
-export function listPopularBusinesses(limit = 10) {
-  return prisma.business.findMany({
+export async function listPopularBusinesses(limit = 10) {
+  const safeLimit = Math.min(Math.max(limit, 1), 30);
+  const candidates = await prisma.business.findMany({
     where: {
       listingStatus: "PUBLISHED",
       OR: [
@@ -102,8 +103,16 @@ export function listPopularBusinesses(limit = 10) {
       { verificationStatus: "desc" },
       { updatedAt: "desc" }
     ],
-    take: Math.min(Math.max(limit, 1), 30)
+    take: Math.min(Math.max(safeLimit * 3, 18), 60)
   });
+
+  if (candidates.length <= safeLimit) return candidates;
+
+  const rotationSlot = Math.floor(Date.now() / (1000 * 60 * 15));
+  const start = rotationSlot % candidates.length;
+  const rotated = [...candidates.slice(start), ...candidates.slice(0, start)];
+
+  return rotated.slice(0, safeLimit);
 }
 
 export async function listRotatingFeaturedBusinesses(limit = 3) {

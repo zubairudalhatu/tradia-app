@@ -41,7 +41,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Phone
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" type="tel" placeholder="07067686190" />
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" type="tel" placeholder="07067686190" required />
           <span className="text-xs font-semibold text-slate-500">Enter a Nigerian number. Tradia converts it securely to international format.</span>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">

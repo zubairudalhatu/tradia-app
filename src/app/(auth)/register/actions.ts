@@ -6,20 +6,22 @@ import { createSession } from "@/lib/auth/session";
 import { createAndSendAccountVerificationCode } from "@/lib/account-verification";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
+import { nigerianPhoneVariants, normalizeNigerianPhone } from "@/lib/phone";
 
 export async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const rawPhone = String(formData.get("phone") ?? "").trim();
+  const phone = normalizeNigerianPhone(rawPhone);
   const password = String(formData.get("password") ?? "");
 
-  if (name.length < 2 || !email || password.length < 8) {
+  if (name.length < 2 || !email || password.length < 8 || (rawPhone && !phone)) {
     redirect("/register?error=invalid");
   }
 
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ email }, ...(phone ? [{ phone }] : [])]
+      OR: [{ email }, ...(phone ? [{ phone: { in: nigerianPhoneVariants(phone) } }] : [])]
     }
   });
 
@@ -49,5 +51,8 @@ export async function registerAction(formData: FormData) {
   });
   await createSession(user.id);
   const verification = await createAndSendAccountVerificationCode(user, "EMAIL");
+  if (!verification.ok) {
+    redirect(`/verify-account?error=${verification.reason}&method=email`);
+  }
   redirect(`/verify-account?sent=email${verification.ok && verification.skipped ? "&delivery=skipped" : ""}`);
 }

@@ -4,22 +4,28 @@ import { redirect } from "next/navigation";
 import { getAdminFromActionToken, getCurrentUser } from "@/lib/auth/session";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
+import { nigerianPhoneVariants, normalizeNigerianPhone } from "@/lib/phone";
 
 export async function updateAdminUserAction(userId: string, formData: FormData) {
   const admin = await requireAdminAction(formData);
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const phone = optionalString(formData.get("phone"));
+  const rawPhone = optionalString(formData.get("phone"));
+  const phone = normalizeNigerianPhone(rawPhone);
   const role = normalizeRole(String(formData.get("role") ?? "USER"));
   const status = normalizeStatus(String(formData.get("status") ?? "ACTIVE"));
 
-  if (name.length < 2 || !isValidEmail(email)) {
+  if (name.length < 2 || !isValidEmail(email) || (rawPhone && !phone)) {
     redirect(`/admin/users/${userId}?error=invalid`);
   }
 
   try {
     const currentUser = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (phone) {
+      const duplicate = await prisma.user.findFirst({ where: { id: { not: userId }, phone: { in: nigerianPhoneVariants(phone) } }, select: { id: true } });
+      if (duplicate) redirect(`/admin/users/${userId}?error=save`);
+    }
     const managedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -27,7 +33,7 @@ export async function updateAdminUserAction(userId: string, formData: FormData) 
         email,
         phone,
         emailVerifiedAt: currentUser.email === email ? currentUser.emailVerifiedAt : null,
-        phoneVerifiedAt: currentUser.phone === phone ? currentUser.phoneVerifiedAt : null,
+        phoneVerifiedAt: normalizeNigerianPhone(currentUser.phone) === phone ? currentUser.phoneVerifiedAt : null,
         role,
         status
       }

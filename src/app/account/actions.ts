@@ -8,6 +8,7 @@ import { saveUpload, UploadValidationError } from "@/lib/uploads";
 import { initializePaystackPayment } from "@/lib/payments/paystack";
 import { initializeSquadPayment } from "@/lib/payments/squad";
 import { getWalletBalance, spendWalletProduct } from "@/lib/wallet/ledger";
+import { nigerianPhoneVariants, normalizeNigerianPhone } from "@/lib/phone";
 
 export async function updateAccountAction(formData: FormData) {
   const user = await getCurrentUser();
@@ -17,7 +18,8 @@ export async function updateAccountAction(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const phone = optionalString(formData.get("phone"));
+  const rawPhone = optionalString(formData.get("phone"));
+  const phone = normalizeNigerianPhone(rawPhone);
   const socialProfiles = {
     facebookUrl: optionalUrl(formData.get("facebookUrl")),
     instagramUrl: optionalUrl(formData.get("instagramUrl")),
@@ -26,18 +28,23 @@ export async function updateAccountAction(formData: FormData) {
     tiktokUrl: optionalUrl(formData.get("tiktokUrl"))
   };
 
-  if (name.length < 2 || Object.values(socialProfiles).some((value) => value === "invalid")) {
+  if (name.length < 2 || (rawPhone && !phone) || Object.values(socialProfiles).some((value) => value === "invalid")) {
+    if (rawPhone && !phone) redirect("/account?error=phone-invalid");
     redirect("/account?error=invalid");
   }
 
   try {
     const currentUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    if (phone) {
+      const duplicate = await prisma.user.findFirst({ where: { id: { not: user.id }, phone: { in: nigerianPhoneVariants(phone) } }, select: { id: true } });
+      if (duplicate) redirect("/account?error=phone");
+    }
     await prisma.user.update({
       where: { id: user.id },
       data: {
         name,
         phone,
-        phoneVerifiedAt: currentUser.phone === phone ? currentUser.phoneVerifiedAt : null,
+        phoneVerifiedAt: normalizeNigerianPhone(currentUser.phone) === phone ? currentUser.phoneVerifiedAt : null,
         facebookUrl: socialProfiles.facebookUrl,
         instagramUrl: socialProfiles.instagramUrl,
         xUrl: socialProfiles.xUrl,

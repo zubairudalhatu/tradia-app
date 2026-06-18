@@ -3,6 +3,7 @@ import type { AccountVerificationMethod, User } from "@prisma/client";
 import { paragraphEmail, sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/db";
 import { addMinutes } from "@/lib/time";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 const CODE_TTL_MINUTES = 15;
 
@@ -60,7 +61,7 @@ export async function createAndSendAccountVerificationCode(user: VerificationUse
 
   const delivery = await sendVerificationCode({ user, method, destination, code });
 
-  if (delivery.failed) return { ok: false, reason: "delivery-failed" as const };
+  if (delivery.failed) return { ok: false, reason: delivery.reason ?? "delivery-failed" as const };
 
   return { ok: true, skipped: Boolean(delivery.skipped) };
 }
@@ -131,7 +132,7 @@ async function sendVerificationCode(input: {
   const message = `Your Tradia verification code is ${input.code}. It expires in ${CODE_TTL_MINUTES} minutes.`;
 
   if (input.method === "EMAIL") {
-    return sendEmail({
+    const result = await sendEmail({
       to: input.destination,
       subject: "Verify your Tradia account",
       text: message,
@@ -141,6 +142,11 @@ async function sendVerificationCode(input: {
         "Enter this code on Tradia to finish creating your account."
       ])
     });
+    if (result && typeof result === "object" && "failed" in result && result.failed) {
+      const status = "status" in result ? result.status : undefined;
+      return { ...result, reason: status === 403 ? "email-sender" as const : status === 429 ? "email-rate-limit" as const : "delivery-failed" as const };
+    }
+    return result;
   }
 
   return sendPhoneVerificationCode(input.destination, message, input.method);
@@ -156,12 +162,17 @@ async function sendPhoneVerificationCode(destination: string, message: string, m
     return { skipped: true };
   }
 
+  const normalizedDestination = normalizeNigerianPhone(destination);
+  if (!normalizedDestination) {
+    return { skipped: false, failed: true, reason: "phone-invalid" as const };
+  }
+
   const response = await fetch("https://api.ng.termii.com/api/sms/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       api_key: apiKey,
-      to: destination,
+      to: normalizedDestination,
       from: process.env.TERMII_SENDER_ID?.trim() || "Tradia",
       sms: message,
       type: "plain",
@@ -175,8 +186,12 @@ async function sendPhoneVerificationCode(destination: string, message: string, m
       status: response.status,
       body: body.slice(0, 500)
     });
-    return { skipped: false, failed: true };
+    return { skipped: false, failed: true, reason: response.status === 429 ? "phone-rate-limit" as const : "delivery-failed" as const };
   }
 
-  return response.json();
+  const result = await response.json() as { code?: number | string; status?: string };
+  if (result.status === "error" || Number(result.code) >= 400) {
+    return { ...result, skipped: false, failed: true, reason: "delivery-failed" as const };
+  }
+  return result;
 }

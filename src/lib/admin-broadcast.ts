@@ -1,4 +1,5 @@
 import { paragraphEmail, sendEmail } from "@/lib/email";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 export type BroadcastChannel = "EMAIL" | "SMS" | "WHATSAPP";
 
@@ -33,12 +34,15 @@ async function sendTermiiMessage(destination: string, message: string, channel: 
   const apiKey = process.env.TERMII_API_KEY?.trim();
   if (!apiKey) return false;
 
+  const normalizedDestination = normalizeNigerianPhone(destination);
+  if (!normalizedDestination) return false;
+
   const response = await fetch("https://api.ng.termii.com/api/sms/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       api_key: apiKey,
-      to: destination,
+      to: normalizedDestination,
       from: process.env.TERMII_SENDER_ID?.trim() || "Tradia",
       sms: message,
       type: "plain",

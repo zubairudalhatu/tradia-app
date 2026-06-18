@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { isUserAccountVerified } from "@/lib/account-verification";
 import { getCurrentUser } from "@/lib/auth/session";
-import { confirmAccountVerificationCodeAction, sendAccountVerificationCodeAction } from "./actions";
+import { confirmAccountVerificationCodeAction, sendAccountVerificationCodeAction, updateVerificationPhoneAction } from "./actions";
 
 type VerifyAccountPageProps = {
-  searchParams: Promise<{ sent?: string; error?: string; delivery?: string; method?: string }>;
+  searchParams: Promise<{ sent?: string; error?: string; delivery?: string; method?: string; saved?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -37,8 +37,22 @@ export default async function VerifyAccountPage({ searchParams }: VerifyAccountP
           {errorMessage(params.error)}
         </p>
       ) : null}
+      {params.saved === "phone" ? (
+        <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
+          Phone number updated. You can now request an SMS or WhatsApp code.
+        </p>
+      ) : null}
 
-      <section className="mt-8 grid gap-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
+      <form action={updateVerificationPhoneAction} className="mt-8 grid gap-3 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto] sm:items-end">
+        <label className="grid gap-2 text-sm font-bold text-slate-600">
+          Update phone number
+          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="phone" type="tel" defaultValue={user.phone ?? ""} placeholder="07067686190" required />
+          <span className="text-xs font-semibold text-slate-500">Nigerian formats such as 07067686190 and +2347067686190 are accepted.</span>
+        </label>
+        <button className="rounded-tradia bg-slate-100 px-5 py-3 font-bold text-ink">Save phone</button>
+      </form>
+
+      <section className="mt-6 grid gap-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm">
         <div>
           <h2 className="text-2xl font-black">Send a code</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -120,7 +134,12 @@ function normalizeMethodLabel(value?: string) {
 function errorMessage(error: string) {
   if (error === "missing-destination") return "That verification method needs a phone number on your account.";
   if (error === "already-verified") return "That account channel is already verified.";
-  if (error === "delivery-failed") return "We could not send that verification code. Please try email or contact support.";
+  if (error === "phone-invalid") return "Enter a valid Nigerian phone number, for example 07067686190 or 2347067686190.";
+  if (error === "phone-exists") return "That phone number is already connected to another Tradia account.";
+  if (error === "email-sender") return "Email delivery is being configured for Tradia's new domain. Please try SMS or WhatsApp for now.";
+  if (error === "email-rate-limit") return "Too many email codes were requested. Please wait a minute and try again.";
+  if (error === "phone-rate-limit") return "Too many phone codes were requested. Please wait a minute and try again.";
+  if (error === "delivery-failed") return "We could not send that verification code through the selected channel. Please try another channel or contact support.";
   if (error === "expired") return "That code has expired. Please request a new one.";
   return "That verification code is invalid. Please check it and try again.";
 }

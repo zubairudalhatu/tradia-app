@@ -375,6 +375,7 @@ function formatAmount(amount: number, currency: string) {
 
 function accountErrorMessage(error: string) {
   if (error === "phone") return "That phone number is already used by another account.";
+  if (error === "phone-invalid") return "Enter a valid Nigerian phone number, for example 07067686190 or 2347067686190.";
   if (error === "avatar-size") return "That profile photo is larger than the approved 5 MB limit.";
   if (error === "avatar-type") return "Choose a PNG, JPG, or WebP profile photo.";
   if (error === "avatar") return "The profile photo could not be uploaded. Please try again.";

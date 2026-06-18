@@ -41,7 +41,7 @@ export async function sendEmail(input: SendEmailInput) {
       subject: input.subject,
       body: body.slice(0, 500)
     });
-    return { skipped: false, failed: true };
+    return { skipped: false, failed: true, status: response.status };
   }
 
   return response.json();

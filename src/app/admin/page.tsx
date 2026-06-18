@@ -123,6 +123,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     pendingListings,
     verificationRequests,
     reports,
+    pendingClaims,
     publishedListings,
     pendingBusinesses,
     pendingVerificationRequests,
@@ -145,6 +146,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.business.count({ where: { listingStatus: "PENDING_REVIEW" } }),
     prisma.verificationRequest.count({ where: { status: "PENDING" } }),
     prisma.report.count({ where: { status: "OPEN" } }),
+    prisma.businessClaim.count({ where: { status: "PENDING" } }),
     prisma.business.count({ where: { listingStatus: "PUBLISHED" } }),
     prisma.business.findMany({
       where: { listingStatus: "PENDING_REVIEW" },
@@ -340,19 +342,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <main className="mx-auto max-w-7xl px-5 py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Admin</p>
       <h1 className="text-5xl font-black tracking-normal">Tradia control center</h1>
-      <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          [String(pendingListings), "Pending listings"],
-          [String(verificationRequests), "Verification requests"],
-          [String(reports), "Open reports"],
-          [String(publishedListings), "Published listings"],
-          [String(newLeads), "New enquiries"],
-          [String(expiringSubscriptionCount), "Renewals due"],
-          [String(expiredSubscriptionCount), "Expired plans"]
-        ].map(([value, label]) => (
-          <article key={label} className="rounded-tradia border border-slate-200 bg-white p-5">
+          [String(pendingListings), "Pending listings", ""],
+          [String(verificationRequests), "Verification requests", ""],
+          [String(reports), "Open reports", ""],
+          [String(pendingClaims), "Pending ownership claims", "/admin/claims"],
+          [String(publishedListings), "Published listings", ""],
+          [String(newLeads), "New enquiries", ""],
+          [String(expiringSubscriptionCount), "Renewals due", ""],
+          [String(expiredSubscriptionCount), "Expired plans", ""]
+        ].map(([value, label, href]) => (
+          <article key={label} className={`rounded-tradia border bg-white p-5 ${href ? "border-emerald-300" : "border-slate-200"}`}>
             <strong className="block text-3xl font-black text-ink">{value}</strong>
             <span className="text-sm text-slate-600">{label}</span>
+            {href ? <a href={href} className="mt-3 block text-sm font-black text-forest">Review claims</a> : null}
           </article>
         ))}
       </section>

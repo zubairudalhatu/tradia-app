@@ -81,6 +81,66 @@ export async function notifyVerificationDecision(
   });
 }
 
+export async function notifyClaimSubmitted(
+  business: NotificationBusiness,
+  claimant: { name: string; email: string }
+) {
+  await Promise.all([
+    sendEmail({
+      to: adminEmail(),
+      subject: `Business ownership claim: ${business.name}`,
+      html: paragraphEmail("New business ownership claim", [
+        `${claimant.name} (${claimant.email}) submitted an ownership claim for ${business.name}.`,
+        "Review the claimant's explanation and proof before transferring ownership."
+      ], { label: "Review Claims", url: appUrl("/admin/claims") })
+    }),
+    sendEmail({
+      to: claimant.email,
+      subject: `Your Tradia claim for ${business.name} was received`,
+      html: paragraphEmail("Claim received", [
+        `Hi ${claimant.name},`,
+        `Your ownership claim for ${business.name} is waiting for admin review. Tradia may contact you if more proof is needed.`
+      ], { label: "View Business", url: appUrl(`/businesses/${business.slug}`) })
+    })
+  ]);
+}
+
+export async function notifyClaimDecision(
+  business: NotificationBusiness,
+  claimant: { name: string; email: string },
+  status: "approved" | "rejected",
+  adminNotes?: string | null
+) {
+  await sendEmail({
+    to: claimant.email,
+    subject: `Your Tradia ownership claim was ${status}`,
+    html: paragraphEmail(`Ownership claim ${status}`, [
+      `Hi ${claimant.name},`,
+      `Your claim for ${business.name} was ${status}.`,
+      adminNotes ? `Admin note: ${adminNotes}` : "",
+      status === "approved" ? "The business is now connected to your Tradia account." : "You may submit a new claim later with clearer ownership proof."
+    ].filter(Boolean), status === "approved"
+      ? { label: "Manage Business", url: appUrl("/dashboard") }
+      : { label: "View Business", url: appUrl(`/businesses/${business.slug}`) })
+  });
+}
+
+export async function notifyPreviousOwnerClaimTransfer(
+  business: NotificationBusiness,
+  previousOwner: { name: string; email: string },
+  newOwner: { name: string; email: string }
+) {
+  await sendEmail({
+    to: previousOwner.email,
+    subject: `Ownership updated for ${business.name} on Tradia`,
+    html: paragraphEmail("Business ownership updated", [
+      `Hi ${previousOwner.name},`,
+      `After reviewing an ownership claim, Tradia assigned ${business.name} to ${newOwner.name} (${newOwner.email}).`,
+      "If you believe this transfer is incorrect, contact Tradia Support promptly with your ownership evidence."
+    ], { label: "Contact Support", url: appUrl("/contact#support-form") })
+  });
+}
+
 export async function notifyPaymentSuccess(
   business: NotificationBusiness,
   recipient: { name: string; email: string },

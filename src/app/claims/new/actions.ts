@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { notifyClaimSubmitted } from "@/lib/notifications";
 import { claimCreateSchema } from "@/lib/validations/business";
 
 export async function createClaimAction(formData: FormData) {
@@ -26,7 +27,8 @@ export async function createClaimAction(formData: FormData) {
     },
     select: {
       id: true,
-      slug: true
+      slug: true,
+      name: true
     }
   });
 
@@ -49,9 +51,11 @@ export async function createClaimAction(formData: FormData) {
         userId: user.id
       }
     });
+    await notifyClaimSubmitted(business, user);
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/claims");
   redirect(`/businesses/${business.slug}?claim=${existingClaim ? "already-pending" : "submitted"}`);
 }
 

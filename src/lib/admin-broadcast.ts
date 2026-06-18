@@ -5,7 +5,7 @@ export type BroadcastChannel = "EMAIL" | "SMS" | "WHATSAPP";
 
 type BroadcastRecipient = {
   name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
 };
 
@@ -16,6 +16,7 @@ export async function sendAdminBroadcast(input: {
   message: string;
 }) {
   if (input.channel === "EMAIL") {
+    if (!input.recipient.email) return false;
     const result = await sendEmail({
       to: input.recipient.email,
       subject: input.subject,

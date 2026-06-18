@@ -1,4 +1,5 @@
 import { paragraphEmail, sendEmail } from "@/lib/email";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 type NotificationBusiness = {
   id: string;
@@ -17,6 +18,52 @@ function appUrl(path = "/") {
 
 function adminEmail() {
   return process.env.TRADIA_SUPPORT_EMAIL || "tradia@zamkah.com.ng";
+}
+
+export async function notifyNewUserWelcome(user: { name: string; email: string; phone: string | null }) {
+  const firstName = user.name.trim().split(/\s+/)[0] || "there";
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
+  const sms = `Welcome to Tradia ${firstName}! Your account is ready. Complete your profile, list your business and get discovered. Visit tradiabusiness.com.`;
+
+  const deliveries: Promise<unknown>[] = [
+    sendEmail({
+      to: user.email,
+      subject: `Welcome to Tradia, ${firstName}`,
+      text: `Welcome to Tradia, ${firstName}! Your account is ready. Complete your profile, list your business and get discovered at ${baseUrl}.`,
+      html: paragraphEmail("Welcome to Tradia", [
+        `Hi ${firstName},`,
+        "Your Tradia account is ready. Complete your profile, list your business, and help customers discover what you offer.",
+        "You can build trust with business details, photos, reviews, verification, and direct contact options."
+      ], { label: "Complete your profile", url: `${baseUrl}/account` })
+    })
+  ];
+
+  if (user.phone) deliveries.push(sendWelcomeSms(user.phone, sms));
+  await Promise.allSettled(deliveries);
+}
+
+async function sendWelcomeSms(destination: string, message: string) {
+  const apiKey = process.env.TERMII_API_KEY?.trim();
+  const phone = normalizeNigerianPhone(destination);
+  if (!apiKey || !phone) return false;
+
+  const response = await fetch("https://api.ng.termii.com/api/sms/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      api_key: apiKey,
+      to: phone,
+      from: process.env.TERMII_SENDER_ID?.trim() || "Tradia",
+      sms: message,
+      type: "plain",
+      channel: "generic"
+    })
+  });
+
+  if (!response.ok) return false;
+
+  const result = await response.json() as { code?: number | string; status?: string };
+  return result.status !== "error" && !(Number(result.code) >= 400);
 }
 
 export async function notifyBusinessSubmitted(business: NotificationBusiness) {

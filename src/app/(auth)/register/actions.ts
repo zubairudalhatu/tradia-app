@@ -7,6 +7,7 @@ import { createAndSendAccountVerificationCode } from "@/lib/account-verification
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { nigerianPhoneVariants, normalizeNigerianPhone } from "@/lib/phone";
+import { notifyNewUserWelcome } from "@/lib/notifications";
 
 export async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -50,7 +51,10 @@ export async function registerAction(formData: FormData) {
     }
   });
   await createSession(user.id);
-  const verification = await createAndSendAccountVerificationCode(user, "EMAIL");
+  const [verification] = await Promise.all([
+    createAndSendAccountVerificationCode(user, "EMAIL"),
+    notifyNewUserWelcome(user)
+  ]);
   if (!verification.ok) {
     redirect(`/verify-account?error=${verification.reason}&method=email`);
   }

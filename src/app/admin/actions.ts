@@ -33,25 +33,7 @@ export async function sendBroadcastAction(formData: FormData) {
     redirect("/admin/communications?broadcast=invalid");
   }
 
-  const recipientCandidates = await prisma.user.findMany({
-    where: {
-      status: "ACTIVE",
-      ...(audience === "BUSINESS_OWNERS"
-        ? { businesses: { some: {} } }
-        : audience === "REGULAR_USERS"
-        ? { businesses: { none: {} } }
-        : {}),
-      ...(channel === "EMAIL"
-        ? { emailVerifiedAt: { not: null } }
-        : { phone: { not: null } })
-    },
-    select: { id: true, name: true, email: true, phone: true },
-    orderBy: { createdAt: "asc" },
-    take: channel === "EMAIL" ? MAX_BROADCAST_RECIPIENTS : MAX_BROADCAST_RECIPIENTS * 2
-  });
-  const recipients = recipientCandidates
-    .filter((recipient) => channel === "EMAIL" || Boolean(normalizeNigerianPhone(recipient.phone)))
-    .slice(0, MAX_BROADCAST_RECIPIENTS);
+  const recipients = await getBroadcastRecipients(channel, audience);
 
   let delivered = 0;
   const batches = chunk(recipients, channel === "EMAIL" ? 4 : 10);
@@ -523,11 +505,62 @@ function normalizeBroadcastChannel(value: string): BroadcastChannel | null {
 }
 
 function normalizeBroadcastAudience(value: string) {
-  if (["ALL_ACTIVE", "BUSINESS_OWNERS", "REGULAR_USERS"].includes(value)) {
-    return value as "ALL_ACTIVE" | "BUSINESS_OWNERS" | "REGULAR_USERS";
+  if (["ALL_ACTIVE", "BUSINESS_OWNERS", "REGULAR_USERS", "BUSINESS_CONTACTS"].includes(value)) {
+    return value as "ALL_ACTIVE" | "BUSINESS_OWNERS" | "REGULAR_USERS" | "BUSINESS_CONTACTS";
   }
 
   return null;
+}
+
+type BroadcastAudience = NonNullable<ReturnType<typeof normalizeBroadcastAudience>>;
+type BroadcastRecipient = { name: string; email: string | null; phone: string | null };
+
+async function getBroadcastRecipients(channel: BroadcastChannel, audience: BroadcastAudience) {
+  let candidates: BroadcastRecipient[];
+
+  if (audience === "BUSINESS_CONTACTS") {
+    const businesses = await prisma.business.findMany({
+      where: {
+        listingStatus: { not: "REJECTED" },
+        ...(channel === "EMAIL"
+          ? { email: { not: null } }
+          : { OR: [{ phone: { not: null } }, { whatsapp: { not: null } }] })
+      },
+      select: { name: true, email: true, phone: true, whatsapp: true },
+      orderBy: { createdAt: "asc" },
+      take: MAX_BROADCAST_RECIPIENTS * 2
+    });
+    candidates = businesses.map((business) => ({
+      name: business.name,
+      email: business.email,
+      phone: channel === "WHATSAPP" ? business.whatsapp || business.phone : business.phone || business.whatsapp
+    }));
+  } else {
+    candidates = await prisma.user.findMany({
+      where: {
+        status: "ACTIVE",
+        ...(audience === "BUSINESS_OWNERS"
+          ? { businesses: { some: {} } }
+          : audience === "REGULAR_USERS"
+          ? { businesses: { none: {} } }
+          : {}),
+        ...(channel === "EMAIL" ? {} : { phone: { not: null } })
+      },
+      select: { name: true, email: true, phone: true },
+      orderBy: { createdAt: "asc" },
+      take: channel === "EMAIL" ? MAX_BROADCAST_RECIPIENTS : MAX_BROADCAST_RECIPIENTS * 2
+    });
+  }
+
+  const seen = new Set<string>();
+  return candidates.filter((recipient) => {
+    const destination = channel === "EMAIL"
+      ? recipient.email?.trim().toLowerCase()
+      : normalizeNigerianPhone(recipient.phone);
+    if (!destination || seen.has(destination)) return false;
+    seen.add(destination);
+    return true;
+  }).slice(0, MAX_BROADCAST_RECIPIENTS);
 }
 
 function chunk<T>(items: T[], size: number) {

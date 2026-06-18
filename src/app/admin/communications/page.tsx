@@ -15,8 +15,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
   if (!user) redirect("/login");
   if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) redirect("/admin");
 
-  const [verifiedEmailUsers, phoneUsers, activeUsers] = await Promise.all([
-    prisma.user.count({ where: { status: "ACTIVE", emailVerifiedAt: { not: null } } }),
+  const [emailUsers, phoneUsers, activeUsers] = await Promise.all([
+    prisma.user.count({ where: { status: "ACTIVE" } }),
     prisma.user.findMany({
       where: { status: "ACTIVE", phone: { not: null } },
       select: { phone: true }
@@ -44,7 +44,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
       <div className="mt-8 grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
         <section className="grid content-start gap-3 sm:grid-cols-3 xl:grid-cols-1">
           <Metric value={activeUsers} label="Active registered users" />
-          <Metric value={verifiedEmailUsers} label="Eligible for email" />
+          <Metric value={emailUsers} label="Eligible for email" />
           <Metric value={contactablePhoneUsers} label="Eligible for SMS or WhatsApp" />
         </section>
         <form action={sendBroadcastAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-2">
@@ -60,9 +60,10 @@ export default async function CommunicationsPage({ searchParams }: Communication
           <label className="grid gap-2 text-sm font-bold text-slate-600">
             Audience
             <select className="rounded-tradia border border-slate-200 px-4 py-3" name="audience" required>
-              <option value="ALL_ACTIVE">All eligible active users</option>
-              <option value="BUSINESS_OWNERS">Business owners</option>
+              <option value="ALL_ACTIVE">All active registered users</option>
+              <option value="BUSINESS_OWNERS">Registered business owners</option>
               <option value="REGULAR_USERS">Users without a business</option>
+              <option value="BUSINESS_CONTACTS">Registered business contacts</option>
             </select>
           </label>
           <label className="grid gap-2 text-sm font-bold text-slate-600 md:col-span-2">

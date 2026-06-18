@@ -50,11 +50,13 @@ export async function sendBroadcastAction(formData: FormData) {
   });
 
   let delivered = 0;
-  for (const batch of chunk(recipients, 20)) {
+  const batches = chunk(recipients, channel === "EMAIL" ? 4 : 10);
+  for (const [index, batch] of batches.entries()) {
     const results = await Promise.allSettled(
       batch.map((recipient) => sendAdminBroadcast({ channel, recipient, subject: subject || "Tradia update", message }))
     );
     delivered += results.filter((result) => result.status === "fulfilled" && result.value).length;
+    if (index < batches.length - 1) await delay(1100);
   }
 
   await createAuditLog({
@@ -75,6 +77,10 @@ export async function sendBroadcastAction(formData: FormData) {
 
   revalidatePath("/admin");
   redirect(`/admin/communications?broadcast=sent&delivered=${delivered}&attempted=${recipients.length}`);
+}
+
+function delay(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 export async function approveBusinessAction(formData: FormData) {

@@ -64,14 +64,14 @@ export function TradiaHelpChat() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 z-50 sm:right-4">
       {open ? (
-        <section className="mb-3 w-[min(92vw,390px)] overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-2xl" aria-label="Tradia Help Assistant">
+        <section className="fixed inset-x-3 bottom-20 flex max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-tradia border border-slate-200 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:mb-3 sm:max-h-[min(680px,calc(100dvh-6rem))] sm:w-[390px]" aria-label="Tradia Help Assistant">
           <header className="flex items-center justify-between bg-ink px-4 py-3 text-white">
             <span className="flex items-center gap-2 font-black"><Bot className="h-5 w-5" />Tradia Help Assistant</span>
             <button onClick={() => setOpen(false)} aria-label="Close help"><X className="h-5 w-5" /></button>
           </header>
-          <div className="max-h-[68vh] overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
             <div className="grid gap-3">
               {messages.map((message, index) => (
                 <p key={`${message.role}-${index}`} className={`max-w-[90%] rounded-tradia p-3 text-sm leading-6 ${message.role === "user" ? "ml-auto bg-forest text-white" : "bg-slate-50 text-slate-700"}`}>

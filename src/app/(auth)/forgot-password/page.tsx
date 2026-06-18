@@ -11,7 +11,7 @@ export default async function ForgotPasswordPage({ searchParams }: ForgotPasswor
   return (
     <main className="mx-auto max-w-md px-5 py-16">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
-      <h1 className="text-4xl font-black tracking-normal">Reset your password</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Reset your password</h1>
       <p className="mt-4 text-slate-600">
         Enter your account email and we will send a secure reset link if the account exists.
       </p>

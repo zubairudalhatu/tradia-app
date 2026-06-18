@@ -11,7 +11,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   return (
     <main className="mx-auto max-w-md px-5 py-16">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
-      <h1 className="text-4xl font-black tracking-normal">Choose a new password</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Choose a new password</h1>
       {params.error ? (
         <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {params.error === "expired" ? "This reset link is invalid or has expired." : "Use matching passwords of at least 8 characters."}

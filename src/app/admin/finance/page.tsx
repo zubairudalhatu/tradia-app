@@ -57,9 +57,9 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
   const token = createAdminActionToken(user);
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Admin finance</p>
-      <h1 className="mt-1 text-4xl font-black text-ink">Payments and wallet operations</h1>
+      <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Payments and wallet operations</h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Metric value={formatAmount(successfulRevenue._sum.amount ?? 0, "NGN")} label={`${successfulRevenue._count} successful payments`} />
         <Metric value={formatAmount(walletCredits._sum.amount ?? 0, "NGN")} label="Wallet top-ups recorded" />

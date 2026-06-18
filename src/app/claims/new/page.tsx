@@ -27,7 +27,7 @@ export default async function ClaimBusinessPage({ searchParams }: ClaimPageProps
     return (
       <main className="mx-auto max-w-2xl px-5 py-16">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Claim listing</p>
-        <h1 className="text-4xl font-black tracking-normal">Choose a business profile first</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Choose a business profile first</h1>
         <p className="mt-4 leading-7 text-slate-600">
           Open the public business profile you want to claim, then use the claim button on that page.
         </p>
@@ -69,7 +69,7 @@ export default async function ClaimBusinessPage({ searchParams }: ClaimPageProps
     return (
       <main className="mx-auto max-w-2xl px-5 py-16">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Claim listing</p>
-        <h1 className="text-4xl font-black tracking-normal">Business not found</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Business not found</h1>
         <p className="mt-4 leading-7 text-slate-600">
           This listing may no longer be published. Please browse the directory and try again.
         </p>
@@ -87,7 +87,7 @@ export default async function ClaimBusinessPage({ searchParams }: ClaimPageProps
   return (
     <main className="mx-auto max-w-2xl px-5 py-16">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Claim listing</p>
-      <h1 className="text-4xl font-black tracking-normal">Claim {business.name}</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Claim {business.name}</h1>
       <p className="mt-4 leading-7 text-slate-600">
         Submit a short explanation and optional proof link. Tradia admins will review the claim before assigning ownership.
       </p>

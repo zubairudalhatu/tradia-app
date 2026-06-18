@@ -278,7 +278,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-7xl items-start gap-6 px-5 py-12 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <p className="mb-2 text-sm font-extrabold uppercase text-ember">Why Tradia</p>
-            <h2 className="text-4xl font-black tracking-normal text-ink">Built for Nigerian discovery and SME trust.</h2>
+            <h2 className="text-3xl font-black leading-tight tracking-normal text-ink sm:text-4xl">Built for Nigerian discovery and SME trust.</h2>
             <p className="mt-4 leading-7 text-slate-600">
               Customers need confidence before they call. Business owners need visibility that looks credible. Tradia brings both sides into one searchable directory.
             </p>

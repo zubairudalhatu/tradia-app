@@ -64,7 +64,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   ];
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
@@ -72,7 +72,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
       <Breadcrumbs items={breadcrumbs} />
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Location</p>
-        <h1 className="text-5xl font-black tracking-normal">Businesses in {area.name}</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Businesses in {area.name}</h1>
         <p className="mt-4 text-lg text-slate-600">
           Browse trusted local businesses in {area.name}, including verified profiles, reviews, and contact options.
         </p>

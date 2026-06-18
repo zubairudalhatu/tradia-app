@@ -21,9 +21,9 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
   const canTransfer = admin.role === "ADMIN" || admin.role === "SUPER_ADMIN";
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Ownership review</p>
-      <h1 className="mt-1 text-4xl font-black text-ink">Business claims</h1>
+      <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Business claims</h1>
       <p className="mt-2 max-w-3xl text-slate-600">Review the claimant, explanation, and proof before transferring a listing. Approval immediately replaces the current owner.</p>
       {params.saved ? <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">Claim {params.saved} successfully.</p> : null}
       {params.error ? <p className="mt-5 rounded-tradia border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{claimError(params.error)}</p> : null}

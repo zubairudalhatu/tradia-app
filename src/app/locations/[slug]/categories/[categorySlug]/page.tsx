@@ -67,7 +67,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
   ];
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(breadcrumbs, baseUrl)) }}
@@ -75,7 +75,7 @@ export default async function CategoryLocationPage({ params }: CategoryLocationP
       <Breadcrumbs items={breadcrumbs} />
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Local Search</p>
-        <h1 className="text-5xl font-black tracking-normal">{category.name} in {area.name}</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">{category.name} in {area.name}</h1>
         <p className="mt-4 text-lg text-slate-600">
           Find trusted {category.name.toLowerCase()} businesses in {area.name}, with ratings, contact options, and verification status.
         </p>

@@ -54,10 +54,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const walletOrders = walletState.orders;
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-12">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-12">
       <div className="max-w-3xl">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account</p>
-        <h1 className="text-5xl font-black tracking-normal">Your profile</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Your profile</h1>
         <p className="mt-4 text-lg text-slate-600">
           Keep your display name, phone number, and contact details current so Tradia can connect listings, reviews, and verification activity to the right person.
         </p>
@@ -83,7 +83,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </p>
       ) : null}
 
-      <section className="mt-8 grid max-w-3xl gap-5 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[180px_1fr]">
+      <section className="mt-8 grid max-w-3xl gap-5 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:p-6 md:grid-cols-[180px_1fr]">
         <form action={updateAvatarAction} className="grid content-start gap-3">
           <div className="relative aspect-square overflow-hidden rounded-tradia border border-slate-200 bg-slate-50">
             {profile.avatarUrl ? (

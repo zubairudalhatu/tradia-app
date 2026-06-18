@@ -86,7 +86,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
       <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
         <div className="max-w-3xl">
           <p className="mb-2 text-sm font-extrabold uppercase text-ember">Directory</p>
-          <h1 className="break-words text-4xl font-black leading-tight tracking-normal md:text-5xl">Browse Nigerian businesses</h1>
+          <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Browse Nigerian businesses</h1>
           <p className="mt-3 text-base leading-7 text-slate-600 sm:mt-4 sm:text-lg">
             Search Nigeria business listings by name, category, service, location, opening status, and verification.
           </p>

@@ -74,9 +74,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }, {});
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Business Dashboard</p>
-      <h1 className="text-5xl font-black tracking-normal">Manage your Tradia profile</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Manage your Tradia profile</h1>
       {params.submitted ? (
         <p className="mt-5 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-forest">
           Your business has been submitted and is waiting for admin approval.

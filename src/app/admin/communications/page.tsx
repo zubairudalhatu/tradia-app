@@ -21,9 +21,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
   ]);
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Admin communications</p>
-      <h1 className="mt-1 text-4xl font-black text-ink">Registered-user broadcasts</h1>
+      <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Registered-user broadcasts</h1>
       <p className="mt-2 max-w-3xl leading-7 text-slate-600">
         Send necessary Tradia service and account updates through one verified channel at a time.
       </p>

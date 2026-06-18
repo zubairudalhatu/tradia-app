@@ -261,13 +261,13 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
         <div className="relative">
           {business.coverUrl ? (
             <img
-              className="h-72 w-full bg-slate-100 object-cover sm:h-64"
+              className="h-80 w-full bg-slate-100 object-cover sm:h-72 md:h-64"
               src={business.coverUrl}
               alt={`${business.name} cover image`}
               style={{ objectPosition: `${business.coverCropX}% ${business.coverCropY}%` }}
             />
           ) : (
-            <div className="h-72 bg-gradient-to-br from-forest to-ink sm:h-64" />
+            <div className="h-80 bg-gradient-to-br from-forest to-ink sm:h-72 md:h-64" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
           {isOwner ? (

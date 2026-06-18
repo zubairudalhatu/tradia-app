@@ -13,9 +13,9 @@ export default async function AdminSupportPage() {
   const requests = await prisma.supportRequest.findMany({ orderBy: { createdAt: "desc" }, take: 100 });
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Support centre</p>
-      <h1 className="mt-1 text-4xl font-black text-ink">Support requests</h1>
+      <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Support requests</h1>
       <p className="mt-2 text-slate-600">Review enquiries submitted through the Tradia contact form.</p>
       <section className="mt-6 divide-y divide-slate-200 rounded-tradia border border-slate-200 bg-white shadow-sm">
         {requests.length ? requests.map((request) => (

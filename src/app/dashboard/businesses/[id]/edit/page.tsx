@@ -70,9 +70,9 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   const photoCount = business.media.filter((item) => isPhotoMediaType(item.type)).length;
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-12">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-5 sm:py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Business Dashboard</p>
-      <h1 className="text-5xl font-black tracking-normal">Edit {business.name}</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Edit {business.name}</h1>
       <p className="mt-4 text-lg text-slate-600">
         Update public profile details. Approval and verification status are still controlled by Tradia admins.
       </p>
@@ -138,7 +138,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
         )}
       </section>
 
-      <form action={action} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+      <form action={action} className="mt-8 grid gap-4 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:p-6 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Business name
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" defaultValue={business.name} required />

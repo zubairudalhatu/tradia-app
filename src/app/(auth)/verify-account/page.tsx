@@ -21,7 +21,7 @@ export default async function VerifyAccountPage({ searchParams }: VerifyAccountP
   return (
     <main className="mx-auto max-w-2xl px-5 py-16">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Account verification</p>
-      <h1 className="text-4xl font-black tracking-normal">Verify your Tradia account</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">Verify your Tradia account</h1>
       <p className="mt-4 text-sm leading-6 text-slate-600">
         Choose one verification channel. Email verifies your email address. SMS or WhatsApp verifies your phone number.
       </p>

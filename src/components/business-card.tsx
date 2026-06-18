@@ -60,16 +60,16 @@ export function BusinessCard({ business }: BusinessCardProps) {
         </div>
       </div>
       <p className="line-clamp-3 break-words text-sm leading-6 text-slate-600">{business.description}</p>
-      <div className="mt-4 grid grid-cols-3 gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-bold text-slate-600">
-        <span>
+      <div className="mt-4 grid gap-2 rounded-tradia bg-slate-50 p-3 text-xs font-bold text-slate-600 min-[390px]:grid-cols-3">
+        <span className="min-w-0">
           <strong className="block text-sm text-ink">{hasRating ? rating.toFixed(1) : "New"}</strong>
           {business.reviewCount ? `${business.reviewCount} review${business.reviewCount === 1 ? "" : "s"}` : "No reviews yet"}
         </span>
-        <span>
+        <span className="min-w-0">
           <strong className="block text-sm text-ink">{contactCount || "Limited"}</strong>
           Contact channel{contactCount === 1 ? "" : "s"}
         </span>
-        <span>
+        <span className="min-w-0">
           <strong className="block text-sm text-ink">{isVerified ? "Trusted" : "Listed"}</strong>
           Tradia status
         </span>

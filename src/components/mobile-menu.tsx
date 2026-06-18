@@ -23,7 +23,7 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <div className="relative md:hidden">
+    <div className="relative z-[60] md:hidden">
       <button
         type="button"
         className="inline-flex h-10 w-10 items-center justify-center rounded-tradia border border-slate-200 bg-white text-ink shadow-sm transition hover:border-forest/30 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
@@ -37,7 +37,7 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
       {isOpen ? (
         <nav
           id="mobile-site-menu"
-          className="fixed left-4 right-4 top-16 z-50 grid gap-1 rounded-tradia border border-slate-200 bg-white p-3 text-sm font-bold text-slate-700 shadow-xl"
+          className="fixed left-3 right-3 top-[4.25rem] z-[60] grid max-h-[calc(100dvh-5rem)] gap-1 overflow-y-auto rounded-tradia border border-slate-200 bg-white p-3 text-sm font-bold text-slate-700 shadow-xl sm:left-4 sm:right-4 sm:top-20"
         >
           <Link className={menuLinkClass} href="/businesses" onClick={closeMenu}>Browse</Link>
           <Link className={menuLinkClass} href="/pricing" onClick={closeMenu}>Pricing</Link>

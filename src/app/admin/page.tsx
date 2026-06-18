@@ -339,9 +339,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const listingQuality = buildListingQualityDashboard(qualityBusinesses);
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Admin</p>
-      <h1 className="text-5xl font-black tracking-normal">Tradia control center</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Tradia control center</h1>
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
           [String(pendingListings), "Pending listings", ""],

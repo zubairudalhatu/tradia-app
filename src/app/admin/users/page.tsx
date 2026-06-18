@@ -26,9 +26,9 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   const token = createAdminActionToken(user);
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
       <p className="text-sm font-extrabold uppercase text-ember">Admin directory</p>
-      <h1 className="mt-1 text-4xl font-black text-ink">Users</h1>
+      <h1 className="mt-1 break-words text-3xl font-black leading-tight text-ink sm:text-4xl">Users</h1>
       <form action="/admin/users" className="mt-6 grid gap-3 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto]">
         <input className="rounded-tradia border border-slate-200 px-4 py-3" name="q" defaultValue={params.q ?? ""} placeholder="Search name, email, or phone" />
         <button className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">Search users</button>

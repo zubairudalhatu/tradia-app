@@ -22,9 +22,9 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-3xl px-5 py-12">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-5 sm:py-12">
         <p className="mb-2 text-sm font-extrabold uppercase text-ember">Onboarding</p>
-        <h1 className="text-5xl font-black tracking-normal">Sign in to list your business free</h1>
+        <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">Sign in to list your business free</h1>
         <p className="mt-4 text-lg text-slate-600">
           Business submissions are tied to owner accounts so Tradia can support approvals, edits, and verification.
         </p>
@@ -50,9 +50,9 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-12">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-5 sm:py-12">
       <p className="mb-2 text-sm font-extrabold uppercase text-ember">Onboarding</p>
-      <h1 className="text-5xl font-black tracking-normal">List your business free</h1>
+      <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl md:text-5xl">List your business free</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
         Create a profile customers can trust. Start with the required details, then add media, opening hours, verification documents, and a visibility plan from your dashboard.
       </p>
@@ -62,7 +62,7 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
         </p>
       ) : null}
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
-      <form action={submitBusinessAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+      <form action={submitBusinessAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:p-6 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Business name
           <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" placeholder="Aisha Fashion House" required />

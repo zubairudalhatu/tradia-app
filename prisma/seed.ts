@@ -23,19 +23,24 @@ async function main() {
   });
 
   const categories = [
-    ["Hospitality", "hospitality", "Hotels, restaurants, bars, lounges, events, and tourism services."],
+    ["Hotels & Hospitality", "hospitality", "Hotels, guest houses, resorts, bars, lounges, and tourism services."],
+    ["Restaurants & Food Services", "restaurants-food-services", "Restaurants, cafes, bakeries, caterers, grills, and prepared food services."],
     ["Healthcare", "healthcare", "Clinics, hospitals, pharmacies, diagnostics, wellness, and medical services."],
     ["Education", "education", "Schools, training centres, tutors, academies, and learning services."],
     ["Retail", "retail", "Shops, supermarkets, boutiques, ecommerce sellers, and general trading."],
     ["Professional Services", "professional-services", "Consultants, legal, accounting, business support, and agencies."],
-    ["Home & Construction", "home-construction", "Builders, real estate, interior design, furniture, repairs, and artisans."],
-    ["Automotive & Transport", "automotive-transport", "Car dealers, mechanics, logistics, transport, and delivery companies."],
+    ["Printing Services", "printing-services", "Commercial printing, signage, photocopying, packaging print, and related services."],
+    ["Home & Construction", "home-construction", "Builders, interior designers, furniture businesses, repairs, and artisans."],
+    ["Real Estate & Property", "real-estate-property", "Estate agents, property developers, property managers, valuers, and facility services."],
+    ["Automotive & Transport", "automotive-transport", "Car dealers, mechanics, vehicle services, and passenger transport."],
+    ["Logistics & Delivery", "logistics-delivery", "Courier, dispatch, haulage, freight, warehousing, and delivery companies."],
     ["Technology", "technology", "Software, ICT services, gadgets, cybersecurity, and digital products."],
     ["Beauty & Fashion", "beauty-fashion", "Salons, cosmetics, tailoring, fashion stores, and grooming services."],
-    ["Agriculture & Food", "agriculture-food", "Farms, food processing, agro suppliers, livestock, and produce businesses."],
+    ["Agriculture & Agro Services", "agriculture-food", "Farms, food processing, agro suppliers, livestock, and produce businesses."],
     ["Finance & Insurance", "finance-insurance", "Banks, fintechs, cooperative societies, insurance, and financial advisors."],
     ["Manufacturing & Industrial", "manufacturing-industrial", "Factories, industrial suppliers, equipment, production, and fabrication."],
-    ["Media & Entertainment", "media-entertainment", "Studios, creators, event planners, photography, and entertainment services."],
+    ["Media & Entertainment", "media-entertainment", "Studios, creators, photography, production, and entertainment services."],
+    ["Events & Event Services", "events-event-services", "Event planners, venues, decorators, rentals, and celebration services."],
     ["Public & Community Services", "public-community-services", "NGOs, associations, religious centres, and public-facing services."],
     ["Services", "services", "General services that do not fit neatly into another category."]
   ];

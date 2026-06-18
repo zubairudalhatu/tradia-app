@@ -6,13 +6,17 @@ import {
   BriefcaseBusiness,
   Building2,
   CarFront,
+  CalendarDays,
   Clapperboard,
   GraduationCap,
   Hammer,
   HandHeart,
   HeartPulse,
+  Hotel,
+  House,
   Landmark,
   Leaf,
+  Printer,
   Search,
   ShieldCheck,
   Shirt,
@@ -20,6 +24,7 @@ import {
   Sparkles,
   Store,
   TrendingUp,
+  Truck,
   Utensils
 } from "lucide-react";
 import { AdsenseSlot } from "@/components/adsense-slot";
@@ -351,19 +356,24 @@ function ProofPoint({
 
 function getCategoryIcon(categoryName: string): LucideIcon {
   const icons: Record<string, LucideIcon> = {
-    Hospitality: Utensils,
+    "Hotels & Hospitality": Hotel,
+    "Restaurants & Food Services": Utensils,
     Healthcare: HeartPulse,
     Education: GraduationCap,
     Retail: ShoppingBag,
     "Professional Services": BriefcaseBusiness,
+    "Printing Services": Printer,
     "Home & Construction": Hammer,
+    "Real Estate & Property": House,
     "Automotive & Transport": CarFront,
+    "Logistics & Delivery": Truck,
     Technology: Sparkles,
     "Beauty & Fashion": Shirt,
-    "Agriculture & Food": Leaf,
+    "Agriculture & Agro Services": Leaf,
     "Finance & Insurance": Landmark,
     "Manufacturing & Industrial": Building2,
     "Media & Entertainment": Clapperboard,
+    "Events & Event Services": CalendarDays,
     "Public & Community Services": HandHeart,
     Services: Store
   };

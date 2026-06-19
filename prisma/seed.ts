@@ -227,10 +227,12 @@ async function main() {
         canBeFeatured,
         analyticsEnabled,
         listingPriority: annualPrice === 0 ? 0 : annualPrice / 5000,
+        profilePdfEnabled: name === "Platinum",
         features: {
           verification: name !== "Free",
           analytics: analyticsEnabled,
-          featured: canBeFeatured
+          featured: canBeFeatured,
+          profilePdf: name === "Platinum"
         }
       }
     });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
@@ -63,7 +64,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
       <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
         Create a free listing, then upgrade when your business needs more photos, analytics,
         stronger placement, and eligibility for Tradia verification review. Paid plans improve
-        visibility tools; verification is still reviewed separately by admins.
+        visibility tools, and Platinum adds a downloadable company profile PDF; verification is
+        still reviewed separately by admins.
       </p>
       <section className="mt-8 grid gap-4 md:grid-cols-3">
         <PricingBenefit
@@ -100,10 +102,15 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           <article
             key={plan.name}
             className={`min-w-0 overflow-hidden rounded-tradia border bg-white p-5 shadow-sm ${
-              isCurrentForAnyBusiness ? "border-forest ring-2 ring-emerald-100" : "border-slate-200"
+              isCurrentForAnyBusiness || plan.name === "Platinum" ? "border-forest ring-2 ring-emerald-100" : "border-slate-200"
             }`}
           >
             <h2 className="text-xl font-black">{plan.name}</h2>
+            {plan.name === "Platinum" ? (
+              <p className="mt-3 inline-flex rounded-full bg-ink px-3 py-1 text-xs font-black text-white">
+                Best for established businesses
+              </p>
+            ) : null}
             {isCurrentForAnyBusiness ? (
               <p className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-forest">
                 Current plan
@@ -128,10 +135,16 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             <p className="mt-1 text-sm text-slate-500">per year</p>
             <ul className="mt-5 grid gap-3 text-sm text-slate-600">
               {plan.featureList.map((feature) => (
-                <li key={feature}>{pricingFeatureLabel(feature)}</li>
+                <li key={feature} className="flex items-start gap-2">
+                  <Check className="mt-0.5 shrink-0 text-forest" size={16} aria-hidden="true" />
+                  <span>{pricingFeatureLabel(feature)}</span>
+                </li>
               ))}
               {extraPlanBenefits(plan.name).map((feature) => (
-                <li key={feature}>{feature}</li>
+                <li key={feature} className="flex items-start gap-2">
+                  <Check className="mt-0.5 shrink-0 text-forest" size={16} aria-hidden="true" />
+                  <span>{feature}</span>
+                </li>
               ))}
             </ul>
             {plan.annualPrice > 0 ? (
@@ -264,28 +277,37 @@ function extraPlanBenefits(planName: string) {
   if (planName === "Free") {
     return [
       "Claimable public business profile",
-      "Customer phone, WhatsApp, email, and website links"
+      "Customer phone, WhatsApp, email, and website links",
+      "Customer reviews and owner responses",
+      "QR poster and profile sharing tools"
     ];
   }
 
   if (planName === "Silver") {
     return [
-      "Better launch-ready profile capacity",
+      "Business performance analytics dashboard",
+      "Customer reviews and owner responses",
+      "QR poster and profile sharing tools",
       "Good fit for first-time online visibility"
     ];
   }
 
   if (planName === "Gold") {
     return [
+      "Higher plan-based directory placement",
       "Eligible for homepage feature campaigns",
-      "Stronger media capacity for products, services, and proof"
+      "Stronger media capacity for products, services, and proof",
+      "QR poster, enquiry inbox, and profile sharing tools"
     ];
   }
 
   if (planName === "Platinum") {
     return [
-      "Best fit for multi-photo business showcases",
-      "Priority-ready profile for launch campaigns and wallet add-ons"
+      "Upload a public company profile PDF up to 20 MB",
+      "Highest plan-based directory placement",
+      "Best fit for corporate and multi-photo showcases",
+      "Homepage feature campaign eligibility",
+      "Analytics, enquiry inbox, QR poster, and owner growth tools"
     ];
   }
 

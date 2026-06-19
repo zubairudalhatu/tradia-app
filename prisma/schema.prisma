@@ -394,6 +394,7 @@ model Plan {
   maxPhotos        Int        @default(3)
   canBeFeatured    Boolean    @default(false)
   analyticsEnabled Boolean    @default(false)
+  profilePdfEnabled Boolean   @default(false)
   isActive         Boolean    @default(true)
   businesses       Business[]
   subscriptions    Subscription[]

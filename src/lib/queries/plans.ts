@@ -7,13 +7,13 @@ export async function listActivePlans() {
   });
 
   return plans.map((plan) => {
-    const features = plan.features as Record<string, unknown>;
     const featureList = [
       plan.name !== "Free" ? "Verification eligibility" : "Basic listing",
       `${plan.maxPhotos} photos`,
-      features.analytics ? "Analytics included" : "Standard search placement",
-      features.featured ? "Featured placement available" : "Normal placement"
-    ];
+      plan.analyticsEnabled ? "Analytics included" : "Standard search placement",
+      plan.canBeFeatured ? "Featured placement available" : "Normal placement",
+      plan.profilePdfEnabled ? "Public company profile PDF" : null
+    ].filter((feature): feature is string => Boolean(feature));
 
     return { ...plan, featureList };
   });

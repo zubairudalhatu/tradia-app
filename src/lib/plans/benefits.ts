@@ -5,6 +5,7 @@ type PlanBenefitInput = {
   maxPhotos: number;
   canBeFeatured: boolean;
   analyticsEnabled: boolean;
+  profilePdfEnabled: boolean;
 } | null;
 
 type SubscriptionInput = {
@@ -25,6 +26,7 @@ export function getPlanBenefits(plan: PlanBenefitInput) {
     maxPhotos: plan?.maxPhotos ?? 3,
     canBeFeatured: Boolean(plan?.canBeFeatured),
     analyticsEnabled: Boolean(plan?.analyticsEnabled),
+    profilePdfEnabled: Boolean(plan?.profilePdfEnabled),
     canRequestVerification: Boolean(plan && plan.annualPrice > 0)
   };
 }

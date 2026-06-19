@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import type { Location } from "@prisma/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ExternalLink, FileText } from "lucide-react";
 import { AdsenseSlot } from "@/components/adsense-slot";
 import { Breadcrumbs, breadcrumbJsonLd } from "@/components/breadcrumbs";
 import { BusinessGrowthTools } from "@/components/business-growth-tools";
 import { BusinessOwnerMediaPanel } from "@/components/business-owner-media-panel";
+import { BusinessProfileDocumentPanel } from "@/components/business-profile-document-panel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getBusinessPlanState } from "@/lib/plans/benefits";
@@ -112,7 +114,12 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
   const benefits = planState.benefits;
   const imageMedia = business.media.filter((item) => isImageMedia(item.type));
   const gallery = imageMedia.filter((item) => item.type !== "LOGO");
-  const documentMedia = business.media.filter((item) => !isImageMedia(item.type));
+  const profileDocument = business.media.find(
+    (item) => item.type === "DOCUMENT" && item.title?.startsWith("Company profile:")
+  );
+  const documentMedia = business.media.filter(
+    (item) => !isImageMedia(item.type) && item.id !== profileDocument?.id
+  );
   const primaryMedia = gallery[0] ?? imageMedia[0];
   const supportingMedia = gallery.filter((item) => item.id !== primaryMedia?.id).slice(0, 4);
   const baseUrl = (process.env.NEXTAUTH_URL || "https://www.tradiabusiness.com").replace(/\/$/, "");
@@ -320,6 +327,20 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
             isVerified={isVerified}
           />
         ) : null}
+        {isOwner ? (
+          <BusinessProfileDocumentPanel
+            businessId={business.id}
+            businessName={business.name}
+            planName={activePlanName}
+            enabled={benefits.profilePdfEnabled}
+            document={profileDocument ? {
+              id: profileDocument.id,
+              url: profileDocument.url,
+              title: profileDocument.title
+            } : undefined}
+            deleteAction={ownerDeleteMediaAction}
+          />
+        ) : null}
         <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-[1fr_340px]">
           <div>
             <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -329,6 +350,27 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
               <TrustMetric label="Contact" value={hasDirectContact ? "Available" : "Limited"} />
             </div>
             <p className="text-lg leading-8 text-slate-600">{business.description}</p>
+            {profileDocument ? (
+              <a
+                href={profileDocument.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-6 flex items-center justify-between gap-4 rounded-tradia border border-emerald-200 bg-emerald-50 p-4 transition hover:border-forest/40 hover:bg-emerald-100"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-tradia bg-white text-forest">
+                    <FileText size={20} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <strong className="block text-ink">Company profile</strong>
+                    <span className="block truncate text-sm text-slate-600">{displayDocumentTitle(profileDocument.title)}</span>
+                  </span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-2 text-sm font-black text-forest">
+                  Open PDF <ExternalLink size={16} aria-hidden="true" />
+                </span>
+              </a>
+            ) : null}
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {business.phone ? (
                 <ContactAction
@@ -483,7 +525,7 @@ export default async function BusinessPage({ params, searchParams }: BusinessPag
                   {documentMedia.map((item) => (
                     <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="rounded-tradia border border-slate-200 bg-white p-4 transition hover:border-forest/30 hover:shadow-sm">
                       <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase text-slate-500">{mediaTypeLabel(item.type)}</span>
-                      <strong className="mt-3 block text-ink">{mediaTypeLabel(item.type)}</strong>
+                      <strong className="mt-3 block text-ink">{item.title || mediaTypeLabel(item.type)}</strong>
                       <span className="mt-2 block text-sm font-semibold text-forest">View file</span>
                     </a>
                   ))}
@@ -756,6 +798,10 @@ function mediaTypeLabel(type: string) {
   if (type === "BROCHURE") return "Brochure";
   if (type === "DOCUMENT") return "Document";
   return "File";
+}
+
+function displayDocumentTitle(title: string | null) {
+  return title?.replace(/^Company profile:\s*/i, "") || "Company profile.pdf";
 }
 
 function mediaMessage(value: string) {

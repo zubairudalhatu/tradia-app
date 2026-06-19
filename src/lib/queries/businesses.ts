@@ -227,6 +227,43 @@ export async function createBusiness(input: z.infer<typeof businessCreateSchema>
   });
 }
 
+export async function findPotentialBusinessDuplicates(name: string, limit = 6) {
+  const normalizedQuery = normalizeBusinessName(name);
+  if (normalizedQuery.length < 3) return [];
+
+  const searchTerms = Array.from(new Set([
+    name.trim(),
+    normalizedQuery.split(" ")[0]?.slice(0, 3),
+    ...normalizedQuery.split(" ").filter((term) => term.length >= 3 && !legalNameSuffixes.has(term))
+  ].filter((term): term is string => Boolean(term)))).slice(0, 6);
+
+  const candidates = await prisma.business.findMany({
+    where: {
+      listingStatus: { in: ["DRAFT", "PENDING_REVIEW", "PUBLISHED", "SUSPENDED"] },
+      OR: searchTerms.map((term) => ({ name: { contains: term, mode: "insensitive" as const } }))
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      listingStatus: true,
+      category: { select: { name: true } },
+      location: { select: { name: true, state: true, parentId: true } }
+    },
+    take: 30
+  });
+
+  const minimumScore = normalizedQuery.length < 5 ? 0.58 : 0.42;
+  return candidates
+    .map((candidate) => ({
+      ...candidate,
+      score: businessNameSimilarity(normalizedQuery, normalizeBusinessName(candidate.name))
+    }))
+    .filter((candidate) => candidate.score >= minimumScore)
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
+    .slice(0, Math.min(Math.max(limit, 1), 10));
+}
+
 export async function updateOwnedBusiness(
   businessId: string,
   ownerId: string,
@@ -289,6 +326,58 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 
   return slug || "business";
+}
+
+const legalNameSuffixes = new Set([
+  "co", "company", "enterprise", "enterprises", "inc", "incorporated", "limited", "ltd", "llc", "nigeria", "ng", "plc"
+]);
+
+function normalizeBusinessName(value: string) {
+  const words = value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  while (words.length > 1 && legalNameSuffixes.has(words[words.length - 1])) words.pop();
+  return words.join(" ");
+}
+
+function businessNameSimilarity(left: string, right: string) {
+  if (!left || !right) return 0;
+  if (left === right) return 1;
+
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length > right.length ? left : right;
+  const containmentScore = longer.includes(shorter) ? 0.8 + (shorter.length / longer.length) * 0.18 : 0;
+  const leftTokens = new Set(left.split(" "));
+  const rightTokens = new Set(right.split(" "));
+  const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  const union = new Set([...leftTokens, ...rightTokens]).size;
+  const tokenScore = union ? intersection / union : 0;
+  const editScore = 1 - levenshteinDistance(left, right) / Math.max(left.length, right.length);
+
+  return Math.max(containmentScore, tokenScore * 0.9, editScore * 0.92);
+}
+
+function levenshteinDistance(left: string, right: string) {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1)
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+
+  return previous[right.length];
 }
 
 function clampResultLimit(limit?: number) {

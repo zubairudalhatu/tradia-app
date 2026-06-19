@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { isUserAccountVerified } from "@/lib/account-verification";
 import { createAuditLog } from "@/lib/audit";
-import { createBusiness } from "@/lib/queries/businesses";
+import { createBusiness, findPotentialBusinessDuplicates } from "@/lib/queries/businesses";
 import { businessCreateSchema } from "@/lib/validations/business";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notifyBusinessSubmitted } from "@/lib/notifications";
+import { prisma } from "@/lib/db";
 
 export async function submitBusinessAction(formData: FormData) {
   const user = await getCurrentUser();
@@ -34,6 +35,16 @@ export async function submitBusinessAction(formData: FormData) {
   if (!parsed.success) {
     redirect("/businesses/new?error=invalid");
   }
+
+  const [selectedLocation, duplicateCandidates] = await Promise.all([
+    prisma.location.findUnique({ where: { id: parsed.data.locationId }, select: { id: true, parentId: true } }),
+    findPotentialBusinessDuplicates(parsed.data.name, 10)
+  ]);
+  const selectedStateId = selectedLocation?.parentId ?? selectedLocation?.id;
+  const duplicate = duplicateCandidates.find((candidate) =>
+    candidate.score >= 0.94 && candidate.location.parentId === selectedStateId
+  );
+  if (duplicate) redirect("/businesses/new?error=duplicate");
 
   const business = await createBusiness(parsed.data, user.id);
   await createAuditLog({

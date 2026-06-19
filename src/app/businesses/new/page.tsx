@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { listActiveCategories } from "@/lib/queries/categories";
 import { listActiveStateSelections } from "@/lib/queries/locations";
 import { submitBusinessAction } from "./actions";
+import { BusinessNameSuggestions } from "@/components/business-name-suggestions";
 
 type NewBusinessPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -58,15 +59,14 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
       </p>
       {params.error ? (
         <p className="mt-4 rounded-tradia border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
-          Please complete the required business details. Description must be at least 20 characters.
+          {params.error === "duplicate"
+            ? "A very similar business is already listed or waiting for review in this state. Check the suggested businesses before submitting again."
+            : "Please complete the required business details. Description must be at least 20 characters."}
         </p>
       ) : null}
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
       <form action={submitBusinessAction} className="grid gap-4 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm sm:p-6 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-bold text-slate-600">
-          Business name
-          <input className="rounded-tradia border border-slate-200 px-4 py-3" name="name" placeholder="Aisha Fashion House" required />
-        </label>
+        <BusinessNameSuggestions />
         <label className="grid gap-2 text-sm font-bold text-slate-600">
           Category
           <select className="rounded-tradia border border-slate-200 px-4 py-3" name="categoryId" required>

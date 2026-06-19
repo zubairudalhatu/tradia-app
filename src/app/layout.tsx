@@ -70,6 +70,7 @@ export default function RootLayout({
       "https://x.com/tradiabusiness",
       "https://www.instagram.com/tradiabusiness",
       "https://www.facebook.com/tradiabusiness",
+      "https://www.linkedin.com/company/tradiabusiness",
       "https://www.tiktok.com/@tradiabusiness",
       "https://www.youtube.com/@tradiabusiness"
     ]

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { paragraphEmail, sendEmail } from "@/lib/email";
+import { verifyHumanChallenge } from "@/lib/human-verification";
 
 export async function createSupportRequestAction(formData: FormData) {
   const user = await getCurrentUser();
@@ -13,11 +14,24 @@ export async function createSupportRequestAction(formData: FormData) {
   const topic = normalizeTopic(String(formData.get("topic") ?? ""));
   const message = String(formData.get("message") ?? "").trim();
   const website = String(formData.get("website") ?? "").trim();
+  const humanToken = String(formData.get("humanToken") ?? "");
+  const humanAnswer = String(formData.get("humanAnswer") ?? "");
 
   if (website) redirect("/contact?sent=1");
+  if (!verifyHumanChallenge(humanToken, humanAnswer)) {
+    redirect("/contact?error=verification#support-form");
+  }
   if (name.length < 2 || !isValidEmail(email) || message.length < 15 || message.length > 3000) {
     redirect("/contact?error=invalid#support-form");
   }
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const [recentRequestCount, duplicateRequest] = await Promise.all([
+    prisma.supportRequest.count({ where: { email, createdAt: { gte: oneHourAgo } } }),
+    prisma.supportRequest.findFirst({ where: { email, message, createdAt: { gte: oneHourAgo } }, select: { id: true } })
+  ]);
+  if (duplicateRequest) redirect("/contact?sent=1#support-form");
+  if (recentRequestCount >= 3) redirect("/contact?error=rate-limit#support-form");
 
   const request = await prisma.supportRequest.create({
     data: { userId: user?.id, name, email, phone, topic, message }

@@ -1,5 +1,5 @@
 import type { IconType } from "react-icons";
-import { FaFacebookF, FaInstagram, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
 
 const channels: Array<{
   label: string;
@@ -9,6 +9,7 @@ const channels: Array<{
   { label: "X", href: "https://x.com/tradiabusiness", Icon: FaXTwitter },
   { label: "Instagram", href: "https://www.instagram.com/tradiabusiness", Icon: FaInstagram },
   { label: "Facebook", href: "https://www.facebook.com/tradiabusiness", Icon: FaFacebookF },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/tradiabusiness", Icon: FaLinkedinIn },
   { label: "TikTok", href: "https://www.tiktok.com/@tradiabusiness", Icon: FaTiktok },
   { label: "YouTube", href: "https://www.youtube.com/@tradiabusiness", Icon: FaYoutube }
 ];

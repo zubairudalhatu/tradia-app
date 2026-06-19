@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { getBusinessPlanState, isPhotoMediaType } from "@/lib/plans/benefits";
 import { getBusinessProfileCompleteness } from "@/lib/profile-completeness";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveStateAreaGroups } from "@/lib/queries/locations";
+import { listActiveStateSelections } from "@/lib/queries/locations";
 import {
   respondToReviewAction,
   submitVerificationRequestAction,
@@ -21,12 +21,12 @@ type EditBusinessPageProps = {
 export const dynamic = "force-dynamic";
 
 export default async function EditBusinessPage({ params, searchParams }: EditBusinessPageProps) {
-  const [{ id }, query, user, categories, locationGroups] = await Promise.all([
+  const [{ id }, query, user, categories, stateOptions] = await Promise.all([
     params,
     searchParams,
     getCurrentUser(),
     listActiveCategories(),
-    listActiveStateAreaGroups()
+    listActiveStateSelections()
   ]);
 
   if (!user) redirect(`/login?next=/dashboard/businesses/${id}/edit`);
@@ -68,6 +68,7 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
   const planState = getBusinessPlanState(business);
   const benefits = planState.benefits;
   const photoCount = business.media.filter((item) => isPhotoMediaType(item.type)).length;
+  const selectedStateLocationId = stateOptions.find((state) => state.stateId === business.location.parentId)?.id ?? business.locationId;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-5 sm:py-12">
@@ -170,14 +171,10 @@ export default async function EditBusinessPage({ params, searchParams }: EditBus
           </select>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
-          State / Area
-          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="locationId" defaultValue={business.locationId} required>
-            {locationGroups.map((state) => (
-              <optgroup key={state.id} label={state.name}>
-                {state.children.map((area) => (
-                  <option key={area.id} value={area.id}>{area.name}</option>
-                ))}
-              </optgroup>
+          State
+          <select className="rounded-tradia border border-slate-200 px-4 py-3" name="locationId" defaultValue={selectedStateLocationId} required>
+            {stateOptions.map((state) => (
+              <option key={state.id} value={state.id}>{state.name}</option>
             ))}
           </select>
         </label>

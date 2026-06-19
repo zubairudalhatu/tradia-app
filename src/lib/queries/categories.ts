@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 export function listActiveCategories() {
   return prisma.category.findMany({
     where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
+    orderBy: { name: "asc" }
   });
 }
 

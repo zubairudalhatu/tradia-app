@@ -160,10 +160,7 @@ export async function listPublishedBusinessCategories(filters: Pick<BusinessSear
       id: { in: categoryIds },
       isActive: true
     },
-    orderBy: [
-      { sortOrder: "asc" },
-      { name: "asc" }
-    ]
+    orderBy: { name: "asc" }
   });
 }
 
@@ -307,7 +304,7 @@ function buildPublishedBusinessWhere(filters: BusinessSearchFilters = {}) {
     listingStatus: "PUBLISHED",
     ...(filters.verified ? { verificationStatus: "VERIFIED" } : {}),
     ...(filters.category ? { category: { slug: filters.category } } : {}),
-    ...(filters.location ? { location: { slug: filters.location } } : {}),
+    ...(filters.location ? { location: buildLocationFilter(filters.location) } : {}),
     ...(openNow
       ? {
           hours: {
@@ -332,6 +329,20 @@ function buildPublishedBusinessWhere(filters: BusinessSearchFilters = {}) {
         }
       : {})
   } satisfies Prisma.BusinessWhereInput;
+}
+
+function buildLocationFilter(locationSlug: string): Prisma.LocationWhereInput {
+  if (locationSlug.endsWith("-statewide")) {
+    return {
+      parent: {
+        slug: locationSlug.slice(0, -"-statewide".length),
+        type: "STATE",
+        isActive: true
+      }
+    };
+  }
+
+  return { slug: locationSlug };
 }
 
 function rotateBusinessResults<T>(businesses: T[]) {

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { isUserAccountVerified } from "@/lib/account-verification";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveStateAreaGroups } from "@/lib/queries/locations";
+import { listActiveStateSelections } from "@/lib/queries/locations";
 import { submitBusinessAction } from "./actions";
 
 type NewBusinessPageProps = {
@@ -13,10 +13,10 @@ type NewBusinessPageProps = {
 export const dynamic = "force-dynamic";
 
 export default async function NewBusinessPage({ searchParams }: NewBusinessPageProps) {
-  const [user, categories, locationGroups, params] = await Promise.all([
+  const [user, categories, stateOptions, params] = await Promise.all([
     getCurrentUser(),
     listActiveCategories(),
-    listActiveStateAreaGroups(),
+    listActiveStateSelections(),
     searchParams
   ]);
 
@@ -76,14 +76,10 @@ export default async function NewBusinessPage({ searchParams }: NewBusinessPageP
           </select>
         </label>
         <label className="grid gap-2 text-sm font-bold text-slate-600">
-          State / Area
+          State
           <select className="rounded-tradia border border-slate-200 px-4 py-3" name="locationId" required>
-            {locationGroups.map((state) => (
-              <optgroup key={state.id} label={state.name}>
-                {state.children.map((area) => (
-                  <option key={area.id} value={area.id}>{area.name}</option>
-                ))}
-              </optgroup>
+            {stateOptions.map((state) => (
+              <option key={state.id} value={state.id}>{state.name}</option>
             ))}
           </select>
         </label>

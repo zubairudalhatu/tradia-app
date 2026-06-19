@@ -31,7 +31,7 @@ import { AdsenseSlot } from "@/components/adsense-slot";
 import { BusinessCard } from "@/components/business-card";
 import { getPublicDirectoryStats, listFeaturedBusinesses, listPopularBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveStateAreaGroups } from "@/lib/queries/locations";
+import { listActiveStateSelections } from "@/lib/queries/locations";
 
 export const revalidate = 300;
 
@@ -59,19 +59,19 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredBusinesses, popularCandidates, popularCategories, locationGroups, directoryStats] = hasDatabaseUrl()
+  const [featuredBusinesses, popularCandidates, popularCategories, stateOptions, directoryStats] = hasDatabaseUrl()
     ? await Promise.all([
         listFeaturedBusinesses(4),
         listPopularBusinesses(12),
         listActiveCategories(),
-        listActiveStateAreaGroups(),
+        listActiveStateSelections(),
         getPublicDirectoryStats()
       ])
     : [
         [] as Awaited<ReturnType<typeof listFeaturedBusinesses>>,
         [] as Awaited<ReturnType<typeof listPopularBusinesses>>,
         [] as Awaited<ReturnType<typeof listActiveCategories>>,
-        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>,
+        [] as Awaited<ReturnType<typeof listActiveStateSelections>>,
         {
           publishedBusinesses: 0,
           verifiedBusinesses: 0,
@@ -119,16 +119,10 @@ export default async function HomePage() {
                 placeholder="Hotels, schools, clinics, furniture..."
                 aria-label="Search businesses"
               />
-              <select className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="State or area">
+              <select className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3" name="location" aria-label="State">
                 <option value="">All Nigeria</option>
-                {locationGroups.map((state) => (
-                  <optgroup key={state.id} label={state.name}>
-                    {state.children.map((area) => (
-                      <option key={area.id} value={area.slug}>
-                        {area.name}
-                      </option>
-                    ))}
-                  </optgroup>
+                {stateOptions.map((state) => (
+                  <option key={state.id} value={state.slug}>{state.name}</option>
                 ))}
               </select>
               <button className="inline-flex items-center justify-center gap-2 rounded-tradia bg-forest px-6 py-3 text-center font-bold text-white">

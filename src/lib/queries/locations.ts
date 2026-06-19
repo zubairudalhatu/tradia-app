@@ -29,6 +29,34 @@ export function listActiveStateAreaGroups() {
   });
 }
 
+export async function listActiveStateSelections() {
+  const states = await prisma.location.findMany({
+    where: {
+      isActive: true,
+      type: "STATE"
+    },
+    include: {
+      children: {
+        where: {
+          isActive: true,
+          type: "AREA",
+          slug: { endsWith: "-statewide" }
+        },
+        orderBy: { name: "asc" },
+        take: 1
+      }
+    },
+    orderBy: { name: "asc" }
+  });
+
+  return states.flatMap((state) => state.children.map((area) => ({
+    id: area.id,
+    slug: area.slug,
+    stateId: state.id,
+    name: state.name === "Federal Capital Territory" ? "Federal Capital Territory (FCT)" : state.name
+  })));
+}
+
 export function getActiveAreaBySlug(slug: string) {
   return prisma.location.findFirst({
     where: {

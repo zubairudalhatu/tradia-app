@@ -5,7 +5,7 @@ import { AdsenseSlot } from "@/components/adsense-slot";
 import { BusinessCard } from "@/components/business-card";
 import { countPublishedBusinesses, listPublishedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
-import { listActiveStateAreaGroups } from "@/lib/queries/locations";
+import { listActiveStateSelections } from "@/lib/queries/locations";
 
 type BusinessesPageProps = {
   searchParams: Promise<{
@@ -56,18 +56,18 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
     page: currentPage,
     rotate: !params.q && currentPage === 1
   };
-  const [businesses, totalBusinesses, popularCategories, locationGroups] = hasDatabaseUrl()
+  const [businesses, totalBusinesses, popularCategories, stateOptions] = hasDatabaseUrl()
     ? await Promise.all([
         listPublishedBusinesses(filters),
         countPublishedBusinesses(filters),
         listActiveCategories(),
-        listActiveStateAreaGroups()
+        listActiveStateSelections()
       ])
     : [
         [] as Awaited<ReturnType<typeof listPublishedBusinesses>>,
         0,
         [] as Awaited<ReturnType<typeof listActiveCategories>>,
-        [] as Awaited<ReturnType<typeof listActiveStateAreaGroups>>
+        [] as Awaited<ReturnType<typeof listActiveStateSelections>>
       ];
   const totalPages = Math.max(Math.ceil(totalBusinesses / pageSize), 1);
   const safePage = Math.min(currentPage, totalPages);
@@ -120,15 +120,11 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               </select>
             </label>
             <label className="grid gap-2 text-sm font-bold text-slate-600">
-              State / Area
+              State
               <select className="min-w-0 rounded-tradia border border-slate-200 px-3 py-2" name="location" defaultValue={params.location ?? ""}>
                 <option value="">All Nigeria</option>
-                {locationGroups.map((state) => (
-                  <optgroup key={state.id} label={state.name}>
-                    {state.children.map((area) => (
-                      <option key={area.id} value={area.slug}>{area.name}</option>
-                    ))}
-                  </optgroup>
+                {stateOptions.map((state) => (
+                  <option key={state.id} value={state.slug}>{state.name}</option>
                 ))}
               </select>
             </label>
@@ -182,7 +178,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
             )) : (
               <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
                 <h2 className="text-xl font-black">No businesses found</h2>
-                <p className="mt-2 text-sm text-slate-600">Try a different search term, category, area, or remove one filter.</p>
+                <p className="mt-2 text-sm text-slate-600">Try a different search term, category, state, or remove one filter.</p>
                 <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                   List your business free
                 </Link>

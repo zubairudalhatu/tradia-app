@@ -1,4 +1,4 @@
-import { appUrl } from "./config";
+import { appUrl, releaseInfo } from "./config";
 
 type MobileEventName =
   | "mobile_search_submitted"
@@ -11,9 +11,12 @@ type MobileEventProperties = Record<string, string | number | boolean | null | u
 export function trackMobileEvent(name: MobileEventName, properties: MobileEventProperties = {}) {
   const payload = JSON.stringify({
     name,
-    properties: Object.fromEntries(
-      Object.entries(properties).filter(([, value]) => value !== undefined && value !== "")
-    )
+    properties: {
+      ...releaseInfo,
+      ...Object.fromEntries(
+        Object.entries(properties).filter(([, value]) => value !== undefined && value !== "")
+      )
+    }
   });
 
   void fetch(appUrl("/api/mobile-events"), {

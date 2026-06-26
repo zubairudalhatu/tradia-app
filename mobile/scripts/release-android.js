@@ -29,6 +29,13 @@ console.log(`EAS profile: ${profile}`);
 console.log(`Command: npx ${release.command.join(" ")}`);
 
 const result = spawnSync("npx", release.command, {
+  env: {
+    ...process.env,
+    TRADIA_ANDROID_RELEASE_TYPE: release.label,
+    TRADIA_ANDROID_ARTIFACT: release.artifact,
+    TRADIA_EAS_PROFILE: profile,
+    TRADIA_RELEASE_STARTED_AT: new Date().toISOString()
+  },
   stdio: "inherit",
   shell: process.platform === "win32"
 });

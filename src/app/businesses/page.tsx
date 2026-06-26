@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AdsenseSlot } from "@/components/adsense-slot";
+import { AnalyticsForm, AnalyticsLink } from "@/components/analytics-events";
 import { BusinessCard } from "@/components/business-card";
 import { countPublishedBusinesses, listPublishedBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -100,7 +101,14 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <aside className="h-fit min-w-0 overflow-hidden rounded-tradia border border-slate-200 bg-white p-4 sm:p-5">
           <h2 className="mb-4 font-black">Filters</h2>
-          <form className="grid gap-4" action="/businesses">
+          <AnalyticsForm
+            className="grid gap-4"
+            action="/businesses"
+            eventName="search_submitted"
+            eventProperties={{ surface: "directory_filters" }}
+            eventFields={["q", "category", "location"]}
+            eventCheckboxFields={["verified", "open"]}
+          >
             <label className="grid gap-2 text-sm font-bold text-slate-600">
               Search
               <input
@@ -138,17 +146,19 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
             </label>
             <button className="w-full rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">Apply Filters</button>
             <Link href="/businesses" className="text-sm font-bold text-forest">Clear filters</Link>
-          </form>
+          </AnalyticsForm>
           <h3 className="mb-3 mt-7 hidden font-black lg:block">Categories</h3>
           <div className="hidden gap-2 lg:grid">
             {popularCategories.map((category) => (
-              <Link
+              <AnalyticsLink
                 href={`/businesses?category=${category.slug}`}
                 key={category.slug}
+                eventName="search_submitted"
+                eventProperties={{ surface: "directory_category_filter", category: category.slug }}
                 className="min-w-0 rounded-tradia px-3 py-2 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-forest"
               >
                 {category.name}
-              </Link>
+              </AnalyticsLink>
             ))}
           </div>
         </aside>
@@ -179,9 +189,9 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               <div className="rounded-tradia border border-slate-200 bg-white p-5 md:col-span-2">
                 <h2 className="text-xl font-black">No businesses found</h2>
                 <p className="mt-2 text-sm text-slate-600">Try a different search term, category, state, or remove one filter.</p>
-                <Link href="/businesses/new" className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
+                <AnalyticsLink href="/businesses/new" eventName="add_business_tap" eventProperties={{ surface: "directory_empty_state" }} className="mt-4 inline-flex rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">
                   List your business free
-                </Link>
+                </AnalyticsLink>
               </div>
             )}
           </div>
@@ -210,7 +220,7 @@ export default async function BusinessesPage({ searchParams }: BusinessesPagePro
               Add your business to Tradia to appear in category and location searches, collect reviews, request verification, and receive customer enquiries.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/businesses/new" className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">List your business free</Link>
+              <AnalyticsLink href="/businesses/new" eventName="add_business_tap" eventProperties={{ surface: "directory_visibility_panel" }} className="rounded-tradia bg-forest px-4 py-2 text-sm font-bold text-white">List your business free</AnalyticsLink>
               <Link href="/pricing" className="rounded-tradia bg-slate-100 px-4 py-2 text-sm font-bold text-ink">Compare plans</Link>
             </div>
           </div>

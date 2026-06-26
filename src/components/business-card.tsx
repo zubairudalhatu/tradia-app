@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AnalyticsLink } from "@/components/analytics-events";
 
 type BusinessCardProps = {
   business: {
@@ -28,8 +28,16 @@ export function BusinessCard({ business }: BusinessCardProps) {
   const contactCount = [business.phone, business.whatsapp, business.email, business.website].filter(Boolean).length;
 
   return (
-    <Link
+    <AnalyticsLink
       href={`/businesses/${business.slug}`}
+      eventName="open_full_profile"
+      eventProperties={{
+        surface: "business_card",
+        businessSlug: business.slug,
+        category: business.category.name,
+        location: business.location.name,
+        verified: isVerified
+      }}
       className="group min-w-0 rounded-tradia border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-md sm:p-5"
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -81,6 +89,6 @@ export function BusinessCard({ business }: BusinessCardProps) {
         </div>
         <span className="text-forest transition group-hover:translate-x-1">View profile</span>
       </div>
-    </Link>
+    </AnalyticsLink>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -119,6 +120,7 @@ export default function RootLayout({
         </header>
         {children}
         <TradiaHelpChat />
+        <Analytics />
         <footer className="border-t border-slate-200 bg-ink text-white">
           <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>

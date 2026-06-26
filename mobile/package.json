@@ -8,12 +8,15 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "release:android:preview": "node ./scripts/release-android.js preview",
+    "release:android:production": "node ./scripts/release-android.js production",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "expo": "~52.0.0",
     "expo-asset": "~11.0.5",
     "expo-build-properties": "~0.13.3",
+    "expo-constants": "~17.0.8",
     "expo-status-bar": "~2.0.0",
     "react": "18.3.1",
     "react-native": "0.76.9",

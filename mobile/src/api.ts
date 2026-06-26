@@ -1,6 +1,5 @@
 import type { BusinessDetail, BusinessSummary, CategoryFilter, LocationGroup } from "./types";
-
-const apiBaseUrl = "https://www.tradiabusiness.com";
+import { appUrl } from "./config";
 
 export type BusinessListFilters = {
   q?: string;
@@ -28,7 +27,7 @@ export async function listBusinesses(filters: BusinessListFilters = {}) {
     params.set("verified", "1");
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/businesses?${params.toString()}`);
+  const response = await fetch(appUrl(`/api/businesses?${params.toString()}`));
 
   if (!response.ok) {
     throw new Error("Unable to load businesses.");
@@ -39,7 +38,7 @@ export async function listBusinesses(filters: BusinessListFilters = {}) {
 }
 
 export async function listCategories() {
-  const response = await fetch(`${apiBaseUrl}/api/categories`);
+  const response = await fetch(appUrl("/api/categories"));
 
   if (!response.ok) {
     throw new Error("Unable to load categories.");
@@ -50,7 +49,7 @@ export async function listCategories() {
 }
 
 export async function listLocations() {
-  const response = await fetch(`${apiBaseUrl}/api/locations`);
+  const response = await fetch(appUrl("/api/locations"));
 
   if (!response.ok) {
     throw new Error("Unable to load locations.");
@@ -61,7 +60,7 @@ export async function listLocations() {
 }
 
 export async function getBusiness(slug: string) {
-  const response = await fetch(`${apiBaseUrl}/api/businesses/${encodeURIComponent(slug)}`);
+  const response = await fetch(appUrl(`/api/businesses/${encodeURIComponent(slug)}`));
 
   if (!response.ok) {
     throw new Error("Unable to load this business.");
@@ -72,13 +71,13 @@ export async function getBusiness(slug: string) {
 }
 
 export function businessUrl(slug: string) {
-  return `${apiBaseUrl}/businesses/${slug}`;
+  return appUrl(`/businesses/${slug}`);
 }
 
 export function addBusinessUrl() {
-  return `${apiBaseUrl}/businesses/new`;
+  return appUrl("/businesses/new");
 }
 
 export function accountUrl() {
-  return `${apiBaseUrl}/account`;
+  return appUrl("/account");
 }

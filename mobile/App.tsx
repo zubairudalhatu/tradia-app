@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { accountUrl, addBusinessUrl, businessUrl, getBusiness, listBusinesses, listCategories, listLocations } from "./src/api";
+import { trackMobileEvent } from "./src/analytics";
 import type { BusinessDetail as BusinessDetailData, BusinessMedia, BusinessSummary, CategoryFilter, LocationFilter, LocationGroup } from "./src/types";
 
 const brandLogo = require("./assets/tradia-logo.png");
@@ -95,16 +96,19 @@ export default function App() {
 
   function applyCategory(slug: string) {
     setSelectedCategory(slug);
+    trackMobileEvent("mobile_search_submitted", { surface: "category_filter", category: slug || "all" });
     void loadBusinesses(query, false, { category: slug });
   }
 
   function applyLocation(slug: string) {
     setSelectedLocation(slug);
+    trackMobileEvent("mobile_search_submitted", { surface: "state_filter", location: slug || "all" });
     void loadBusinesses(query, false, { location: slug });
   }
 
   function applyVerifiedOnly(value: boolean) {
     setVerifiedOnly(value);
+    trackMobileEvent("mobile_search_submitted", { surface: "verified_filter", verified: value });
     void loadBusinesses(query, false, { verified: value });
   }
 
@@ -113,7 +117,40 @@ export default function App() {
     setSelectedCategory("");
     setSelectedLocation("");
     setVerifiedOnly(false);
+    trackMobileEvent("mobile_search_submitted", { surface: "clear_filters" });
     void loadBusinesses("", false, { category: "", location: "", verified: false });
+  }
+
+  function submitSearch() {
+    trackMobileEvent("mobile_search_submitted", {
+      surface: "search_box",
+      q: query.trim() || null,
+      category: selectedCategory || null,
+      location: selectedLocation || null,
+      verified: verifiedOnly
+    });
+    void loadBusinesses(query);
+  }
+
+  function openAccount() {
+    trackMobileEvent("mobile_account_open", { surface: "header" });
+    setWebScreen({ title: "Account", url: accountUrl() });
+  }
+
+  function openAddBusiness() {
+    trackMobileEvent("mobile_add_business_tap", { surface: "home" });
+    setWebScreen({ title: "Add Business", url: addBusinessUrl() });
+  }
+
+  function openBusinessDetail(business: BusinessSummary) {
+    trackMobileEvent("mobile_open_full_profile", {
+      surface: "native_business_card",
+      businessSlug: business.slug,
+      category: business.category.name,
+      location: business.location.name,
+      verified: business.verificationStatus === "VERIFIED"
+    });
+    setSelectedBusiness(business);
   }
 
   if (webScreen) {
@@ -140,7 +177,7 @@ export default function App() {
       <ExpoStatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <View style={styles.header}>
         <Image source={brandLogo} style={styles.logo} resizeMode="contain" />
-        <Pressable style={styles.headerButton} onPress={() => setWebScreen({ title: "Account", url: accountUrl() })}>
+        <Pressable style={styles.headerButton} onPress={openAccount}>
           <Text style={styles.headerButtonText}>Account</Text>
         </Pressable>
       </View>
@@ -168,9 +205,9 @@ export default function App() {
                 placeholderTextColor="#94a3b8"
                 style={styles.searchInput}
                 returnKeyType="search"
-                onSubmitEditing={() => loadBusinesses(query)}
+                onSubmitEditing={submitSearch}
               />
-              <Pressable style={styles.searchButton} onPress={() => loadBusinesses(query)}>
+              <Pressable style={styles.searchButton} onPress={submitSearch}>
                 <Text style={styles.searchButtonText}>Search</Text>
               </Pressable>
             </View>
@@ -218,7 +255,7 @@ export default function App() {
               <Stat label="Verified" value={String(businesses.filter((item) => item.verificationStatus === "VERIFIED").length)} />
             </View>
 
-            <Pressable style={styles.addBusinessButton} onPress={() => setWebScreen({ title: "Add Business", url: addBusinessUrl() })}>
+            <Pressable style={styles.addBusinessButton} onPress={openAddBusiness}>
               <Text style={styles.addBusinessButtonText}>Add Business</Text>
             </Pressable>
 
@@ -227,7 +264,7 @@ export default function App() {
           </View>
         }
         renderItem={({ item }) => (
-          <BusinessCard business={item} onPress={() => setSelectedBusiness(item)} />
+          <BusinessCard business={item} onPress={() => openBusinessDetail(item)} />
         )}
         ListEmptyComponent={!isLoading ? (
           <View style={styles.emptyState}>
@@ -411,7 +448,19 @@ function BusinessDetailScreen({
             {displayBusiness.website ? <ActionButton label="Website" onPress={() => openUrl(displayBusiness.website ?? "")} /> : null}
           </View>
 
-          <Pressable style={styles.profileButton} onPress={() => onOpenInApp({ title: displayBusiness.name, url: businessUrl(displayBusiness.slug) })}>
+          <Pressable
+            style={styles.profileButton}
+            onPress={() => {
+              trackMobileEvent("mobile_open_full_profile", {
+                surface: "detail_open_web_profile",
+                businessSlug: displayBusiness.slug,
+                category: displayBusiness.category.name,
+                location: locationLabel,
+                verified: displayBusiness.verificationStatus === "VERIFIED"
+              });
+              onOpenInApp({ title: displayBusiness.name, url: businessUrl(displayBusiness.slug) });
+            }}
+          >
             <Text style={styles.profileButtonText}>Open Full Profile</Text>
           </Pressable>
         </View>

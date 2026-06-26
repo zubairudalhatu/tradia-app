@@ -13,8 +13,8 @@ npm run start
 
 1. Create or log in to an Expo account and install EAS CLI.
 2. Run `eas init` once from this `mobile` folder if the app has not yet been linked to an Expo project.
-3. Build a local-test APK: `eas build --platform android --profile preview`.
-4. Build the Play Store AAB: `eas build --platform android --profile production`.
+3. Build a clearly labeled local-test APK: `npm run release:android:preview`.
+4. Build the Play Store AAB: `npm run release:android:production`.
 5. Upload the `.aab` manually in Google Play Console, or configure a Play service account and run `eas submit --platform android --profile production`.
 
 The Android package name is `business.tradia.app`. Do not change it after the first Play Console upload.

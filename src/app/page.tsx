@@ -28,6 +28,7 @@ import {
   Utensils
 } from "lucide-react";
 import { AdsenseSlot } from "@/components/adsense-slot";
+import { AnalyticsForm, AnalyticsLink } from "@/components/analytics-events";
 import { BusinessCard } from "@/components/business-card";
 import { getPublicDirectoryStats, listFeaturedBusinesses, listPopularBusinesses } from "@/lib/queries/businesses";
 import { listActiveCategories } from "@/lib/queries/categories";
@@ -97,22 +98,28 @@ export default async function HomePage() {
               verification, and visibility plans.
             </p>
             <div className="mt-5 grid max-w-3xl gap-3 md:mt-6 md:grid-cols-2">
-              <Link href="/businesses" className="rounded-tradia border border-forest bg-forest p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+              <AnalyticsLink href="/businesses" eventName="directory_browse_tap" eventProperties={{ surface: "home_hero_customer_card" }} className="rounded-tradia border border-forest bg-forest p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
                 <span className="text-sm font-black uppercase text-white/70">For customers</span>
                 <strong className="mt-2 block text-2xl font-black">Find a trusted business</strong>
                 <span className="mt-2 block text-sm leading-6 text-white/80">
                   Search by category, location, reviews, and verification status.
                 </span>
-              </Link>
-              <Link href="/businesses/new" className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
+              </AnalyticsLink>
+              <AnalyticsLink href="/businesses/new" eventName="add_business_tap" eventProperties={{ surface: "home_hero_owner_card" }} className="rounded-tradia border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-lg">
                 <span className="text-sm font-black uppercase text-ember">For business owners</span>
                 <strong className="mt-2 block text-2xl font-black text-ink">List your business free</strong>
                 <span className="mt-2 block text-sm leading-6 text-slate-600">
                   Build a profile with contact buttons, reviews, media, and verification.
                 </span>
-              </Link>
+              </AnalyticsLink>
             </div>
-            <form action="/businesses" className="mt-6 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:mt-8 md:grid-cols-[1fr_180px_auto]">
+            <AnalyticsForm
+              action="/businesses"
+              eventName="search_submitted"
+              eventProperties={{ surface: "home_hero" }}
+              eventFields={["q", "location"]}
+              className="mt-6 grid max-w-3xl gap-3 rounded-tradia border border-slate-200 bg-white p-3 shadow-xl md:mt-8 md:grid-cols-[1fr_180px_auto]"
+            >
               <input
                 className="min-w-0 rounded-tradia border border-slate-200 px-4 py-3"
                 name="q"
@@ -129,7 +136,7 @@ export default async function HomePage() {
                 <Search aria-hidden="true" className="h-4 w-4" />
                 Search
               </button>
-            </form>
+            </AnalyticsForm>
             <div className="mt-5 flex flex-wrap gap-2 text-sm font-bold text-slate-500">
               <span className="rounded-full bg-white px-3 py-1">Verified profiles</span>
               <span className="rounded-full bg-white px-3 py-1">Direct WhatsApp contact</span>
@@ -147,9 +154,17 @@ export default async function HomePage() {
             </div>
             <div className="grid gap-3">
               {featuredBusinesses.slice(0, 4).map((business, index) => (
-                <Link
+                <AnalyticsLink
                   href={`/businesses/${business.slug}`}
                   key={business.slug}
+                  eventName="open_full_profile"
+                  eventProperties={{
+                    surface: "home_featured",
+                    businessSlug: business.slug,
+                    category: business.category.name,
+                    location: business.location.name,
+                    verified: business.verificationStatus === "VERIFIED"
+                  }}
                   className={`min-w-0 rounded-tradia border border-slate-200 p-3 transition hover:border-forest ${index >= 3 ? "hidden sm:block" : ""}`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -173,7 +188,7 @@ export default async function HomePage() {
                     </div>
                   </div>
                   <p className="mt-2 break-words text-sm leading-5 text-slate-600">{business.description}</p>
-                </Link>
+                </AnalyticsLink>
               ))}
             </div>
             {!featuredBusinesses.length ? (
@@ -184,9 +199,9 @@ export default async function HomePage() {
                 </p>
               </div>
             ) : null}
-            <Link href="/businesses" className="mt-4 inline-flex w-full justify-center rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-ink hover:bg-emerald-50 hover:text-forest">
+            <AnalyticsLink href="/businesses" eventName="directory_browse_tap" eventProperties={{ surface: "home_featured" }} className="mt-4 inline-flex w-full justify-center rounded-tradia bg-slate-100 px-4 py-3 text-sm font-black text-ink hover:bg-emerald-50 hover:text-forest">
               Browse all businesses
-            </Link>
+            </AnalyticsLink>
           </div>
         </div>
       </section>
@@ -223,10 +238,10 @@ export default async function HomePage() {
                   Discover published profiles earning attention through customer visits, contact activity, reviews, and trust.
                 </p>
               </div>
-              <Link href="/businesses" className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
+              <AnalyticsLink href="/businesses" eventName="directory_browse_tap" eventProperties={{ surface: "home_popular" }} className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
                 Explore the directory
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </Link>
+              </AnalyticsLink>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {popularBusinesses.map((business) => (
@@ -247,19 +262,21 @@ export default async function HomePage() {
                 Start with what you need, then narrow your search by location and verification status.
               </p>
             </div>
-            <Link href="/businesses" className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
+            <AnalyticsLink href="/businesses" eventName="directory_browse_tap" eventProperties={{ surface: "home_categories" }} className="inline-flex items-center gap-2 text-sm font-black text-forest hover:text-ink">
               Browse all businesses
               <ArrowRight aria-hidden="true" className="h-4 w-4" />
-            </Link>
+            </AnalyticsLink>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {popularCategories.map((category) => {
               const CategoryIcon = getCategoryIcon(category.name);
 
               return (
-                <Link
+                <AnalyticsLink
                   href={`/businesses?category=${category.slug}`}
                   key={category.slug}
+                  eventName="search_submitted"
+                  eventProperties={{ surface: "home_category_card", category: category.slug }}
                   className="group flex min-h-24 items-center gap-4 rounded-tradia border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-forest hover:shadow-md"
                 >
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-forest transition group-hover:bg-forest group-hover:text-white">
@@ -267,7 +284,7 @@ export default async function HomePage() {
                   </span>
                   <span className="min-w-0 flex-1 font-black leading-5 text-ink">{category.name}</span>
                   <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-forest" />
-                </Link>
+                </AnalyticsLink>
               );
             })}
           </div>
@@ -282,7 +299,7 @@ export default async function HomePage() {
               Customers need confidence before they call. Business owners need visibility that looks credible. Tradia brings both sides into one searchable directory.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/businesses/new" className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">List Your Business Free</Link>
+              <AnalyticsLink href="/businesses/new" eventName="add_business_tap" eventProperties={{ surface: "home_why_tradia" }} className="rounded-tradia bg-forest px-5 py-3 font-bold text-white">List Your Business Free</AnalyticsLink>
               <Link href="/verification-policy" className="rounded-tradia bg-white px-5 py-3 font-bold text-ink">How verification works</Link>
             </div>
           </div>

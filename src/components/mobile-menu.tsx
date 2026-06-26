@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnalyticsLink, trackTradiaEvent } from "@/components/analytics-events";
 
 type MobileMenuProps = {
   isSignedIn: boolean;
@@ -43,9 +44,26 @@ export function MobileMenu({ isSignedIn, canAccessAdmin }: MobileMenuProps) {
           <Link className={menuLinkClass} href="/pricing" onClick={closeMenu}>Pricing</Link>
           <Link className={menuLinkClass} href="/dashboard" onClick={closeMenu}>Business</Link>
           <Link className={menuLinkClass} href="/support" onClick={closeMenu}>Support</Link>
-          {isSignedIn ? <Link className={menuLinkClass} href="/account" onClick={closeMenu}>Account</Link> : null}
+          {isSignedIn ? (
+            <AnalyticsLink
+              className={menuLinkClass}
+              href="/account"
+              eventName="account_open"
+              eventProperties={{ surface: "mobile_menu" }}
+              onClick={closeMenu}
+            >
+              Account
+            </AnalyticsLink>
+          ) : null}
           {canAccessAdmin ? <Link className={menuLinkClass} href="/admin" onClick={closeMenu}>Admin</Link> : null}
-          <Link className="rounded-tradia bg-forest px-4 py-3 text-center text-white transition hover:bg-forest/90 focus-visible:outline-none" href="/businesses/new" onClick={closeMenu}>
+          <Link
+            className="rounded-tradia bg-forest px-4 py-3 text-center text-white transition hover:bg-forest/90 focus-visible:outline-none"
+            href="/businesses/new"
+            onClick={() => {
+              trackTradiaEvent("add_business_tap", { surface: "mobile_menu" });
+              closeMenu();
+            }}
+          >
             List Your Business Free
           </Link>
           {isSignedIn ? (
